@@ -1,0 +1,15 @@
+{
+  "gameID": "gameID",
+  "cubeID": "f7314414-c2d2-48ed-af2c-764cf0207c62",
+  "numberOfDoubleDraftPicksPerPlayer": 4,
+  "players": [
+    {
+      "name": "Josh",
+      "playerID": 1
+    },
+    {
+      "name": "Zach",
+      "playerID": 2
+    }
+  ]
+}

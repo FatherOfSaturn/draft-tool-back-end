@@ -1,0 +1,52 @@
+{
+  "mainboard": [
+    {
+      "details": {
+        "image_normal": "some URL",
+        "image_small": "some Url",
+        "scryfall_id": "someID",
+        "set": "isd",
+        "set_name": "Innistrad",
+        "name": "Card 4"
+      },
+      "name": "Card 1",
+      "cardID": "f7314414-c2d2-48ed-af2c-764cf0207c62"
+    },
+    {
+      "details": {
+        "image_normal": "some URL",
+        "image_small": "some Url",
+        "scryfall_id": "someID",
+        "set": "isd",
+        "set_name": "Innistrad",
+        "name": "Card 4"
+      },
+      "cardID": "f7314414-c2d2-48ed-af2c-764cf0207c62",
+      "name": "Card 2"
+    },
+    {
+      "details": {
+        "image_normal": "some URL",
+        "image_small": "some Url",
+        "scryfall_id": "someID",
+        "set": "isd",
+        "set_name": "Innistrad",
+        "name": "Card 4"
+      },
+      "cardID": "f7314414-c2d2-48ed-af2c-764cf0207c62",
+      "name": "Card 3"
+    },
+    {
+      "details": {
+        "image_normal": "some URL",
+        "image_small": "some Url",
+        "scryfall_id": "someID",
+        "set": "isd",
+        "set_name": "Innistrad",
+        "name": "Card 4"
+      },
+      "cardID": "f7314414-c2d2-48ed-af2c-764cf0207c62",
+      "name": "Card 4"
+    }
+  ]
+}
