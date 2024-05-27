@@ -1,14 +1,11 @@
 package org.magic.draft;
 
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
-import org.magic.draft.api.Player;
 import org.magic.draft.api.card.Card;
-import org.magic.draft.app.GameMaestro;
-import org.magic.draft.util.Pair;
+import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
@@ -24,42 +21,43 @@ import jakarta.ws.rs.core.MediaType;
 public class GameResource {
     private static final Logger LOGGER = LogManager.getLogger(GameResource.class);
 
-    final GameMaestro gameMaestro;
+    final GameCoordinationWorker gameWorker;
 
-    public GameResource(final GameMaestro gameMaestro) {
-        this.gameMaestro = gameMaestro;
+    public GameResource(final GameCoordinationWorker gameWorker) {
+        this.gameWorker = gameWorker;
     }
     
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Uni<List<Player>> createAndStartGame(final GameInfo gameinfo) {
-        return gameMaestro.startGame(gameinfo);
+    public Uni<GameInfo> createAndStartGame(final GameCreationInfo gameinfo) {
+        return gameWorker.startGame(gameinfo);
     }
 
     @POST
-    @Path("{playerName}/draftCard/{packNumber}/{cardID}")
+    @Path("/{gameID}/{playerID}/draftCard/{packNumber}/{cardID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<Card> draftCard(@PathParam("playerName") final String playerName,
+    public Uni<Card> draftCard(@PathParam("playerID") final String playerID,
                                @PathParam("packNumber") int packNumber,
                                @PathParam("cardID") final String cardID,
+                               @PathParam("gameID") final String gameID,
                                @QueryParam("doublePick") final boolean isDoublePick) {
         // Increase PackNumber by 1 to fix the array indexing so user doesnt have to decrement.
-        packNumber++;
-        return gameMaestro.draftCard(playerName, packNumber, cardID, isDoublePick);
+        packNumber--;
+        return Uni.createFrom().item(gameWorker.draftCard(playerID, packNumber, cardID, isDoublePick, gameID));
     }
 
     @GET
-    @Path("/fetchPlayerData")
+    @Path("/fetchGameData/{gameID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<List<Player>> getCurrentPlayerInfo() {
-        return gameMaestro.getCurrentPlayerInfo();
+    public Uni<GameInfo> getCurrentPlayerInfo(@PathParam("gameID") final String gameID) {
+        return gameWorker.getGameInfo(gameID);
     }
 
     @GET
-    @Path("/merge")
+    @Path("/merge/{gameID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<List<Player>> triggerPackMergeAndSwap() {
-        return gameMaestro.mergeAndSwapPacks();
+    public Uni<GameInfo> triggerPackMergeAndSwap(@PathParam("gameID") final String gameID) {
+        return gameWorker.mergeAndSwapPacks(gameID);
     }
 }

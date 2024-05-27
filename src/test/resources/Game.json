@@ -1,4 +1,6 @@
-[
+{
+    "gameID": "0900e494-962d-48c6-8e78-66a489be4bb2",
+    "players": [
     {
         "playerName": "Josh",
         "cardPacks": [
@@ -4189,4 +4191,5 @@
         "cardsDrafted": [],
         "doubleDraftPicksRemaining": 4
     }
-]
+    ]
+}

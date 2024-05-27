@@ -6,6 +6,8 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.magic.draft.api.card.Card;
 import org.magic.draft.api.card.CardPack;
 
@@ -13,21 +15,26 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "playerName", "cardPacks", "doubleDraftPicksRemaining" })
+@JsonPropertyOrder({ "playerName", "cardsDrafted", "cardPacks", "doubleDraftPicksRemaining" })
 public class Player {
     private static final Logger LOGGER = LogManager.getLogger(Player.class);
     private final String playerName;
+    private final String playerID;
     private List<CardPack> cardPacks;
     private List<Card> cardsDrafted;
     private int doubleDraftPicksRemaining;
 
     @JsonCreator
-    public Player(@JsonProperty("playerName") final String playerName, 
-                  @JsonProperty("cardPacks") final List<CardPack> cardPacks, 
-                  @JsonProperty("doubleDraftPicksRemaining") final int doubleDraftPicksRemaining) {
+    @BsonCreator
+    public Player(@JsonProperty("playerName") @BsonProperty("playerName")final String playerName, 
+                  @JsonProperty("playerID") @BsonProperty("playerID")final String playerID, 
+                  @JsonProperty("cardPacks") @BsonProperty("cardPacks")final List<CardPack> cardPacks, 
+                  @JsonProperty("doubleDraftPicksRemaining") @BsonProperty("doubleDraftPicksRemaining")final int doubleDraftPicksRemaining,
+                  @JsonProperty("cardsDrafted") @BsonProperty("cardsDrafted")final List<Card> cardsDrafted) {
         this.playerName = Objects.requireNonNull(playerName, "player name Required for Player");
+        this.playerID = Objects.requireNonNull(playerID, "player id Required for Player");
         this.cardPacks = Objects.requireNonNull(cardPacks, "card packs Required for Player");
-        this.cardsDrafted = new ArrayList<>();
+        this.cardsDrafted = Objects.requireNonNullElse(cardsDrafted, new ArrayList<>());
         this.doubleDraftPicksRemaining = Objects.requireNonNull(doubleDraftPicksRemaining, "double picks amount required for Player");
     }
 
@@ -49,6 +56,10 @@ public class Player {
         return playerName;
     }
 
+    public String getPlayerID() {
+        return playerID;
+    }
+
     public List<CardPack> getCardPacks() {
         return cardPacks;
     }
@@ -61,7 +72,7 @@ public class Player {
         return doubleDraftPicksRemaining;
     }
 
-    public void setCards(final List<CardPack> newCardPacks) {
+    public void setCardPacks(final List<CardPack> newCardPacks) {
         this.cardPacks = newCardPacks;
     }
 }

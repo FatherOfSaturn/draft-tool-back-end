@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,12 +20,13 @@ public class Card {
     private CardDetails cardDetails;
 
     @JsonCreator
-    public Card(@JsonProperty("name") final String name,
-                @JsonProperty("details") final CardDetails cardDetails,
-                @JsonProperty("cardID") final String cardID) {
+    @BsonCreator
+    public Card(@JsonProperty("name") @BsonProperty("name") final String name,
+                @JsonProperty("details") @BsonProperty("details") final CardDetails cardDetails,
+                @JsonProperty("cardID") @BsonProperty("cardID") final String cardID) {
         if (name == null) {
             LOGGER.warn("Card with ID of {} does not have a name on the Card SuperType", cardID);
-            this.name = cardDetails.getCardName();
+            this.name = cardDetails.getName();
         }
         else {
             this.name = name;

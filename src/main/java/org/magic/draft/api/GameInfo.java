@@ -3,41 +3,31 @@ package org.magic.draft.api;
 import java.util.List;
 import java.util.Objects;
 
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "gameID", "cubeID", "numberOfDoubleDraftPicksPerPlayer" })
+@JsonPropertyOrder({ "gameID", "players" })
 public class GameInfo {
     private final String gameID;
-    private final String cubeID;
-    private final int numberOfDoubleDraftPicksPerPlayer;
-    private final List<PlayerInfo> playerInfo;
+    private final List<Player> playerStates;
 
     @JsonCreator
-    public GameInfo(@JsonProperty("gameID") final String gameID,
-                    @JsonProperty("cubeID") final String cubeID,
-                    @JsonProperty("players") final List<PlayerInfo> playerInfo,
-                    @JsonProperty("numberOfDoubleDraftPicksPerPlayer") final int numberOfDoubleDraftPicksPerPlayer) {
+    @BsonCreator
+    public GameInfo(@JsonProperty("gameID") @BsonProperty("gameID") final String gameID,
+                    @JsonProperty("players") @BsonProperty("players") final List<Player> playerStates) {
         this.gameID = Objects.requireNonNull(gameID, "gameID Required for Game Info");
-        this.cubeID = Objects.requireNonNull(cubeID, "cubeID Required for Game Info");
-        this.playerInfo = Objects.requireNonNull(playerInfo, "players Required for Game Info");
-        this.numberOfDoubleDraftPicksPerPlayer = Objects.requireNonNull(numberOfDoubleDraftPicksPerPlayer, "numberOfDoubleDraftPicksPerPlayer Required for GameInfo");
+        this.playerStates = Objects.requireNonNull(playerStates, "player list Required for Game Info");
     }
 
     public String getGameID() {
         return gameID;
     }
 
-    public int getNumberOfDoubleDraftPicksPerPlayer() {
-        return numberOfDoubleDraftPicksPerPlayer;
-    }
-
-    public String getCubeID() {
-        return cubeID;
-    }
-
-    public List<PlayerInfo> getPlayerInfo() {
-        return playerInfo;
+    public List<Player> getPlayers() {
+        return playerStates;
     }
 }

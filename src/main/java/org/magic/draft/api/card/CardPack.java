@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -17,8 +20,9 @@ public class CardPack {
     private final int originalCardsInPackNumber;
 
     @JsonCreator
-    public CardPack(@JsonProperty("packNumber") final int packNumber,
-                    @JsonProperty("cardsInPack") final Collection<Card> cardsInPack) {
+    @BsonCreator
+    public CardPack(@JsonProperty("packNumber") @BsonProperty("packNumber") final int packNumber,
+                    @JsonProperty("cardsInPack") @BsonProperty("cardsInPack")final Collection<Card> cardsInPack) {
         this.packNumber = Objects.requireNonNull(packNumber, "pack number Required for card Pack");
         this.cardsInPack = cardsInPack.stream()
                                       .collect(Collectors.toMap(Card::getCardID, item -> item));

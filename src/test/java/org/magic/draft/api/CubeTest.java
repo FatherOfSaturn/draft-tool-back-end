@@ -73,10 +73,10 @@ public class CubeTest {
     @Test
     void testGameInfo() throws IOException {
 
-        InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameInfo.json");
+        InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        GameInfo info = JsonUtility.getInstance().fromJson(gameString, GameInfo.class);
+        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
 
         System.out.println(JsonUtility.getInstance().toJson(info));
     }

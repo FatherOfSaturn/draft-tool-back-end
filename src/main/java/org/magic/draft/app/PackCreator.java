@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.draft.api.Player;
+import org.magic.draft.api.PlayerCreationInfo;
 import org.magic.draft.api.card.Card;
 import org.magic.draft.api.card.CardPack;
 import org.magic.draft.api.card.Cube;
@@ -26,7 +27,9 @@ public class PackCreator {
         this.cube = Objects.requireNonNull(cube, "cube Required for Pack Creator");
     }
 
-    public List<Player> createPyramidPacks(final String player1Name, final String player2Name, final int numberOfDoubleDraftPicksPerPlayer) {
+    public List<Player> createPyramidPacks(final PlayerCreationInfo player1,
+                                           final PlayerCreationInfo player2,
+                                           final int numberOfDoubleDraftPicksPerPlayer) {
 
         cube.getCards().shuffleMainboard();
 
@@ -43,7 +46,7 @@ public class PackCreator {
                                           .flatMap(List::stream)
                                           .collect(Collectors.toList());
 
-        LOGGER.info("Player {} Packs created. {} Packs", player1Name, player1Packs.size());
+        LOGGER.info("Player {} Packs created. {} Packs", player1.getPlayerName(), player1Packs.size());
         
         List<CardPack> player2PacksOf11 = createPacks(List.of(1, 2, 3, 4, 5, 6, 7, 8), 11);
         List<CardPack> player2PacksOf9 = createPacks(List.of(9, 10, 11, 12), 9);
@@ -54,12 +57,12 @@ public class PackCreator {
                                           .flatMap(List::stream)
                                           .collect(Collectors.toList());
 
-        LOGGER.info("Player {} Packs created. {} Packs", player2Name, player2Packs.size());
+        LOGGER.info("Player {} Packs created. {} Packs", player2.getPlayerName(), player2Packs.size());
 
-        Player player1 = new Player(player1Name, player1Packs, numberOfDoubleDraftPicksPerPlayer);
-        Player player2 = new Player(player2Name, player2Packs, numberOfDoubleDraftPicksPerPlayer);
+        Player fullPlayer1 = new Player(player1.getPlayerName(), player1.getPlayerID(), player1Packs, numberOfDoubleDraftPicksPerPlayer, null);
+        Player fullPlayer2 = new Player(player2.getPlayerName(), player2.getPlayerID(), player2Packs, numberOfDoubleDraftPicksPerPlayer, null);
 
-        return List.of(player1, player2);
+        return List.of(fullPlayer1, fullPlayer2);
     }
 
     private List<CardPack> createPacks(final List<Integer> packNumbers, final int numberOfCardsInPack) {

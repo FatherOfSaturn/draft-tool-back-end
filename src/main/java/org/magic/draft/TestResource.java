@@ -5,16 +5,47 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.card.Cube;
+import org.magic.draft.app.GameCoordination.DbHandler;
 import org.magic.draft.util.JsonUtility;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @Path("/test")
 public class TestResource {
+    private static final Logger LOGGER = LogManager.getLogger(TestResource.class);
+
+    @Inject
+    DbHandler dbHandler;
+
+    @POST
+    @Path("/db")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response testOutDB(final GameInfo gameInfo) {
+
+        LOGGER.info("Testing DB Method");
+
+        try {
+            dbHandler.addGame(gameInfo);
+        }
+        catch(Exception e) {
+            LOGGER.error(e.getMessage());
+            return Response.serverError().build();
+        }
+        
+        return Response.ok().build();
+    }
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
