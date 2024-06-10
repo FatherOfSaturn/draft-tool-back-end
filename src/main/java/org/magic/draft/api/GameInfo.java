@@ -30,4 +30,15 @@ public class GameInfo {
     public List<Player> getPlayers() {
         return playerStates;
     }
+
+    @Override
+    public String toString() {
+        if (playerStates.size() == 2) {
+            return "GameInfo [gameID=" + gameID 
+                    + ", \n\tplayer1=" + playerStates.get(0).toString() 
+                    + "\n\tplayer2=" + playerStates.get(1).toString() + "]";
+        }
+
+        return "GameInfo [gameID=" + gameID + ", playerStates=" + playerStates + "]";
+    }
 }

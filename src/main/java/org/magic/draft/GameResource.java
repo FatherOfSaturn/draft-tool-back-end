@@ -31,6 +31,7 @@ public class GameResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Uni<GameInfo> createAndStartGame(final GameCreationInfo gameinfo) {
+        LOGGER.info("Call to create Game for cube: {}", gameinfo.getCubeID());
         return gameWorker.startGame(gameinfo);
     }
 
@@ -42,8 +43,7 @@ public class GameResource {
                                @PathParam("cardID") final String cardID,
                                @PathParam("gameID") final String gameID,
                                @QueryParam("doublePick") final boolean isDoublePick) {
-        // Increase PackNumber by 1 to fix the array indexing so user doesnt have to decrement.
-        packNumber--;
+        LOGGER.info("Call to draft card: {}\n For game: {}\n", cardID, gameID);
         return Uni.createFrom().item(gameWorker.draftCard(playerID, packNumber, cardID, isDoublePick, gameID));
     }
 
@@ -51,6 +51,7 @@ public class GameResource {
     @Path("/fetchGameData/{gameID}")
     @Produces(MediaType.APPLICATION_JSON)
     public Uni<GameInfo> getCurrentPlayerInfo(@PathParam("gameID") final String gameID) {
+        LOGGER.info("Call to fetch Game: {}", gameID);
         return gameWorker.getGameInfo(gameID);
     }
 
@@ -58,6 +59,7 @@ public class GameResource {
     @Path("/merge/{gameID}")
     @Produces(MediaType.APPLICATION_JSON)
     public Uni<GameInfo> triggerPackMergeAndSwap(@PathParam("gameID") final String gameID) {
+        LOGGER.info("Call to merge Game: {}", gameID);
         return gameWorker.mergeAndSwapPacks(gameID);
     }
 }

@@ -75,4 +75,12 @@ public class Player {
     public void setCardPacks(final List<CardPack> newCardPacks) {
         this.cardPacks = newCardPacks;
     }
+
+    @Override
+    public String toString() {
+        return "Player [playerName=" + playerName + ", playerID=" + playerID + ", cardPacks#=" + cardPacks.size()
+                + ", cardsDrafted#=" + cardsDrafted.size() + ", doubleDraftPicksRemaining=" + doubleDraftPicksRemaining + "]";
+    }
+
+    
 }

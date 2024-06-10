@@ -51,6 +51,9 @@ public class DbHandler {
             LOGGER.error("Unable to find Game with ID: {}", gameID);
             throw new Error("Unable to find Game with ID: " + gameID);
         }
+        else {
+            LOGGER.info("Found Game Info: {}", gameDocument.toString());
+        }
         return gameDocument;
     }
 
