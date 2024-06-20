@@ -10,17 +10,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "gameID", "players" })
+@JsonPropertyOrder({ "gameID", "players", "gameState" })
 public class GameInfo {
     private final String gameID;
-    private final List<Player> playerStates;
+    private List<Player> playerStates;
+    private GameState gameState;
 
     @JsonCreator
     @BsonCreator
     public GameInfo(@JsonProperty("gameID") @BsonProperty("gameID") final String gameID,
-                    @JsonProperty("players") @BsonProperty("players") final List<Player> playerStates) {
+                    @JsonProperty("players") @BsonProperty("players") final List<Player> playerStates,
+                    @JsonProperty("gameState") @BsonProperty("gameState") final GameState gameState) {
         this.gameID = Objects.requireNonNull(gameID, "gameID Required for Game Info");
         this.playerStates = Objects.requireNonNull(playerStates, "player list Required for Game Info");
+        this.gameState = Objects.requireNonNull(gameState, "gameState flag Required for Game Info");
     }
 
     public String getGameID() {
@@ -31,12 +34,25 @@ public class GameInfo {
         return playerStates;
     }
 
+    public void updatePlayers(final List<Player> players) {
+        this.playerStates = players;
+    }
+
+    public void setGameState(final GameState state) {
+        this.gameState = state;
+    }
+
+    public GameState getGameState() {
+        return this.gameState;
+    }
+
     @Override
     public String toString() {
         if (playerStates.size() == 2) {
-            return "GameInfo [gameID=" + gameID 
-                    + ", \n\tplayer1=" + playerStates.get(0).toString() 
-                    + "\n\tplayer2=" + playerStates.get(1).toString() + "]";
+            return "GameInfo \n[gameID=" + this.gameID 
+                    + ", \n\tplayer1=" + this.playerStates.get(0).toString() 
+                    + ", \n\tplayer2=" + this.playerStates.get(1).toString() 
+                    + ", \n\tGameState= " + this.gameState + "\n]";
         }
 
         return "GameInfo [gameID=" + gameID + ", playerStates=" + playerStates + "]";

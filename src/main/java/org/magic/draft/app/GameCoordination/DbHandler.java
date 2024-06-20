@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.magic.draft.api.GameInfo;
+import org.magic.draft.api.GameState;
 import org.magic.draft.api.Player;
 
 import com.mongodb.client.MongoCollection;
@@ -23,7 +24,6 @@ public class DbHandler {
     // // u: hitma1221
     // // p: uoGrw4Iw8aOG7blz
     // // mongodb+srv://hitma1221:uoGrw4Iw8aOG7blz@jholdencluster.b7umtui.mongodb.net/
-    private final String mongoURL = "mongodb+srv://hitma1221:uoGrw4Iw8aOG7blz@jholdencluster.b7umtui.mongodb.net/";
 
     @Inject
     MongoService mongoService;
@@ -76,6 +76,45 @@ public class DbHandler {
         } else {
             LOGGER.error("Unable to update Game {}, with Player {}, new info.", gameInfo.getGameID(), player.getPlayerID());
             throw new Error("Unable to Update Game with players new info.");
+        }
+    }
+
+    public GameInfo updateGame(final GameInfo gameInfo) {
+
+        Bson filter = Filters.eq("gameID", gameInfo.getGameID());
+
+        Bson update = Updates.combine(
+            Updates.set("players", gameInfo.getPlayers()),
+            Updates.set("gameState", gameInfo.getGameState())
+        );
+
+        // Perform the update
+        UpdateResult result = getCollection().updateOne(filter, update);
+
+        if (result.getModifiedCount() > 0) {
+            LOGGER.info("Successfully updated Game: {}\n", gameInfo.getGameID());
+            return gameInfo;
+        } else {
+            LOGGER.error("Unable to update Game {}, new info.", gameInfo.getGameID());
+            throw new Error("Unable to Update Game with new info.");
+        }
+    }
+
+    public GameState updateGameState(final String gameID, final GameState gameState) {
+        
+        Bson filter = Filters.eq("gameID", gameID);
+
+        Bson update = Updates.combine(
+            Updates.set("gameState", gameState));
+        // Perform the update
+        UpdateResult result = getCollection().updateOne(filter, update);
+
+        if (result.getModifiedCount() > 0) {
+            LOGGER.info("Successfully updated Game: {}\n", gameID);
+            return gameState;
+        } else {
+            LOGGER.error("Unable to update Game {}, with Game State {}.", gameID, gameState);
+            throw new Error("Unable to Update Game with new info.");
         }
     }
 }

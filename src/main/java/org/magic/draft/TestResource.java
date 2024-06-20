@@ -10,12 +10,14 @@ import org.apache.logging.log4j.Logger;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.card.Cube;
 import org.magic.draft.app.GameCoordination.DbHandler;
+import org.magic.draft.app.GameCoordination.MongoService;
 import org.magic.draft.util.JsonUtility;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -28,6 +30,9 @@ public class TestResource {
     @Inject
     DbHandler dbHandler;
 
+    @Inject
+    MongoService mongoService;
+
     @POST
     @Path("/db")
     @Produces(MediaType.APPLICATION_JSON)
@@ -38,6 +43,25 @@ public class TestResource {
 
         try {
             dbHandler.addGame(gameInfo);
+        }
+        catch(Exception e) {
+            LOGGER.error(e.getMessage());
+            return Response.serverError().build();
+        }
+        
+        return Response.ok().build();
+    }
+    
+    @PUT
+    @Path("/db")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response testUpdateMethod(final GameInfo gameInfo) {
+
+        LOGGER.info("Testing DB Method");
+
+        try {
+            dbHandler.updateGame(gameInfo);
         }
         catch(Exception e) {
             LOGGER.error(e.getMessage());

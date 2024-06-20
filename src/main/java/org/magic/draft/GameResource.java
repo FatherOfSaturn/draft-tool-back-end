@@ -4,8 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
+import org.magic.draft.api.GameStatusMessage;
 import org.magic.draft.api.card.Card;
 import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
+import org.magic.draft.util.JsonUtility;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
@@ -55,11 +59,25 @@ public class GameResource {
         return gameWorker.getGameInfo(gameID);
     }
 
+    // Call will return null if game is not ready for merge
+    // Otherwise, return the GameID
     @GET
     @Path("/merge/{gameID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<GameInfo> triggerPackMergeAndSwap(@PathParam("gameID") final String gameID) {
+    public Uni<GameStatusMessage> triggerPackMergeAndSwap(@PathParam("gameID") final String gameID) {
         LOGGER.info("Call to merge Game: {}", gameID);
-        return gameWorker.mergeAndSwapPacks(gameID);
+        return gameWorker.mergeAndSwapPacks(gameID)
+                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
+    }
+
+    // Call will return null if game is not ready for merge
+    // Otherwise, return the GameID
+    @GET
+    @Path("/end/{gameID}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<GameStatusMessage> endGame(@PathParam("gameID") final String gameID) {
+        LOGGER.info("Call to End Game: {}", gameID);
+        return gameWorker.endGame(gameID)
+                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
     }
 }

@@ -3,18 +3,20 @@ package org.magic.draft.util;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public final class JsonUtility {
 
+    private static final Logger LOGGER = LogManager.getLogger(JsonUtility.class);
     private static final Object LOCK = new Object();
 
     private static volatile JsonUtility instance = null;
@@ -70,7 +72,13 @@ public final class JsonUtility {
                      .readValue(jsonString);
     }
 
-    public String toJson(final Object type) throws JsonProcessingException {
-        return mapper.writeValueAsString(type);
+    public String toJson(final Object type) {
+
+        try {
+            return mapper.writeValueAsString(type);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Failed to Serialize Object to Json.", e);
+        }
+        return "";
     }
 }

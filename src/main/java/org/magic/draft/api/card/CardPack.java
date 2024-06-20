@@ -13,24 +13,36 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "packNumber", "cardsInPack" })
+@JsonPropertyOrder({ "packNumber", "cardsInPack", "originalCardsInPack" })
 public class CardPack {
     private int packNumber;
     private Map<String, Card> cardsInPack;
-    private final int originalCardsInPackNumber;
+    private final int originalCardsInPack;
+    private boolean doubleDraftedFlag;
 
     @JsonCreator
     @BsonCreator
     public CardPack(@JsonProperty("packNumber") @BsonProperty("packNumber") final int packNumber,
-                    @JsonProperty("cardsInPack") @BsonProperty("cardsInPack")final Collection<Card> cardsInPack) {
+                    @JsonProperty("cardsInPack") @BsonProperty("cardsInPack") final Collection<Card> cardsInPack,
+                    @JsonProperty("originalCardsInPack") @BsonProperty("originalCardsInPack") final int originalCardsInPack,
+                    @JsonProperty("doubleDraftedFlag") @BsonProperty("doubleDraftedFlag") final boolean doubleDraftedFlag) {
         this.packNumber = Objects.requireNonNull(packNumber, "pack number Required for card Pack");
         this.cardsInPack = cardsInPack.stream()
                                       .collect(Collectors.toMap(Card::getCardID, item -> item));
-        this.originalCardsInPackNumber = cardsInPack.size();
+        this.originalCardsInPack = originalCardsInPack;
+        this.doubleDraftedFlag = doubleDraftedFlag;
     }
 
     public int getPackNumber() {
         return packNumber;
+    }
+
+    public boolean getDoubleDraftedFlag() {
+        return this.doubleDraftedFlag;
+    }
+
+    public void setDoubleDraftedFlag(final boolean doubleDraftedFlag) {
+        this.doubleDraftedFlag = doubleDraftedFlag;
     }
 
     public List<Card> getCardsInPack() {
@@ -46,7 +58,7 @@ public class CardPack {
         }
     }
 
-    public int getOriginalCardsInPackNumber() {
-        return originalCardsInPackNumber;
+    public int getOriginalCardsInPack() {
+        return originalCardsInPack;
     }
 }
