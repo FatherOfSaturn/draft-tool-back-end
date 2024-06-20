@@ -23,6 +23,7 @@ public class CubeDownloader {
 
     public Uni<Cube> getCubeForCubeID(final String cubeID) {
         return cubeCobraService.getCubeDataAsJson(cubeID)
-                               .onFailure().invoke(e -> LOGGER.error("Got error trying to download Cube Json. {}", e));
+                               .onFailure().invoke(e -> LOGGER.error("Got error trying to download Cube Json. {}", e))
+                               .onFailure().retry().atMost(3);
     }
 }
