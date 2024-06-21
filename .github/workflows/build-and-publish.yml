@@ -19,7 +19,7 @@ jobs:
           java-version: '17'  # Adjust Java version as needed
           distribution: 'temurin'
 
-      - name: Build with Maven
+      - name: Build with Gradle
         run: ./gradlew build
 
     #   - name: Docker Build and Publish to GHCR
