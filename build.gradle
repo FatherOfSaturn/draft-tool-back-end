@@ -12,6 +12,8 @@ dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-mutiny'
     implementation 'io.quarkus:quarkus-resteasy-client-mutiny'
+    implementation 'io.quarkus:quarkus-smallrye-health'
+
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.1' // Jackson core functionality
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1' // Optional: Java 8 date/time support
     implementation 'io.quarkus:quarkus-resteasy-jackson' // For Jackson support
