@@ -1,0 +1,50 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+    gap: 10px; /* Spacing between grid items */
+  }
+  
+  .grid-item img {
+    max-width: 100%; /* Ensure images don't exceed container width */
+    height: auto; /* Maintain aspect ratio */
+  }
+
+  .grid-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
+
+  .progress-bar {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .image-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .mat-grid-tile-content {
+    align-items: flex-start;
+  }
+  
+  .progress-bar[_ngcontent-ng-c2405264231] {
+    --mdc-linear-progress-active-indicator-height: 20px;
+    --mdc-linear-progress-track-height: 20px;
+    --mdc-linear-progress-active-indicator-color: lawngreen;
+    --mdc-linear-progress-track-color: white;
+  }
+
+  .mat-mdc-tab-group { 
+    background-color: wheat;
+  }
+
+
+/*
+
+No idea why i cant style just the header
+  .mat-mdc-tab-group.mat-mdc-tab-header { 
+    background-color: red;
+  } */

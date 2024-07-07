@@ -37,3 +37,8 @@ nb-configuration.xml
 
 # Plugin directory
 /.quarkus/cli/plugins/
+
+# Front end artifacts
+src/main/webui/dist
+src/main/webui/node_modules
+src/main/webui/.angular
