@@ -30,4 +30,10 @@ jobs:
           docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/fatherofsaturn/back-end:${{ github.sha }} .
           docker push ghcr.io/fatherofsaturn/back-end:${{ github.sha }}
 
-           
+      # - name: Quinoa Docker Build and Publish to GHCR
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+      #     docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/fatherofsaturn/back-end:${{ github.sha }} .
+      #     docker push ghcr.io/fatherofsaturn/back-end:${{ github.sha }}
