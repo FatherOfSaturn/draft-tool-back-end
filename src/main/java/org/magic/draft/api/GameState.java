@@ -1,9 +1,9 @@
 package org.magic.draft.api;
 
 public enum GameState {
-    GAME_STARTED("Game has started"),
-    GAME_MERGED("Game has merged"),
-    GAME_COMPLETE("Game is complete");
+    GAME_STARTED("game_started"),
+    GAME_MERGED("game_merged"),
+    GAME_COMPLETE("game_complete");
 
     private final String description;
 

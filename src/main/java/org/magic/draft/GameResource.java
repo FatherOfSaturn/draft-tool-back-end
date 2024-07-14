@@ -4,15 +4,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
+import org.magic.draft.api.GameState;
 import org.magic.draft.api.GameStatusMessage;
 import org.magic.draft.api.card.Card;
 import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 import org.magic.draft.util.JsonUtility;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -20,6 +20,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @Path("/game")
 public class GameResource {
@@ -79,5 +80,14 @@ public class GameResource {
         LOGGER.info("Call to End Game: {}", gameID);
         return gameWorker.endGame(gameID)
                          .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
+    }
+
+    @DELETE
+    @Path("/end/admin/delete/random/{gameState}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<Response> deleteGamesWithStatus(@PathParam("gameState") final String gameState) {
+        LOGGER.info("Call to delete Games with state of {}", gameState);
+        
+        return gameWorker.deleteGamesWithStatus(GameState.fromString(gameState));
     }
 }

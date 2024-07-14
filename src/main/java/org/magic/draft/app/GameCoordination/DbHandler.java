@@ -12,6 +12,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,10 +21,6 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class DbHandler {
     private static final Logger LOGGER = LogManager.getLogger(DbHandler.class);
-
-    // // u: hitma1221
-    // // p: uoGrw4Iw8aOG7blz
-    // // mongodb+srv://hitma1221:uoGrw4Iw8aOG7blz@jholdencluster.b7umtui.mongodb.net/
 
     @Inject
     MongoService mongoService;
@@ -116,5 +113,13 @@ public class DbHandler {
             LOGGER.error("Unable to update Game {}, with Game State {}.", gameID, gameState);
             throw new Error("Unable to Update Game with new info.");
         }
+    }
+
+    public int clearGamesWithStatus(final GameState gameState) {
+        Bson filter = Filters.eq("gameState", gameState);
+
+        DeleteResult result = this.getCollection().deleteMany(filter);
+        
+        return (int) result.getDeletedCount();
     }
 }

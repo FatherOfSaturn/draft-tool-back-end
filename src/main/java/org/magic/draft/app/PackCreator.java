@@ -37,21 +37,21 @@ public class PackCreator {
         // [b] 4 packs of 7 cards
         // [c] 4 packs of 9 cards
         // [d] 8 packs of 11 cards
-        List<CardPack> player1PacksOf11 = createPacks(List.of(0,1, 2, 3, 4, 5, 6, 7), 11);
+        List<CardPack> player1PacksOf3 = createPacks(List.of(0, 1, 2, 3), 3);
+        List<CardPack> player1PacksOf7 = createPacks(List.of(4, 5, 6, 7), 7);
         List<CardPack> player1PacksOf9 = createPacks(List.of(8, 9, 10, 11), 9);
-        List<CardPack> player1PacksOf7 = createPacks(List.of(12, 13, 14, 15), 7);
-        List<CardPack> player1PacksOf3 = createPacks(List.of(16, 17, 18, 19), 3);
+        List<CardPack> player1PacksOf11 = createPacks(List.of(12,13, 14, 15, 16, 17, 18, 19), 11);
 
         List<CardPack> player1Packs = Stream.of(player1PacksOf11, player1PacksOf9, player1PacksOf7, player1PacksOf3)
                                           .flatMap(List::stream)
                                           .collect(Collectors.toList());
 
         LOGGER.info("Player {} Packs created. {} Packs", player1.getPlayerName(), player1Packs.size());
-        
-        List<CardPack> player2PacksOf11 = createPacks(List.of(0,1, 2, 3, 4, 5, 6, 7), 11);
+
+        List<CardPack> player2PacksOf3 = createPacks(List.of(0, 1, 2, 3), 3);
+        List<CardPack> player2PacksOf7 = createPacks(List.of(4, 5, 6, 7), 7);
         List<CardPack> player2PacksOf9 = createPacks(List.of(8, 9, 10, 11), 9);
-        List<CardPack> player2PacksOf7 = createPacks(List.of(12, 13, 14, 15), 7);
-        List<CardPack> player2PacksOf3 = createPacks(List.of(16, 17, 18, 19), 3);
+        List<CardPack> player2PacksOf11 = createPacks(List.of(12,13, 14, 15, 16, 17, 18, 19), 11);
         
         List<CardPack> player2Packs = Stream.of(player2PacksOf11, player2PacksOf9, player2PacksOf7, player2PacksOf3)
                                           .flatMap(List::stream)

@@ -19,6 +19,7 @@ import org.magic.draft.app.PackMerger;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class GameCoordinationWorker {
@@ -138,5 +139,13 @@ public class GameCoordinationWorker {
         }
 
         return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_COMPLETE));
+    }
+
+    public Uni<Response> deleteGamesWithStatus(final GameState gameState) {
+        final int recordsDeleted = dbHandler.clearGamesWithStatus(gameState);
+
+        final String message = String.format("Deleted %d records with game state of %s.", recordsDeleted, gameState);
+
+        return Uni.createFrom().item(Response.ok(message).build());
     }
 }
