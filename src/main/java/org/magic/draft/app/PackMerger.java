@@ -1,7 +1,10 @@
 package org.magic.draft.app;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -51,8 +54,19 @@ public class PackMerger {
         this.validatePackCounts(4, sevenCountPacks.size());
         this.validatePackCounts(4, threeCountPacks.size());
 
-        List<CardPack> newPacks = elevenCountPacks.stream().peek(pack -> pack.setDoubleDraftedFlag(false)).collect(Collectors.toList());
-        newPacks.add(this.mergePacks(8, threeCountPacks));
+
+        List<CardPack> newPacks = new ArrayList<>();
+        newPacks.add(this.mergePacks(0, threeCountPacks));
+
+        AtomicInteger count = new AtomicInteger(0);
+        List<Integer> newPackNumbers = List.of(1, 2, 3, 4, 5, 6, 7, 8);
+
+        newPacks.addAll(elevenCountPacks.stream().peek(pack -> {
+                LOGGER.info(count.get());
+                pack.setPackNumber(newPackNumbers.get(count.getAndIncrement()));
+                pack.setDoubleDraftedFlag(false);
+            }).collect(Collectors.toList()));
+
         newPacks.add(this.mergePacks(9, List.of(sevenCountPacks.get(0), sevenCountPacks.get(1))));
         newPacks.add(this.mergePacks(10, List.of(sevenCountPacks.get(2), sevenCountPacks.get(3))));
         newPacks.add(this.mergePacks(11, List.of(nineCountPacks.get(0), nineCountPacks.get(1))));

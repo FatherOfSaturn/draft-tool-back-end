@@ -37,6 +37,10 @@ public class CardPack {
         return packNumber;
     }
 
+    public void setPackNumber(final int packNumber) {
+        this.packNumber = packNumber;
+    }
+
     public boolean getDoubleDraftedFlag() {
         return this.doubleDraftedFlag;
     }

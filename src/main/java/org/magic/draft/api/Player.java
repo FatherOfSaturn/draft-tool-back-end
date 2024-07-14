@@ -64,7 +64,8 @@ public class Player {
             this.cardPacks.get(packNumber).setDoubleDraftedFlag(true);
         }
 
-        Card draftedCard = cardPacks.get(packNumber).removeCardFromPack(cardID);
+        CardPack currentDraftPack = cardPacks.stream().filter(pack -> pack.getPackNumber() == packNumber).findFirst().get();
+        Card draftedCard = currentDraftPack.removeCardFromPack(cardID);
         this.cardsDrafted.add(draftedCard);
         this.currentDraftPack++;
 
