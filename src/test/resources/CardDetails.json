@@ -1,8 +1,53 @@
 {
+  "elo": 1241.19999999973,
+  "popularity": 9.59539099870504,
+  "cubeCount": 18154,
+  "pickCount": 17462,
+  "isExtra": false,
+  "color_identity": [
+    "U"
+  ],
   "set": "isd",
   "set_name": "Innistrad",
-  "scryfall_id": "someID",
-  "image_small": "some Url",
-  "image_normal": "some URL",
-  "name": "Elish Norn"
+  "name": "Delver of Secrets",
+  "name_lower": "delver of secrets",   
+  "full_name": "Delver of Secrets [isd-51]",
+  "artist": "Nils Hamm",
+  "scryfall_uri": "https://scryfall.com/card/isd/51/delver-of-secrets-insectile-aberration?utm_source=api",
+  "rarity": "common",
+  "oracle_text": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform Delver of Secrets.\nFlying",
+  "scryfall_id": "11bf83bb-c95b-4b4f-9a56-ce7a1816307a",
+  "oracle_id": "edd531b9-f615-4399-8c8c-1c5e18c4acbf",
+  "cmc": 1,
+  "legalities": {
+    "Legacy": "legal",
+    "Modern": "legal",
+    "Standard": "legal",
+    "Pioneer": "legal",
+    "Pauper": "legal",
+    "Brawl": "legal",
+    "Historic": "legal",
+    "Commander": "legal",
+    "Penny": "not_legal",
+    "Vintage": "legal"
+  },
+  "parsed_cost": [
+    "u"
+  ],
+  "colors": [
+    "U"
+  ],
+  "type": "Creature — Human Wizard",
+  "full_art": false,
+  "language": "en",
+  "mtgo_id": 42436,
+  "layout": "transform",
+  "tcgplayer_id": 56246,
+  "power": "1",
+  "toughness": "1",
+  "image_small": "https://cards.scryfall.io/small/front/1/1/11bf83bb-c95b-4b4f-9a56-ce7a1816307a.jpg?1562826346",
+  "image_normal": "https://cards.scryfall.io/normal/front/1/1/11bf83bb-c95b-4b4f-9a56-ce7a1816307a.jpg?1562826346",
+  "art_crop": "https://cards.scryfall.io/art_crop/front/1/1/11bf83bb-c95b-4b4f-9a56-ce7a1816307a.jpg?1562826346",
+  "image_flip": "https://cards.scryfall.io/normal/back/1/1/11bf83bb-c95b-4b4f-9a56-ce7a1816307a.jpg?1562826346",
+  "colorcategory": "u"
 }

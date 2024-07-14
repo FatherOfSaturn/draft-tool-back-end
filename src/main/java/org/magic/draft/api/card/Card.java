@@ -17,13 +17,15 @@ public class Card {
 
     private String name;
     private final String cardID;
+    private final int cmc;
     private CardDetails cardDetails;
 
     @JsonCreator
     @BsonCreator
-    public Card(@JsonProperty("name") @BsonProperty("name") final String name,
+    public Card(@JsonProperty("name")    @BsonProperty("name")    final String name,
                 @JsonProperty("details") @BsonProperty("details") final CardDetails cardDetails,
-                @JsonProperty("cardID") @BsonProperty("cardID") final String cardID) {
+                @JsonProperty("cardID")  @BsonProperty("cardID")  final String cardID,
+                @JsonProperty("cmc")     @BsonProperty("cmc")     final int cmc) {
         if (name == null) {
             LOGGER.warn("Card with ID of {} does not have a name on the Card SuperType", cardID);
             this.name = cardDetails.getName();
@@ -33,14 +35,19 @@ public class Card {
         }
         this.cardDetails = Objects.requireNonNull(cardDetails, "cardDetails Required for card");
         this.cardID = Objects.requireNonNull(cardID, "cardID required for card");
+        this.cmc = Objects.requireNonNull(cmc, "Converted Mana Cost Required for a Card.");
     }
 
     public String getCardID() {
-        return cardID;
+        return this.cardID;
+    }
+
+    public int getCmc() {
+        return this.cmc;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -48,7 +55,7 @@ public class Card {
     }
 
     public CardDetails getDetails() {
-        return cardDetails;
+        return this.cardDetails;
     }
 
     public void setDetails(CardDetails cardDetails) {
