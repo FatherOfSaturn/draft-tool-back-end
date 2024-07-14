@@ -1,0 +1,21 @@
+version: '3'
+services:
+  back:
+    image: 7e3c8590e63b:latest
+    container_name: backend
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_CONNECTION=$MONGO_CONNECTION
+#   front:
+#     image: 383b1e819e29:latest
+#     container_name: frontend
+#     ports:
+#       - "80:80"
+#     environment:
+#       - NG_CLI_ANALYTICS=false
+
+# networks:
+#   default:
+#     driver: bridge
+# # docker run -e MONGO_CONNECTION=$MONGO_CONNECTION -d -p 8080:8080 ef25

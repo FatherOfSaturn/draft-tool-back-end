@@ -1,0 +1,39 @@
+name: Build and Publish Docker Image to GHCR
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on pushes to the main branch
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'  # Adjust Java version as needed
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Docker Build and Publish to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+          docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/fatherofsaturn/back-end:${{ github.sha }} .
+          docker push ghcr.io/fatherofsaturn/back-end:${{ github.sha }}
+
+      # - name: Quinoa Docker Build and Publish to GHCR
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+      #     docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/fatherofsaturn/back-end:${{ github.sha }} .
+      #     docker push ghcr.io/fatherofsaturn/back-end:${{ github.sha }}

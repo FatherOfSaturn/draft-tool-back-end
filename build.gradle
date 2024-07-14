@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-mutiny'
+    implementation 'io.quarkus:quarkus-resteasy-client-mutiny'
+    implementation 'io.quarkus:quarkus-smallrye-health'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.1' // Jackson core functionality
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1' // Optional: Java 8 date/time support
+    implementation 'io.quarkus:quarkus-resteasy-jackson' // For Jackson support
+    implementation 'io.quarkus:quarkus-arc'
+
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+    implementation 'io.quarkus:quarkus-mongodb-client'
+    implementation 'org.mongodb:mongodb-driver-sync:4.8.0'
+    implementation 'org.mongodb:mongodb-driver-core:4.8.0'
+    implementation 'org.mongodb:bson:4.8.0'
+
+    testImplementation 'org.mockito:mockito-core:3.12.4'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+group 'org.magic.draft'
+version '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
