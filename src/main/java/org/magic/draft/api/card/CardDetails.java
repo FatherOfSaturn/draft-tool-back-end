@@ -19,6 +19,7 @@ public class CardDetails {
     private String image_normal;
     private String imageFlip;
     private String name;
+    private Integer cmc;
 
     @JsonCreator
     @BsonCreator
@@ -28,7 +29,8 @@ public class CardDetails {
                        @JsonProperty("image_small")  @BsonProperty("image_small")  final String imageSmall,
                        @JsonProperty("image_normal") @BsonProperty("image_normal") final String imageNormal,
                        @JsonProperty("image_flip")   @BsonProperty("image_flip")   final String imageFlip,
-                       @JsonProperty("name")         @BsonProperty("name")         final String name) {
+                       @JsonProperty("name")         @BsonProperty("name")         final String name,
+                       @JsonProperty("cmc")          @BsonProperty("cmc")          final Integer cmc) {
         this.set = Objects.requireNonNull(set, "set Required for card details");
         this.set_name = Objects.requireNonNull(setName, "set_name Required for card details");
         this.scryfall_id = Objects.requireNonNull(scryfallId, "scryfallId Required for card details");
@@ -40,6 +42,10 @@ public class CardDetails {
             System.out.println("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD NAME IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11");
         }
         this.name = Objects.requireNonNull(name, "name Required for card details");
+        if (cmc == null) {
+            System.out.println("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD CMC IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11");
+        }
+        this.cmc = Objects.requireNonNull(cmc, "cmc Required for card details");
     }
 
     public String getSet() {
@@ -48,6 +54,10 @@ public class CardDetails {
 
     public void setSet(String set) {
         this.set = set;
+    }
+
+    public Integer getCmc() {
+        return this.cmc;
     }
 
     public String getImage_flip() {

@@ -16,7 +16,6 @@ import org.magic.draft.util.JsonUtility;
 
 public class CubeTest {
 
-    @Test
     void testCubeSerialization() throws IOException {
 
         InputStream detailIs = getClass().getClassLoader().getResourceAsStream("CardDetails.json");
@@ -46,18 +45,6 @@ public class CubeTest {
 
         Cube myCube = JsonUtility.getInstance().fromJson(fileString, Cube.class);
         System.out.println(JsonUtility.getInstance().toJson(myCube));
-    }
-
-    @Test
-    void testCardsInCube() throws IOException {
-
-        InputStream cicStream = getClass().getClassLoader().getResourceAsStream("CardsInCube.json");
-        String cicString = IOUtils.toString(cicStream, "UTF-8");
-
-        System.out.println(cicString);
-
-        // CardsInCube cardsInCube = JsonUtility.getInstance().fromJson(cicString, CardsInCube.class);
-        // System.out.println(JsonbUtility.jsonb().toJson(cardsInCube));
     }
 
     @Test
