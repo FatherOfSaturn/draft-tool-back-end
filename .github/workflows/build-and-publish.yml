@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # Trigger workflow on pushes to the main branch
+      - corsFixs
 
 jobs:
   build-and-publish:
