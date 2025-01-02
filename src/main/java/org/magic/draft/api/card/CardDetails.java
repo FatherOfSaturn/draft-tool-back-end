@@ -20,6 +20,7 @@ public class CardDetails {
     private String imageFlip;
     private String name;
     private Integer cmc;
+    private List<String> parsed_cost;
 
     @JsonCreator
     @BsonCreator
@@ -30,7 +31,8 @@ public class CardDetails {
                        @JsonProperty("image_normal") @BsonProperty("image_normal") final String imageNormal,
                        @JsonProperty("image_flip")   @BsonProperty("image_flip")   final String imageFlip,
                        @JsonProperty("name")         @BsonProperty("name")         final String name,
-                       @JsonProperty("cmc")          @BsonProperty("cmc")          final Integer cmc) {
+                       @JsonProperty("cmc")          @BsonProperty("cmc")          final Integer cmc,
+                       @JsonProperty("parsed_cost")  @BsonProperty("parsed_cost")  final List<String> parsed_cost) {
         this.set = Objects.requireNonNull(set, "set Required for card details");
         this.set_name = Objects.requireNonNull(setName, "set_name Required for card details");
         this.scryfall_id = Objects.requireNonNull(scryfallId, "scryfallId Required for card details");
@@ -46,6 +48,7 @@ public class CardDetails {
             System.out.println("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD CMC IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11");
         }
         this.cmc = Objects.requireNonNull(cmc, "cmc Required for card details");
+        this.parsed_cost = Objects.requireNonNullElse(parsed_cost, List.of());
     }
 
     public String getSet() {
@@ -98,5 +101,13 @@ public class CardDetails {
 
     public String getName() {
         return name;
+    }
+
+    public void setParsed_cost(List<String> parsed_cost) {
+        this.parsed_cost = parsed_cost;
+    }
+
+    public List<String> getParsed_cost() {
+        return this.parsed_cost;
     }
 }

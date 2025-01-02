@@ -19,13 +19,15 @@ public class Card {
     private final String cardID;
     private final int cmc;
     private CardDetails cardDetails;
+    private final String type_line;
 
     @JsonCreator
     @BsonCreator
-    public Card(@JsonProperty("name")    @BsonProperty("name")    final String name,
-                @JsonProperty("details") @BsonProperty("details") final CardDetails cardDetails,
-                @JsonProperty("cardID")  @BsonProperty("cardID")  final String cardID,
-                @JsonProperty("cmc")     @BsonProperty("cmc")     final Integer cmc) {
+    public Card(@JsonProperty("name")     @BsonProperty("name")    final String name,
+                @JsonProperty("details")  @BsonProperty("details") final CardDetails cardDetails,
+                @JsonProperty("cardID")   @BsonProperty("cardID")  final String cardID,
+                @JsonProperty("cmc")      @BsonProperty("cmc")     final Integer cmc,
+                @JsonProperty("type_line")@BsonProperty("type_line")     final String type_line) {
         if (name == null) {
             LOGGER.warn("Card with ID of {} does not have a name on the Card SuperType", cardID);
             this.name = cardDetails.getName();
@@ -42,6 +44,7 @@ public class Card {
         else {
             this.cmc = cmc;
         }
+        this.type_line = type_line;
     }
 
     public String getCardID() {
@@ -66,5 +69,9 @@ public class Card {
 
     public void setDetails(CardDetails cardDetails) {
         this.cardDetails = cardDetails;
+    }
+
+    public String getType_line() {
+        return this.type_line;
     }
 }
