@@ -109,4 +109,12 @@ public class TestResource {
 
         return "Hello from Quarkus REST";
     }
+
+    @POST
+    @Path("/game")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void createTestGame() {
+
+    }
 }

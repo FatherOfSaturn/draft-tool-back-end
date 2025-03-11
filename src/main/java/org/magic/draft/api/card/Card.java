@@ -74,4 +74,40 @@ public class Card {
     public String getType_line() {
         return this.type_line;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Card other = (Card) obj;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        if (cardID == null) {
+            if (other.cardID != null)
+                return false;
+        } else if (!cardID.equals(other.cardID))
+            return false;
+        if (cmc != other.cmc)
+            return false;
+        if (cardDetails == null) {
+            if (other.cardDetails != null)
+                return false;
+        } else if (!cardDetails.equals(other.cardDetails))
+            return false;
+        if (type_line == null) {
+            if (other.type_line != null)
+                return false;
+        } else if (!type_line.equals(other.type_line))
+            return false;
+        return true;
+    }
+
+    
 }

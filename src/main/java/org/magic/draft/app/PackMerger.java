@@ -1,10 +1,8 @@
 package org.magic.draft.app;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,23 +27,17 @@ public class PackMerger {
         List<CardPack> threeCountPacks = new ArrayList<>();
         
         player.getCardPacks().stream().forEach(pack -> {
-            if (pack.getOriginalCardsInPack() == 11) {
-                elevenCountPacks.add(pack);
-            }
-            else if (pack.getOriginalCardsInPack() == 9) {
-                nineCountPacks.add(pack);
-            }
-            else if (pack.getOriginalCardsInPack() == 7) {
-                sevenCountPacks.add(pack);
-            }
-            else if (pack.getOriginalCardsInPack() == 3) {
-                threeCountPacks.add(pack);
-            }
-            else {
-                LOGGER.error("Unable to merge Pack {} with {} count of original cards", 
-                             pack.getPackNumber(), 
-                             pack.getOriginalCardsInPack());
-                throw new Error("Unable to merge pack.");
+            switch (pack.getOriginalCardsInPack()) {
+                case 11 -> elevenCountPacks.add(pack);
+                case 9 -> nineCountPacks.add(pack);
+                case 7 -> sevenCountPacks.add(pack);
+                case 3 -> threeCountPacks.add(pack);
+                default -> {
+                    LOGGER.error("Unable to merge Pack {} with {} count of original cards",
+                            pack.getPackNumber(),
+                            pack.getOriginalCardsInPack());
+                    throw new Error("Unable to merge pack.");
+                }
             }
         });
 

@@ -53,4 +53,8 @@ public class CardsInCube {
     public void setMainboard(List<Card> mainboard) {
         this.mainboard = mainboard;
     }
+
+    public void resetIteratorTEST_ONLY() {
+        cardIterator = mainboard.iterator();
+    }
 }

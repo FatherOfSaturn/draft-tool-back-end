@@ -56,6 +56,7 @@ public class GameCoordinationWorker {
                              .map(players -> new GameInfo(gameCreationInfo.getGameID(), players, GameState.GAME_STARTED))
                              .invoke(gameInfo -> dbHandler.addGame(gameInfo));
     }
+
     public Card draftCard(final String playerID, 
                           final int packNumber, 
                           final String cardID, 

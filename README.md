@@ -9,6 +9,10 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 You can run your application in dev mode that enables live coding using:
 ```shell script
 ./gradlew quarkusDev
+
+Running local json server with this
+docker run -d --name json-server -p 3000:80 -v $(pwd)/db.json:/data/db.json clue/json-server
+
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.

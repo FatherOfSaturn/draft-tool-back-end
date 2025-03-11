@@ -65,4 +65,29 @@ public class CardPack {
     public int getOriginalCardsInPack() {
         return originalCardsInPack;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CardPack other = (CardPack) obj;
+        if (packNumber != other.packNumber)
+            return false;
+        if (cardsInPack == null) {
+            if (other.cardsInPack != null)
+                return false;
+        } else if (!cardsInPack.equals(other.cardsInPack))
+            return false;
+        if (originalCardsInPack != other.originalCardsInPack)
+            return false;
+        if (doubleDraftedFlag != other.doubleDraftedFlag)
+            return false;
+        return true;
+    }
+
+    
 }

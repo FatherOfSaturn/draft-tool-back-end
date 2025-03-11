@@ -1,9 +1,8 @@
 package org.magic.draft.app.GameCoordination;
 
+import org.bson.codecs.configuration.CodecProvider;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -26,6 +25,10 @@ public class MongoService {
     @ConfigProperty(name = "quarkus.mongodb.connection-string")
     String connectionString;
 
+    @Inject
+    @ConfigProperty(name = "quarkus.mongodb.database")
+    String databaseName;
+
     @PostConstruct
     void init() {
         System.out.println("Using MongoDB connection string: " + connectionString);
@@ -34,6 +37,6 @@ public class MongoService {
     public MongoDatabase getDatabase() {
         CodecProvider pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
         CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
-        return mongoClient.getDatabase("MTGames").withCodecRegistry(pojoCodecRegistry);
+        return mongoClient.getDatabase(databaseName).withCodecRegistry(pojoCodecRegistry);
     }
 }
