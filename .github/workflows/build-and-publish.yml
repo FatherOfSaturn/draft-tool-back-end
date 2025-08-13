@@ -5,6 +5,7 @@ on:
     branches:
       - main  # Trigger workflow on pushes to the main branch
       - corsFix
+      - cubeSizeUpdates
 
 jobs:
   build-and-publish:
