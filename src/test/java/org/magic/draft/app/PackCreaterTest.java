@@ -2,10 +2,13 @@ package org.magic.draft.app;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.magic.draft.api.GameCreationInfo;
+import org.magic.draft.api.Player;
 import org.magic.draft.api.card.Cube;
 import org.magic.draft.util.JsonUtility;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,26 +21,31 @@ public class PackCreaterTest {
     @Test
     void packMergeTest() throws IOException {
 
-        // Cube cube = this.createCubeFromJson("FullCube.json");
-        // cube.getCards().shuffleMainboard();
+        Cube cube = this.createCubeFromJson("JoshCube.json");
+        cube.getCards().shuffleMainboard();
 
-        // InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
-        // String gameString = IOUtils.toString(gameIS, "UTF-8");
+        InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
+        String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        // GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
 
-        // packCreator = new PackCreator(cube);
+        packCreator = new PackCreator(cube);
 
-        // List<Player> control = packCreator.OLD_createPyramidPacks(info.getPlayerInfo().get(0), info.getPlayerInfo().get(1), 3);
+        List<Player> update = packCreator.createPyramidPacks(info.getPlayerInfo().get(0), info.getPlayerInfo().get(1), 3);
+    }
 
-        // cube.getCards().resetIteratorTEST_ONLY();
+    public List<Player> createPlayers() throws IOException {
 
-        // List<Player> update = packCreator.createPlayerBoardsNEW(info.getPlayerInfo().get(0), info.getPlayerInfo().get(1), 3);
+        Cube cube = this.createCubeFromJson("JoshCube.json");
 
-        // assertEquals(control.get(0).getCardPacks().size(), update.get(0).getCardPacks().size());
-        // assertEquals(control.get(1).getCardPacks().size(), update.get(1).getCardPacks().size());
+        InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
+        String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        // assertEquals(control.get(0).getCardPacks(), update.get(0).getCardPacks());
+        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+
+        packCreator = new PackCreator(cube);
+
+        return packCreator.createPyramidPacks(info.getPlayerInfo().get(0), info.getPlayerInfo().get(1), 3);
     }
 
     public Cube createCubeFromJson(final String fileName) throws IOException {

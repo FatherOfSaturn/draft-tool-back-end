@@ -7,12 +7,15 @@ import java.net.URL;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.card.Cube;
 import org.magic.draft.app.GameCoordination.DbHandler;
+import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 import org.magic.draft.app.GameCoordination.MongoService;
 import org.magic.draft.util.JsonUtility;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -32,6 +35,9 @@ public class TestResource {
 
     @Inject
     MongoService mongoService;
+
+    @Inject
+    GameCoordinationWorker gameCoordinationWorker;
 
     @POST
     @Path("/db")
@@ -114,7 +120,8 @@ public class TestResource {
     @Path("/game")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public void createTestGame() {
+    public Uni<GameInfo> createTestGame(final GameCreationInfo creationInfo) {
 
+        return gameCoordinationWorker.startGame(creationInfo);
     }
 }

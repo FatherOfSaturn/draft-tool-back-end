@@ -28,23 +28,27 @@ public class Card {
                 @JsonProperty("cardID")   @BsonProperty("cardID")  final String cardID,
                 @JsonProperty("cmc")      @BsonProperty("cmc")     final Integer cmc,
                 @JsonProperty("type_line")@BsonProperty("type_line")     final String type_line) {
-        if (name == null) {
-            LOGGER.warn("Card with ID of {} does not have a name on the Card SuperType", cardID);
-            this.name = cardDetails.getName();
-        }
-        else {
-            this.name = name;
-        }
         this.cardDetails = Objects.requireNonNull(cardDetails, "cardDetails Required for card");
         this.cardID = Objects.requireNonNull(cardID, "cardID required for card");
-        if (cmc == null) {
-            LOGGER.warn("Card with ID of {} does not have a CMC on Card Supertype.", cardID);
-            this.cmc = cardDetails.getCmc();
+
+        if (name == null) {
+            LOGGER.debug("Card with ID of {} does not have a name on the Card SuperType", cardID);
+            this.name = cardDetails.getName();
+        } else {
+            this.name = name;
         }
-        else {
+        if (cmc == null) {
+            LOGGER.debug("Card with ID of {} does not have a CMC on Card Supertype.", cardID);
+            this.cmc = cardDetails.getCmc();
+        } else {
             this.cmc = cmc;
         }
-        this.type_line = type_line;
+        if (type_line == null) {
+            LOGGER.debug("Card with ID of {} does not have a type on Card Supertype.", cardID);
+            this.type_line = cardDetails.getType();
+        } else {
+            this.type_line = type_line;
+        }
     }
 
     public String getCardID() {

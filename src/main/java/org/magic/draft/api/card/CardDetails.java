@@ -3,15 +3,20 @@ package org.magic.draft.api.card;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 
-@JsonPropertyOrder({ "name", "set", "set_name", "scryfall_id", "image_small", "image_normal", "image_flip" })
+@JsonPropertyOrder({ "name", "set", "set_name", "cmc", "type", "scryfall_id", "image_small", "image_normal", "image_flip" })
 public class CardDetails {
+    private static final Logger LOGGER = LogManager.getLogger(CardDetails.class);
+
     private String set;
     private String set_name;
     private String scryfall_id;
@@ -19,6 +24,7 @@ public class CardDetails {
     private String image_normal;
     private String imageFlip;
     private String name;
+    private String type;
     private Integer cmc;
     private List<String> parsed_cost;
 
@@ -31,6 +37,7 @@ public class CardDetails {
                        @JsonProperty("image_normal") @BsonProperty("image_normal") final String imageNormal,
                        @JsonProperty("image_flip")   @BsonProperty("image_flip")   final String imageFlip,
                        @JsonProperty("name")         @BsonProperty("name")         final String name,
+                       @JsonProperty("type")         @BsonProperty("type")         final String type,
                        @JsonProperty("cmc")          @BsonProperty("cmc")          final Integer cmc,
                        @JsonProperty("parsed_cost")  @BsonProperty("parsed_cost")  final List<String> parsed_cost) {
         this.set = Objects.requireNonNull(set, "set Required for card details");
@@ -38,17 +45,20 @@ public class CardDetails {
         this.scryfall_id = Objects.requireNonNull(scryfallId, "scryfallId Required for card details");
         this.image_small = Objects.requireNonNull(imageSmall, "imageSmall Required for card details");
         this.image_normal = Objects.requireNonNull(imageNormal, "imageNormal Required for card details");
+        this.name = Objects.requireNonNull(name, "name Required for card details");
+        this.parsed_cost = Objects.requireNonNullElse(parsed_cost, List.of());
         // Only required for Flip Cards
         this.imageFlip = imageFlip;
-        if (name == null) {
-            System.out.println("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD NAME IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11");
-        }
-        this.name = Objects.requireNonNull(name, "name Required for card details");
+
+        // These fields showed up weirdly on a few supertypes
         if (cmc == null) {
-            System.out.println("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD CMC IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11");
+            LOGGER.info("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD CMC FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+        if (type == null) {
+            LOGGER.info("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD TYPE IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         this.cmc = Objects.requireNonNull(cmc, "cmc Required for card details");
-        this.parsed_cost = Objects.requireNonNullElse(parsed_cost, List.of());
+        this.type = Objects.requireNonNull(name, "type Required for card details");
     }
 
     public String getSet() {
@@ -57,6 +67,14 @@ public class CardDetails {
 
     public void setSet(String set) {
         this.set = set;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Integer getCmc() {

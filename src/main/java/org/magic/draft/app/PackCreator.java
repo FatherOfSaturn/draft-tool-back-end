@@ -24,9 +24,9 @@ public class PackCreator {
         this.cube = Objects.requireNonNull(cube, "cube Required for Pack Creator");
     }
 
-        public List<Player> createPyramidPacks(final PlayerCreationInfo player1,
-                                               final PlayerCreationInfo player2,
-                                               final int numberOfDoubleDraftPicksPerPlayer) {
+    public List<Player> createPyramidPacks(final PlayerCreationInfo player1,
+                                            final PlayerCreationInfo player2,
+                                            final int numberOfDoubleDraftPicksPerPlayer) {
         int cubeSize = cube.getCards().getMainboard().size();
 
         int packsOf3;
@@ -35,6 +35,7 @@ public class PackCreator {
         int packsOf11;
 
         if (cubeSize <= 540 && cubeSize > 490) {
+            LOGGER.info("Large Cube size detected: {}", cube.getName());
             //large cube
             packsOf3 = 8;
             packsOf7 = 8;
@@ -42,6 +43,7 @@ public class PackCreator {
             packsOf11 = 8;
         }
         else if (cubeSize <= 490 && cubeSize > 410) {
+            LOGGER.info("Medium Cube size detected: {}", cube.getName());
             // medium
             packsOf3 = 6;
             packsOf7 = 4;
@@ -49,6 +51,7 @@ public class PackCreator {
             packsOf11 = 8;
         }
         else if (cubeSize <= 410 && cubeSize > 328) {
+            LOGGER.info("Small Cube size detected: {}", cube.getName());
             // small
             packsOf3 = 4;
             packsOf7 = 4;

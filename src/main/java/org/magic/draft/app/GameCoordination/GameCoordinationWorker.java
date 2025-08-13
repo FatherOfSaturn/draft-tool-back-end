@@ -37,7 +37,7 @@ public class GameCoordinationWorker {
         this.packMerger = packMerger;
         this.cubeDownloader = cubeDownloader;
     }
-    
+
     public Uni<GameInfo> startGame(final GameCreationInfo gameCreationInfo) {
 
         PlayerCreationInfo player1Creation = gameCreationInfo.getPlayerInfo().get(0);
@@ -46,8 +46,8 @@ public class GameCoordinationWorker {
         return cubeDownloader.getCubeForCubeID(gameCreationInfo.getCubeID())
                              .map(cube -> new PackCreator(cube))
                              .map(packCreator -> packCreator.createPyramidPacks(player1Creation, 
-                                                                                player2Creation, 
-                                                                                gameCreationInfo.getNumberOfDoubleDraftPicksPerPlayer()))
+                                                                                            player2Creation,
+                                                                                            gameCreationInfo.getNumberOfDoubleDraftPicksPerPlayer()))
                             //  .invoke(players -> {
                             //     LOGGER.info("Successfully generated Players and Packs. Caching Data.");
                             //     this.player1 = players.get(0);
@@ -126,8 +126,8 @@ public class GameCoordinationWorker {
             return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_MERGED));
         }
         LOGGER.info("\nGame {} is not ready for merge, or has already been merged.\nPlayer1: {}\nPlayer2: {}", gameID, 
-                                                                                                                       player1.isReadyForMerge(), 
-                                                                                                                       player2.isReadyForMerge());
+                                                                                                                        player1.isReadyForMerge(),
+                                                                                                                        player2.isReadyForMerge());
         return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_STARTED));
     }
 

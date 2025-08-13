@@ -43,7 +43,7 @@ public class CubeTest {
         System.out.println(JsonUtility.getInstance().toJson(cardsInCube));
 
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("TestCube.json");
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("JoshCube.json");
         String fileString = IOUtils.toString(inputStream, "UTF-8");
 
         Cube myCube = JsonUtility.getInstance().fromJson(fileString, Cube.class);
@@ -52,7 +52,7 @@ public class CubeTest {
 
     @Test
     void testRealCube() throws IOException {
-        InputStream cubeIS = getClass().getClassLoader().getResourceAsStream("FullCube.json");
+        InputStream cubeIS = getClass().getClassLoader().getResourceAsStream("JoshCube.json");
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
 
         Cube cube = JsonUtility.getInstance().fromJson(cubeString, Cube.class);
