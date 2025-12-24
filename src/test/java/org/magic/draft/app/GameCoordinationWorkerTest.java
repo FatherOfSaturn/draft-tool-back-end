@@ -1,15 +1,13 @@
 package org.magic.draft.app;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.List;
 
-import io.smallrye.mutiny.Uni;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,15 +15,10 @@ import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.Player;
 import org.magic.draft.api.card.Cube;
-import org.magic.draft.app.GameCoordination.DbHandler;
-import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 import org.magic.draft.util.JsonUtility;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 public class GameCoordinationWorkerTest extends TestUtils {

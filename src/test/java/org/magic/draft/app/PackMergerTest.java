@@ -9,7 +9,6 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.Player;
 import org.magic.draft.api.card.Card;

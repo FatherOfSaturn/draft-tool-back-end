@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import jakarta.inject.Singleton;
+import jakarta.json.JsonObject;
 
 @Singleton
 public final class JsonUtility {
@@ -70,6 +71,11 @@ public final class JsonUtility {
     public <T> T fromJson(final String jsonString, final Class<? extends T> clazz) throws IOException {
         return mapper.readerFor(clazz)
                      .readValue(jsonString);
+    }
+
+    public <T> T fromJson(final JsonObject jsonString, final Class<? extends T> clazz) throws IOException {
+        return mapper.readerFor(clazz)
+                     .readValue(jsonString.toString());
     }
 
     public String toJson(final Object type) {
