@@ -1,6 +1,12 @@
 package org.magic.draft.app;
 
-import io.smallrye.mutiny.Uni;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,16 +16,10 @@ import org.magic.draft.api.card.Cube;
 import org.magic.draft.app.GameCoordination.DbHandler;
 import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 import org.magic.draft.util.JsonUtility;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class TestUtils {

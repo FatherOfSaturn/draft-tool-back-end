@@ -1,5 +1,7 @@
 package org.magic.draft.external;
 
+import java.util.List;
+
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.magic.draft.api.card.Cube;
 
@@ -17,6 +19,7 @@ public interface CubeCobraService {
     public Uni<Cube> getCubeDataAsJson(@PathParam("cubeID") String cubeID);
 
     @GET
-    @Path("/cubes?devCubeOwner={owner}")
-    public Uni<Cube> getCubeDataAsJsonLOCAL(@QueryParam("owner") String cubeID);    
+    @Path("/cubes")
+    Uni<List<Cube>> getCubeDataAsJsonLOCAL(@QueryParam("devCubeOwner") String owner);
+
 }

@@ -1,0 +1,38 @@
+cubeCobraHostName/mp-rest/url: http://localhost:3000
+
+cubeOwner: adam
+devCubeOwner: adam
+
+// I am unable to get the Cors:true to be apart of the yaml config, 
+// as any cors: at the same level causes it to be overwritten
+// can try to step up quarkus version to 3.20.1 but caused some other issues with my build i dont have time for
+// can check the runtime config with this
+// http://localhost:8080/q/dev-ui/configuration-form-editor
+quarkus:
+  http:
+    access-log:
+      enabled: true
+
+    cors: true
+    cors:
+      paths: /*
+      origins:
+        - http://localhost:3000
+        - http://localhost:4200
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Content-Type
+        - Authorization
+        - X-Requested-With
+        - Content-Length
+        - Accept
+        - Origin
+
+  mongodb:
+    database: MTGames
+    connection-string: mongodb://localhost:27017

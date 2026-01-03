@@ -21,7 +21,9 @@ public class CubeDownloader {
     @ConfigProperty(name = "cubeOwner")
     String cubeOwner;
 
-    private final CubeCobraService cubeCobraService;
+    @RestClient
+    @Inject
+    private CubeCobraService cubeCobraService;
 
     @Inject
     public CubeDownloader(@RestClient final CubeCobraService cubeCobraService) {
@@ -29,17 +31,22 @@ public class CubeDownloader {
     }
 
     public Uni<Cube> getCubeForCubeID(final String cubeID) {
+                LOGGER.info("profile: {}", activeProfile);
         switch (activeProfile) {
-            case "DEV" -> {
-                return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner);
+            case "dev" -> {
+                LOGGER.info("owner: {}", cubeOwner);
+                return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner)
+                                       .map(list -> list.getFirst());
             }
-            case "PROD" -> {
+            case "prod" -> {
                 return cubeCobraService.getCubeDataAsJson(cubeID)
                                        .onFailure().invoke(e -> LOGGER.error("Got error trying to download Cube Json. {}", e))
                                        .onFailure().retry().atMost(3);
             }
-            case "GAPPED" -> {
-                return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner);
+            case "gapped" -> {
+                LOGGER.info("gapped Sowner: {}", cubeOwner);
+                return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner)
+                                       .map(list -> list.getFirst());
             }
             default -> {
                 return Uni.createFrom().failure(new Throwable("No cube download settings for env."));

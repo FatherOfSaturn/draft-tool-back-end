@@ -11,7 +11,6 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 
 @JsonPropertyOrder({ "name", "set", "set_name", "cmc", "type", "scryfall_id", "image_small", "image_normal", "image_flip" })
 public class CardDetails {
@@ -22,10 +21,10 @@ public class CardDetails {
     private String scryfall_id;
     private String image_small;
     private String image_normal;
-    private String imageFlip;
-    private String name;
+    private final String imageFlip;
+    private final String name;
     private String type;
-    private Integer cmc;
+    private final Integer cmc;
     private List<String> parsed_cost;
 
     @JsonCreator
@@ -184,7 +183,5 @@ public class CardDetails {
         } else if (!parsed_cost.equals(other.parsed_cost))
             return false;
         return true;
-    }
-
-    
+    }   
 }

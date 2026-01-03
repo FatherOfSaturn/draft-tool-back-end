@@ -19,6 +19,7 @@ import org.magic.draft.util.JsonUtility;
 
 public class CubeTest {
 
+    @SuppressWarnings("unused")
     void testCubeSerialization() throws IOException {
 
         InputStream detailIs = getClass().getClassLoader().getResourceAsStream("CardDetails.json");
@@ -92,7 +93,7 @@ public class CubeTest {
         } catch (MalformedURLException e) {
             // URL is invalid
             System.out.println("URL is invalid: " + urlString);
-            e.printStackTrace();
+            System.out.println(e);
         }
     }
 

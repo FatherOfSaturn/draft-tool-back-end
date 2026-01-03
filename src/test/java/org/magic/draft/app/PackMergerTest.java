@@ -1,15 +1,13 @@
 package org.magic.draft.app;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.Player;
 import org.magic.draft.api.card.Card;

@@ -3,7 +3,6 @@ package org.magic.draft.app;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,12 +43,6 @@ public class PackMerger {
         return mergePacksNew(elevenCountPacks, nineCountPacks, sevenCountPacks, threeCountPacks);
     }
 
-    private void validatePackCounts(final int expectedPackCount, final int actualPackCount) {
-        if (expectedPackCount != actualPackCount) {
-            throw new Error("Sorted Pack Count is incorrect for Merging.");
-        }
-    }
-
     private CardPack mergePacks(final int packNumber, final List<CardPack> packsToMerge) {
         List<Card> mergedCards = new ArrayList<>();
         packsToMerge.stream().forEach(pack -> mergedCards.addAll(pack.getCardsInPack()));
@@ -62,7 +55,7 @@ public class PackMerger {
                                       final List<CardPack> threeCountPacks) {
 
         List<CardPack> newCardPacks = new ArrayList<>(mergeThreePacks(threeCountPacks));
-        AtomicInteger count = new AtomicInteger(newCardPacks.size() - 1);
+        AtomicInteger count = new AtomicInteger(newCardPacks.size());
 
         for (CardPack elevenCountPack : elevenCountPacks) {
             elevenCountPack.setPackNumber(count.getAndIncrement());
@@ -71,7 +64,7 @@ public class PackMerger {
         }
 
         newCardPacks.addAll(this.mergePacksFromPairs(count, sevenCountPacks));
-        count.set(newCardPacks.size() - 1);
+        count.set(newCardPacks.size());
         newCardPacks.addAll(this.mergePacksFromPairs(count, nineCountPacks));
 
         return newCardPacks;
@@ -94,23 +87,25 @@ public class PackMerger {
     private List<CardPack> mergeThreePacks(final List<CardPack> threeCountPacks) {
 
         switch (threeCountPacks.size()) {
-            case 4:
-            case 6:
+            case 4, 6 -> {
                 return List.of(this.mergePacks(0, threeCountPacks));
-            case 8:
+            }
+            case 8 -> {
                 // Merge first 4 and last 4
                 return List.of(this.mergePacks(0, List.of(threeCountPacks.get(0),
-                                                                     threeCountPacks.get(1),
-                                                                     threeCountPacks.get(2),
-                                                                     threeCountPacks.get(3))),
-                               this.mergePacks(1, List.of(threeCountPacks.get(4),
-                                                                     threeCountPacks.get(5),
-                                                                     threeCountPacks.get(6),
-                                                                     threeCountPacks.get(7)))
+                        threeCountPacks.get(1),
+                        threeCountPacks.get(2),
+                        threeCountPacks.get(3))),
+                        this.mergePacks(1, List.of(threeCountPacks.get(4),
+                                threeCountPacks.get(5),
+                                threeCountPacks.get(6),
+                                threeCountPacks.get(7)))
                 );
-            default:
+            }
+            default -> {
                 LOGGER.error("Unable to merge packs of 3 with, {} number of packs", threeCountPacks.size());
                 throw new Error("Sorted Pack Count is incorrect for Merging.");
+            }
         }
     }
     /*
