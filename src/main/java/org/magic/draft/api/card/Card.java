@@ -44,7 +44,7 @@ public class Card {
             this.cmc = cmc;
         }
         if (type_line == null) {
-            LOGGER.debug("Card with ID of {} does not have a type on Card Supertype.", cardID);
+            LOGGER.debug("Card with ID of {} does not have a type on Card Supertype. Getting SubType: {}", cardID, cardDetails.getType());
             this.type_line = cardDetails.getType();
         } else {
             this.type_line = type_line;

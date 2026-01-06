@@ -4,6 +4,30 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
 
+1. Run MongoDB in docker
+2. Run Json-server locally (Serves the dummy local cubes)
+3. Update app.prop file to point to these locations
+4. Run with ./gradlew clean build quarkusDev
+
+To inspect the DB
+mongoexport   --db MTGames   --collection Games   --out games.json
+
+Small
+20
+After Merge
+13
+
+=32 Total in tool?
+
+Medium
+
+
+Large picks
+32
+after Merge
+18
+
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:

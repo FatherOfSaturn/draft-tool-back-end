@@ -57,7 +57,7 @@ public class CardDetails {
             LOGGER.info("\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!\nCARD TYPE IS FUCKED:\n" + scryfallId +"\n: \n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         this.cmc = Objects.requireNonNull(cmc, "cmc Required for card details");
-        this.type = Objects.requireNonNull(name, "type Required for card details");
+        this.type = Objects.requireNonNull(type, "type Required for card details");
     }
 
     public String getSet() {
