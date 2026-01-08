@@ -1,18 +1,21 @@
 package org.magic.draft;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.magic.draft.api.GameCreationInfo;
 import org.magic.draft.api.GameInfo;
 import org.magic.draft.api.card.Cube;
 import org.magic.draft.app.GameCoordination.DbHandler;
-import org.magic.draft.app.GameCoordination.MongoService;
+import org.magic.draft.app.GameCoordination.GameCoordinationWorker;
 import org.magic.draft.util.JsonUtility;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -31,7 +34,7 @@ public class TestResource {
     DbHandler dbHandler;
 
     @Inject
-    MongoService mongoService;
+    GameCoordinationWorker gameCoordinationWorker;
 
     @POST
     @Path("/db")
@@ -85,14 +88,15 @@ public class TestResource {
             // Set the request method
             conn.setRequestMethod("GET");
 
-            // Read the response
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line;
-            StringBuilder response = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
+            StringBuilder response;
+            try ( // Read the response
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                String line;
+                response = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
             }
-            reader.close();
 
             // Print the response
             System.out.println("Response from server:");
@@ -103,10 +107,19 @@ public class TestResource {
 
             // Close the connection
             conn.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            LOGGER.error("Error encountered in hello: {}", e);
         }
 
         return "Hello from Quarkus REST";
+    }
+
+    @POST
+    @Path("/game")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Uni<GameInfo> createTestGame(final GameCreationInfo creationInfo) {
+
+        return gameCoordinationWorker.startGame(creationInfo);
     }
 }

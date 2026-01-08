@@ -3,8 +3,6 @@ package org.magic.draft.app;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,36 +25,47 @@ public class PackCreator {
     }
 
     public List<Player> createPyramidPacks(final PlayerCreationInfo player1,
-                                           final PlayerCreationInfo player2,
-                                           final int numberOfDoubleDraftPicksPerPlayer) {
+                                            final PlayerCreationInfo player2,
+                                            final int numberOfDoubleDraftPicksPerPlayer) {
+        int cubeSize = cube.getCards().getMainboard().size();
+
+        int packsOf3;
+        int packsOf7;
+        int packsOf9;
+        int packsOf11;
+
+        if (cubeSize <= 540 && cubeSize > 490) {
+            LOGGER.info("Large Cube size detected: {}", cube.getName());
+            //large cube
+            packsOf3 = 8;
+            packsOf7 = 8;
+            packsOf9 = 8;
+            packsOf11 = 8;
+        }
+        else if (cubeSize <= 490 && cubeSize > 410) {
+            LOGGER.info("Medium Cube size detected: {}", cube.getName());
+            // medium
+            packsOf3 = 6;
+            packsOf7 = 4;
+            packsOf9 = 8;
+            packsOf11 = 8;
+        }
+        else if (cubeSize <= 410 && cubeSize > 328) {
+            LOGGER.info("Small Cube size detected: {}", cube.getName());
+            // small
+            packsOf3 = 4;
+            packsOf7 = 4;
+            packsOf9 = 4;
+            packsOf11 = 8;
+        }
+        else {
+            throw new Error("Number of cards in cube");
+        }
 
         cube.getCards().shuffleMainboard();
-
-        // [a] 4 packs of 3 cards
-        // [b] 4 packs of 7 cards
-        // [c] 4 packs of 9 cards
-        // [d] 8 packs of 11 cards
-        List<CardPack> player1PacksOf3 = createPacks(List.of(0, 1, 2, 3), 3);
-        List<CardPack> player1PacksOf7 = createPacks(List.of(4, 5, 6, 7), 7);
-        List<CardPack> player1PacksOf9 = createPacks(List.of(8, 9, 10, 11), 9);
-        List<CardPack> player1PacksOf11 = createPacks(List.of(12,13, 14, 15, 16, 17, 18, 19), 11);
-
-        List<CardPack> player1Packs = Stream.of(player1PacksOf3, player1PacksOf7, player1PacksOf9, player1PacksOf11)
-                                          .flatMap(List::stream)
-                                          .collect(Collectors.toList());
-
-        LOGGER.info("Player {} Packs created. {} Packs", player1.getPlayerName(), player1Packs.size());
-
-        List<CardPack> player2PacksOf3 = createPacks(List.of(0, 1, 2, 3), 3);
-        List<CardPack> player2PacksOf7 = createPacks(List.of(4, 5, 6, 7), 7);
-        List<CardPack> player2PacksOf9 = createPacks(List.of(8, 9, 10, 11), 9);
-        List<CardPack> player2PacksOf11 = createPacks(List.of(12,13, 14, 15, 16, 17, 18, 19), 11);
         
-        List<CardPack> player2Packs = Stream.of(player2PacksOf3, player2PacksOf7, player2PacksOf9, player2PacksOf11)
-                                          .flatMap(List::stream)
-                                          .collect(Collectors.toList());
-
-        LOGGER.info("Player {} Packs created. {} Packs", player2.getPlayerName(), player2Packs.size());
+        List<CardPack> player1Packs = this.createPlayerPack(packsOf3, packsOf7, packsOf9, packsOf11);
+        List<CardPack> player2Packs = this.createPlayerPack(packsOf3, packsOf7, packsOf9, packsOf11);
 
         Player fullPlayer1 = new Player(player1.getPlayerName(), player1.getPlayerID(), player1Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
         Player fullPlayer2 = new Player(player2.getPlayerName(), player2.getPlayerID(), player2Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
@@ -64,15 +73,58 @@ public class PackCreator {
         return List.of(fullPlayer1, fullPlayer2);
     }
 
-    private List<CardPack> createPacks(final List<Integer> packNumbers, final int numberOfCardsInPack) {
 
+    private List<CardPack> createPacks(final int firstPackNumber, final int lastPackNumber, final int numberOfCardsInPack) {
+        
         List<CardPack> packs = new ArrayList<>();
 
-        for (Integer packNumber : packNumbers) {
+        for (int currentPackNumber = firstPackNumber; currentPackNumber < lastPackNumber; currentPackNumber++) {
             List<Card> cardsInPack = this.cube.getCards().drawCardsFromCube(numberOfCardsInPack);
-            packs.add(new CardPack(packNumber, cardsInPack, numberOfCardsInPack, false));
+            packs.add(new CardPack(currentPackNumber, cardsInPack, numberOfCardsInPack, false));
         }
 
         return packs;
     }
+
+    private List<CardPack> createPlayerPack(int packsOf3, int packsOf7, int packsOf9, int packsOf11) {
+        int packNumber = 0;
+        List<CardPack> playerPacks = new ArrayList<>();
+
+        playerPacks = this.createPacks(packNumber, packNumber + packsOf3, 3);
+        packNumber += packsOf3;
+        playerPacks.addAll(this.createPacks(packNumber, packNumber + packsOf7, 7));
+        packNumber += packsOf7;
+        playerPacks.addAll(this.createPacks(packNumber, packNumber + packsOf9, 9));
+        packNumber += packsOf9;
+        playerPacks.addAll(this.createPacks(packNumber, packNumber + packsOf11, 11));
+        
+        return playerPacks;
+    }
+
+
+    /*
+     * 
+For different size cubes
+360 => 328 cards ~ 91%
+4 p of 3 = 12
+4 p of 7 = 28
+4 p of 9 = 36
+8 p of 11 = 88
+=164
+
+450 => 410 cards ~ 91%
+6 p of 3 = 18
+4 p of 7 = 28
+8 p of 9 = 72
+8 p of 11 = 88
+=206
+
+540 => 490 Cards ~ 91%
+8 p of 3 = 24
+8 p of 7 = 56
+8 p of 9 = 72
+8 p of 11 = 88
+=240
+     * 
+     */
 }

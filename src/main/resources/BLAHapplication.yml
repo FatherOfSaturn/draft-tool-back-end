@@ -1,0 +1,32 @@
+cubeCobraHostName/mp-rest/url: https://cubecobra.com
+
+cubeOwner: adam
+devCubeOwner: adam
+
+quarkus:
+  http:
+    access-log:
+      enabled: true
+
+    cors: true
+    cors:
+      paths: /*
+      origins:
+        - https://pyramiddraft.xyz
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Content-Type
+        - Authorization
+        - X-Requested-With
+        - Content-Length
+        - Accept
+        - Origin
+
+  mongodb:
+    database: MTGames
+    connection-string: ${MONGO_CONNECTION:password}
