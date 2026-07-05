@@ -36,7 +36,7 @@ public class CubeDownloader {
             case "dev" -> {
                 LOGGER.info("owner: {}", cubeOwner);
                 return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner)
-                                       .map(list -> list.getFirst());
+                                       .map(list -> list.iterator().next());
             }
             case "prod" -> {
                 return cubeCobraService.getCubeDataAsJson(cubeID)
@@ -46,7 +46,7 @@ public class CubeDownloader {
             case "gapped" -> {
                 LOGGER.info("gapped Sowner: {}", cubeOwner);
                 return cubeCobraService.getCubeDataAsJsonLOCAL(cubeOwner)
-                                       .map(list -> list.getFirst());
+                                       .map(list -> list.iterator().next());
             }
             default -> {
                 return Uni.createFrom().failure(new Throwable("No cube download settings for env."));

@@ -6,6 +6,7 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 
 1. Run MongoDB in docker
 2. Run Json-server locally (Serves the dummy local cubes)
+    2.1 json-server --watch db.json
 3. Update app.prop file to point to these locations
 4. Run with ./gradlew clean build quarkusDev
 
