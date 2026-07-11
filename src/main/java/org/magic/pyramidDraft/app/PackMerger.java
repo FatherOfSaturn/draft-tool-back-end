@@ -12,12 +12,25 @@ import org.magic.pyramidDraft.api.card.CardPack;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * Handles merging of card packs between draft phases in a pyramid draft.
+ * After a player finishes drafting all their packs, the remaining packs are merged
+ * by size and swapped with the other player's packs for the next draft phase.
+ */
 @ApplicationScoped
 public class PackMerger {
     private static final Logger LOGGER = LogManager.getLogger(PackMerger.class);
 
     public PackMerger() {}
     
+    /**
+     * Merges a player's remaining packs by grouping them by size (3, 7, 9, 11 cards),
+     * then applies the merging rules to produce a consolidated list of packs for the
+     * next draft phase.
+     *
+     * @param player the player whose packs to merge
+     * @return the list of merged packs, ready to be swapped with the other player
+     */
     public List<CardPack> mergePlayerPacks(final Player player) {
 
         List<CardPack> elevenCountPacks = new ArrayList<>();
@@ -49,6 +62,15 @@ public class PackMerger {
         return new CardPack(packNumber, mergedCards, mergedCards.size(), false);
     }
 
+    /**
+     * Merges packs by combining them according to pyramid draft rules:
+     * <ul>
+     *   <li>Packs of 3 are merged first (4/6 → 1 pack, 8 → 2 packs of 4)</li>
+     *   <li>Packs of 11 are kept as-is (renumbered)</li>
+     *   <li>Packs of 7 are merged in pairs</li>
+     *   <li>Packs of 9 are merged in pairs</li>
+     * </ul>
+     */
     private List<CardPack> mergePacksNew(final List<CardPack> elevenCountPacks, 
                                       final List<CardPack> nineCountPacks, 
                                       final List<CardPack> sevenCountPacks, 
@@ -84,6 +106,17 @@ public class PackMerger {
         return newPacks;
     }
 
+    /**
+     * Merges packs of 3 cards into larger packs. The merging strategy depends on the count:
+     * <ul>
+     *   <li>4 or 6 packs → all merged into a single pack</li>
+     *   <li>8 packs → split into two groups of 4, each merged separately</li>
+     * </ul>
+     *
+     * @param threeCountPacks the list of packs containing 3 cards each
+     * @return the merged packs
+     * @throws IllegalStateException if the pack count is not 4, 6, or 8
+     */
     private List<CardPack> mergeThreePacks(final List<CardPack> threeCountPacks) {
 
         switch (threeCountPacks.size()) {

@@ -1,0 +1,9 @@
+{
+  "deckID": "507f1f77bcf86cd799439012",
+  "accountID": "507f1f77bcf86cd799439011",
+  "name": "Test Deck",
+  "description": "A test deck",
+  "cardIds": ["card1", "card2", "card3"],
+  "createdAt": "2024-01-01T00:00:00",
+  "updatedAt": "2024-01-01T00:00:00"
+}

@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Request payload containing the name and ID for creating a player in a new game.
+ */
 public record PlayerCreationInfo(
     @JsonProperty("name") String playerName,
     @JsonProperty("playerID") String playerID

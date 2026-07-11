@@ -1,0 +1,690 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-08T12:00:00.000Z",
+  "__export_source": "opencode",
+  "resources": [
+    {
+      "_id": "__WORKSPACE_1",
+      "type": "workspace",
+      "name": "Draft Tool Backend",
+      "parentId": null,
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "__ENV_1",
+      "type": "environment",
+      "name": "Base Environment",
+      "parentId": "__WORKSPACE_1",
+      "data": {
+        "base_url": "http://localhost:8080"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 0,
+      "_type": "environment"
+    },
+    {
+      "_id": "__FOLDER_account",
+      "type": "request_group",
+      "name": "Account Service",
+      "parentId": "__WORKSPACE_1",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "__FOLDER_game",
+      "type": "request_group",
+      "name": "Game Service",
+      "parentId": "__WORKSPACE_1",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "__REQ_login",
+      "type": "request",
+      "name": "Login",
+      "parentId": "__FOLDER_account",
+      "method": "POST",
+      "url": "{{ base_url }}/account/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idToken\": \"<google-id-token>\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1100,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_get_account",
+      "type": "request",
+      "name": "Get Account",
+      "parentId": "__FOLDER_account",
+      "method": "GET",
+      "url": "{{ base_url }}/account/{{ accountID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P1"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1200,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_update_display",
+      "type": "request",
+      "name": "Update Display Name",
+      "parentId": "__FOLDER_account",
+      "method": "PATCH",
+      "url": "{{ base_url }}/account/{{ accountID }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"displayName\": \"New Display Name\"\n}"
+      },
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P2"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1300,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_list_decks",
+      "type": "request",
+      "name": "List Decks",
+      "parentId": "__FOLDER_account",
+      "method": "GET",
+      "url": "{{ base_url }}/account/{{ accountID }}/decks",
+      "body": {},
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P3"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1400,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_create_deck",
+      "type": "request",
+      "name": "Create Deck",
+      "parentId": "__FOLDER_account",
+      "method": "POST",
+      "url": "{{ base_url }}/account/{{ accountID }}/decks",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"My Deck\",\n  \"description\": \"A description of the deck\",\n  \"cardIds\": []\n}"
+      },
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P4"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1500,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_get_deck",
+      "type": "request",
+      "name": "Get Deck",
+      "parentId": "__FOLDER_account",
+      "method": "GET",
+      "url": "{{ base_url }}/account/{{ accountID }}/decks/{{ deckID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P5"
+        },
+        {
+          "name": "deckID",
+          "value": "507f1f77bcf86cd799439012",
+          "disabled": false,
+          "id": "__P6"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1600,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_update_deck",
+      "type": "request",
+      "name": "Update Deck",
+      "parentId": "__FOLDER_account",
+      "method": "PUT",
+      "url": "{{ base_url }}/account/{{ accountID }}/decks/{{ deckID }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Updated Deck\",\n  \"description\": \"Updated description\",\n  \"cardIds\": [\n    \"card1\",\n    \"card2\"\n  ]\n}"
+      },
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P7"
+        },
+        {
+          "name": "deckID",
+          "value": "507f1f77bcf86cd799439012",
+          "disabled": false,
+          "id": "__P8"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1700,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_delete_deck",
+      "type": "request",
+      "name": "Delete Deck",
+      "parentId": "__FOLDER_account",
+      "method": "DELETE",
+      "url": "{{ base_url }}/account/{{ accountID }}/decks/{{ deckID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "accountID",
+          "value": "507f1f77bcf86cd799439011",
+          "disabled": false,
+          "id": "__P9"
+        },
+        {
+          "name": "deckID",
+          "value": "507f1f77bcf86cd799439012",
+          "disabled": false,
+          "id": "__P10"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1800,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_create_game",
+      "type": "request",
+      "name": "Create & Start Game",
+      "parentId": "__FOLDER_game",
+      "method": "POST",
+      "url": "{{ base_url }}/game",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"gameID\": \"test-game-1\",\n  \"cubeID\": \"cube-1\",\n  \"players\": [\n    {\n      \"name\": \"Player 1\",\n      \"playerID\": \"player-1\"\n    },\n    {\n      \"name\": \"Player 2\",\n      \"playerID\": \"player-2\"\n    }\n  ],\n  \"numberOfDoubleDraftPicksPerPlayer\": 1,\n  \"accountID\": \"507f1f77bcf86cd799439011\",\n  \"partnerAccountID\": \"\",\n  \"accountName\": \"Test User\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2100,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_fetch_game",
+      "type": "request",
+      "name": "Fetch Game Data",
+      "parentId": "__FOLDER_game",
+      "method": "GET",
+      "url": "{{ base_url }}/game/fetchGameData/{{ gameID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gameID",
+          "value": "test-game-1",
+          "disabled": false,
+          "id": "__P11"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 2200,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_draft_card",
+      "type": "request",
+      "name": "Draft Card",
+      "parentId": "__FOLDER_game",
+      "method": "POST",
+      "url": "{{ base_url }}/game/{{ gameID }}/{{ playerID }}/draftCard/{{ packNumber }}/{{ cardID }}?doublePick={{ doublePick }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gameID",
+          "value": "test-game-1",
+          "disabled": false,
+          "id": "__P12"
+        },
+        {
+          "name": "playerID",
+          "value": "player-1",
+          "disabled": false,
+          "id": "__P13"
+        },
+        {
+          "name": "packNumber",
+          "value": "0",
+          "disabled": false,
+          "id": "__P14"
+        },
+        {
+          "name": "cardID",
+          "value": "<scryfall-id>",
+          "disabled": false,
+          "id": "__P15"
+        },
+        {
+          "name": "doublePick",
+          "value": "false",
+          "disabled": false,
+          "id": "__P16"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 2300,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_merge",
+      "type": "request",
+      "name": "Merge & Swap Packs",
+      "parentId": "__FOLDER_game",
+      "method": "GET",
+      "url": "{{ base_url }}/game/merge/{{ gameID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gameID",
+          "value": "test-game-1",
+          "disabled": false,
+          "id": "__P17"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 2400,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_end_game",
+      "type": "request",
+      "name": "End Game",
+      "parentId": "__FOLDER_game",
+      "method": "GET",
+      "url": "{{ base_url }}/game/end/{{ gameID }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gameID",
+          "value": "test-game-1",
+          "disabled": false,
+          "id": "__P18"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 2500,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_delete_games",
+      "type": "request",
+      "name": "Delete Games by State",
+      "parentId": "__FOLDER_game",
+      "method": "DELETE",
+      "url": "{{ base_url }}/game/admin/games/{{ gameState }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gameState",
+          "value": "game_complete",
+          "disabled": false,
+          "id": "__P19"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 2600,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__FOLDER_scryfall",
+      "type": "request_group",
+      "name": "Scryfall API (REST Client)",
+      "parentId": "__WORKSPACE_1",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "__ENV_scryfall",
+      "type": "environment",
+      "name": "Scryfall Environment",
+      "parentId": "__FOLDER_scryfall",
+      "data": {
+        "scryfall_url": "https://api.scryfall.com"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "scryfall_url"
+        ]
+      },
+      "color": "#ff6b6b",
+      "isPrivate": false,
+      "metaSortKey": 3000,
+      "_type": "environment"
+    },
+    {
+      "_id": "__REQ_scryfall_search",
+      "type": "request",
+      "name": "Search Cards",
+      "parentId": "__FOLDER_scryfall",
+      "method": "GET",
+      "url": "{{ scryfall_url }}/cards/search?q={{ query }}&order={{ order }}&dir={{ dir }}&unique={{ unique }}&page={{ page }}&include_extras={{ includeExtras }}&include_multilingual={{ includeMultilingual }}&include_variations={{ includeVariations }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "query",
+          "value": "c:red pow=3",
+          "disabled": false,
+          "id": "__PS1"
+        },
+        {
+          "name": "order",
+          "value": "cmc",
+          "disabled": false,
+          "id": "__PS2"
+        },
+        {
+          "name": "dir",
+          "value": "auto",
+          "disabled": false,
+          "id": "__PS3"
+        },
+        {
+          "name": "unique",
+          "value": "cards",
+          "disabled": false,
+          "id": "__PS4"
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false,
+          "id": "__PS5"
+        },
+        {
+          "name": "includeExtras",
+          "value": "false",
+          "disabled": false,
+          "id": "__PS6"
+        },
+        {
+          "name": "includeMultilingual",
+          "value": "false",
+          "disabled": false,
+          "id": "__PS7"
+        },
+        {
+          "name": "includeVariations",
+          "value": "false",
+          "disabled": false,
+          "id": "__PS8"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 3100,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__REQ_scryfall_by_id",
+      "type": "request",
+      "name": "Get Card by ID",
+      "parentId": "__FOLDER_scryfall",
+      "method": "GET",
+      "url": "{{ scryfall_url }}/cards/{{ scryfallId }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "scryfallId",
+          "value": "56ebc372-aabd-4174-a943-c7bf59e5028d",
+          "disabled": false,
+          "id": "__PS9"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 3200,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "__FOLDER_dev",
+      "type": "request_group",
+      "name": "Dev Resources",
+      "parentId": "__WORKSPACE_1",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 500,
+      "_type": "request_group"
+    },
+    {
+      "_id": "__REQ_dev_token",
+      "type": "request",
+      "name": "Generate Dev Token",
+      "parentId": "__FOLDER_dev",
+      "method": "GET",
+      "url": "{{ base_url }}/dev/token?sub={{ sub }}&email={{ email }}&name={{ name }}",
+      "body": {},
+      "parameters": [
+        {
+          "name": "sub",
+          "value": "dev-user-123",
+          "disabled": false,
+          "id": "__PD1"
+        },
+        {
+          "name": "email",
+          "value": "dev@example.com",
+          "disabled": false,
+          "id": "__PD2"
+        },
+        {
+          "name": "name",
+          "value": "Dev User",
+          "disabled": false,
+          "id": "__PD3"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 510,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    }
+  ]
+}

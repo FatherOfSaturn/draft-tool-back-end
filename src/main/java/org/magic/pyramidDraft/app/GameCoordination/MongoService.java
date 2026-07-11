@@ -17,6 +17,11 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+/**
+ * Provides access to the MongoDB database with POJO codec support.
+ * Configures a {@link CodecRegistry} that enables automatic POJO serialization/deserialization
+ * for MongoDB operations across the application.
+ */
 @ApplicationScoped
 public class MongoService {
     private static final Logger LOGGER = LogManager.getLogger(MongoService.class);
@@ -37,6 +42,11 @@ public class MongoService {
         LOGGER.info("MongoService initialized");
     }
 
+    /**
+     * Returns the configured MongoDB database instance with POJO codec support.
+     *
+     * @return the {@link MongoDatabase} ready for typed collection access
+     */
     public MongoDatabase getDatabase() {
         return mongoClient.getDatabase(databaseName).withCodecRegistry(codecRegistry);
     }

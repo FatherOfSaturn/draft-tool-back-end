@@ -6,12 +6,18 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "gameID", "cubeID", "numberOfDoubleDraftPicksPerPlayer" })
+/**
+ * Request payload for creating a new pyramid draft game. Contains the cube ID,
+ * player information, and the number of double-draft picks allowed per player.
+ */
 public record GameCreationInfo(
     @JsonProperty("gameID") String gameID,
     @JsonProperty("cubeID") String cubeID,
     @JsonProperty("players") List<PlayerCreationInfo> playerInfo,
-    @JsonProperty("numberOfDoubleDraftPicksPerPlayer") int numberOfDoubleDraftPicksPerPlayer
+    @JsonProperty("numberOfDoubleDraftPicksPerPlayer") int numberOfDoubleDraftPicksPerPlayer,
+    @JsonProperty("accountID") String accountID,
+    @JsonProperty("partnerAccountID") String partnerAccountID,
+    @JsonProperty("accountName") String accountName
 ) {
 
     public GameCreationInfo {

@@ -17,6 +17,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Represents a Magic: The Gathering card within a pyramid draft game.
+ * Contains the card's identity, name, and detailed metadata via {@link CardDetails}.
+ */
 @Getter
 @Setter
 @ToString

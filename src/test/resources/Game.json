@@ -8498,5 +8498,8 @@
             "currentDraftPack" : 0,
             "readyForMerge" : false
         } ],
-    "gameState" : "GAME_STARTED"
+    "gameState" : "GAME_STARTED",
+    "accountID" : null,
+    "partnerAccountID" : null,
+    "accountName" : null
 }

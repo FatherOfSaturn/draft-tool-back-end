@@ -101,6 +101,9 @@ public class CubeTest {
         assertEquals(2, info.playerInfo().size());
         assertEquals("Josh", info.playerInfo().get(0).playerName());
         assertEquals("Zach", info.playerInfo().get(1).playerName());
+        assertNull(info.accountID());
+        assertNull(info.partnerAccountID());
+        assertNull(info.accountName());
     }
 
     @Test
@@ -114,6 +117,9 @@ public class CubeTest {
         assertEquals(GameState.GAME_STARTED, gameInfo.getGameState());
         assertNotNull(gameInfo.getPlayers());
         assertEquals(2, gameInfo.getPlayers().size());
+        assertNull(gameInfo.getAccountID());
+        assertNull(gameInfo.getPartnerAccountID());
+        assertNull(gameInfo.getAccountName());
     }
 
     @Test

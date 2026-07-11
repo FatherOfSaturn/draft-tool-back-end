@@ -12,6 +12,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Represents a Magic: The Gathering cube — a curated collection of cards
+ * used for draft games. Contains the cube name and its {@link CardsInCube} mainboard.
+ */
 @Getter
 @Setter
 @ToString
