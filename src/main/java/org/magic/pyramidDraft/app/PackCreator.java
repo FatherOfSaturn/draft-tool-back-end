@@ -84,8 +84,8 @@ public class PackCreator {
         List<CardPack> player1Packs = this.createPlayerPack(packsOf3, packsOf7, packsOf9, packsOf11);
         List<CardPack> player2Packs = this.createPlayerPack(packsOf3, packsOf7, packsOf9, packsOf11);
 
-        Player fullPlayer1 = new Player(player1.playerName(), player1.playerID(), player1Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
-        Player fullPlayer2 = new Player(player2.playerName(), player2.playerID(), player2Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
+        Player fullPlayer1 = new Player(player1.playerName(), player1.accountID(), player1Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
+        Player fullPlayer2 = new Player(player2.playerName(), player2.accountID(), player2Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false);
 
         return List.of(fullPlayer1, fullPlayer2);
     }

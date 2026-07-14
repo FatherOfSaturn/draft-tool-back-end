@@ -78,10 +78,10 @@ public class PyramidDraftDbHandler {
      */
     public Player updatePlayer(final GameInfo gameInfo, final Player player) {
 
-        // Create a filter to match the document by gameID and nested playerID
+        // Create a filter to match the document by gameID and nested accountID
         Bson filter = Filters.and(
                 Filters.eq("gameID", gameInfo.getGameID()),
-                Filters.eq("players.playerID", player.getPlayerID())
+                Filters.eq("players.accountID", player.getAccountID())
         );
 
         Bson updateOperation = Updates.set("players.$", player);
@@ -90,10 +90,10 @@ public class PyramidDraftDbHandler {
         UpdateResult result = getCollection().updateOne(filter, updateOperation);
 
         if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated Player: {}\n\tFor Game: {}", player.getPlayerID(), gameInfo.getGameID());
+            LOGGER.info("Successfully updated Player: {}\n\tFor Game: {}", player.getAccountID(), gameInfo.getGameID());
             return player;
         } else {
-            LOGGER.error("Unable to update Game {}, with Player {}, new info.", gameInfo.getGameID(), player.getPlayerID());
+            LOGGER.error("Unable to update Game {}, with Player {}, new info.", gameInfo.getGameID(), player.getAccountID());
             throw new IllegalStateException("Unable to Update Game with players new info.");
         }
     }
@@ -167,17 +167,14 @@ public class PyramidDraftDbHandler {
     }
 
     /**
-     * Finds all games where the given account is either the creator or the partner.
+     * Finds all games where the given account is a player.
      * Results are sorted by creation date descending (newest first).
      *
      * @param accountID the account ID to search for
      * @return the list of matching games
      */
     public java.util.List<GameInfo> findGamesByAccountID(final String accountID) {
-        Bson filter = Filters.or(
-                Filters.eq("accountID", accountID),
-                Filters.eq("partnerAccountID", accountID)
-        );
+        Bson filter = Filters.eq("players.accountID", accountID);
 
         return getCollection()
                 .find(filter)

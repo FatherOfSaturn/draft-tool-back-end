@@ -100,10 +100,9 @@ public class CubeTest {
         assertNotNull(info.playerInfo());
         assertEquals(2, info.playerInfo().size());
         assertEquals("Josh", info.playerInfo().get(0).playerName());
+        assertEquals("hash1", info.playerInfo().get(0).accountID());
         assertEquals("Zach", info.playerInfo().get(1).playerName());
-        assertNull(info.accountID());
-        assertNull(info.partnerAccountID());
-        assertNull(info.accountName());
+        assertEquals("hash2", info.playerInfo().get(1).accountID());
     }
 
     @Test
@@ -117,9 +116,6 @@ public class CubeTest {
         assertEquals(GameState.GAME_STARTED, gameInfo.getGameState());
         assertNotNull(gameInfo.getPlayers());
         assertEquals(2, gameInfo.getPlayers().size());
-        assertNull(gameInfo.getAccountID());
-        assertNull(gameInfo.getPartnerAccountID());
-        assertNull(gameInfo.getAccountName());
     }
 
     @Test
@@ -130,6 +126,7 @@ public class CubeTest {
         Player player = JsonUtility.getInstance().fromJson(json, Player.class);
 
         assertEquals("Josh", player.getPlayerName());
+        assertEquals("1", player.getAccountID());
         assertNotNull(player.getCardPacks());
         assertTrue(player.getCardPacks().size() > 0);
     }
@@ -142,6 +139,7 @@ public class CubeTest {
         Player player = JsonUtility.getInstance().fromJson(json, Player.class);
 
         assertEquals("Zach", player.getPlayerName());
+        assertEquals("2", player.getAccountID());
         assertNotNull(player.getCardPacks());
         assertTrue(player.getCardPacks().size() > 0);
     }

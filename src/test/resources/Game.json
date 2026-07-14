@@ -4245,7 +4245,7 @@
             "doubleDraftedFlag" : false
         } ],
         "doubleDraftPicksRemaining" : 4,
-        "playerID" : "1",
+        "accountID" : "1",
         "currentDraftPack" : 0,
         "readyForMerge" : false
     },
@@ -8494,12 +8494,9 @@
                 "doubleDraftedFlag" : false
             } ],
             "doubleDraftPicksRemaining" : 4,
-            "playerID" : "2",
+            "accountID" : "2",
             "currentDraftPack" : 0,
             "readyForMerge" : false
         } ],
-    "gameState" : "GAME_STARTED",
-    "accountID" : null,
-    "partnerAccountID" : null,
-    "accountName" : null
+    "gameState" : "GAME_STARTED"
 }

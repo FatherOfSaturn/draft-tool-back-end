@@ -67,9 +67,6 @@ public class GameCoordinationWorker {
                                                           gameCreationInfo.cubeID(),
                                                           players,
                                                           GameState.GAME_STARTED,
-                                                          gameCreationInfo.accountID(),
-                                                          gameCreationInfo.partnerAccountID(),
-                                                          gameCreationInfo.accountName(),
                                                           Instant.now()))
                              .invoke(gameInfo -> dbHandler.addGame(gameInfo));
     }
@@ -78,14 +75,14 @@ public class GameCoordinationWorker {
      * Processes a card draft action for a player. Finds the game and player, then
      * delegates the draft logic to {@link Player#draftCard(String, int, boolean)}.
      *
-     * @param playerID   the ID of the player drafting the card
+     * @param accountID  the account drafting the card
      * @param packNumber the pack number to draft from
      * @param cardID     the Scryfall ID of the card being drafted
      * @param isDoublePick whether this draft uses a double-pick token
      * @param gameID     the game to draft from
      * @return the drafted {@link Card}
      */
-    public Card draftCard(final String playerID, 
+    public Card draftCard(final String accountID, 
                           final int packNumber, 
                           final String cardID, 
                           final boolean isDoublePick,
@@ -97,7 +94,7 @@ public class GameCoordinationWorker {
         LOGGER.info("\nRetrieved Game: {}\n", gameID);
         final Player player = gameInfo.getPlayers()
                                        .stream()
-                                       .filter(pl -> pl.getPlayerID().equals(playerID))
+                                       .filter(pl -> pl.getAccountID().equals(accountID))
                                        .findFirst().get();
         LOGGER.info("\nDrafting {} Card for {}\n", cardID, player.getPlayerName());
         
@@ -211,7 +208,7 @@ public class GameCoordinationWorker {
 
     /**
      * Fetches the game history for an account. Returns summaries of all games
-     * where the account is either the creator or the partner, sorted newest first.
+     * where the account is a player, sorted newest first.
      *
      * @param accountID the account to look up games for
      * @return a {@link Uni} emitting the list of {@link GameSummary} objects

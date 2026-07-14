@@ -4,15 +4,12 @@
   "players": [
     {
       "name": "Josh",
-      "playerID": "hash1"
+      "accountID": "hash1"
     },
     {
       "name": "Zach",
-      "playerID": "hash2"
+      "accountID": "hash2"
     }
   ],
-  "numberOfDoubleDraftPicksPerPlayer": 4,
-  "accountID": null,
-  "partnerAccountID": null,
-  "accountName": null
+  "numberOfDoubleDraftPicksPerPlayer": 4
 }

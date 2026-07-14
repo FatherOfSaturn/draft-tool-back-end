@@ -326,7 +326,7 @@
       "url": "{{ base_url }}/game",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"gameID\": \"test-game-1\",\n  \"cubeID\": \"cube-1\",\n  \"players\": [\n    {\n      \"name\": \"Player 1\",\n      \"playerID\": \"player-1\"\n    },\n    {\n      \"name\": \"Player 2\",\n      \"playerID\": \"player-2\"\n    }\n  ],\n  \"numberOfDoubleDraftPicksPerPlayer\": 1,\n  \"accountID\": \"507f1f77bcf86cd799439011\",\n  \"partnerAccountID\": \"\",\n  \"accountName\": \"Test User\"\n}"
+        "text": "{\n  \"gameID\": \"test-game-1\",\n  \"cubeID\": \"cube-1\",\n  \"players\": [\n    {\n      \"name\": \"Player 1\",\n      \"accountID\": \"player-1\"\n    },\n    {\n      \"name\": \"Player 2\",\n      \"accountID\": \"player-2\"\n    }\n  ],\n  \"numberOfDoubleDraftPicksPerPlayer\": 1\n}"
       },
       "parameters": [],
       "headers": [
@@ -380,7 +380,7 @@
       "name": "Draft Card",
       "parentId": "__FOLDER_game",
       "method": "POST",
-      "url": "{{ base_url }}/game/{{ gameID }}/{{ playerID }}/draftCard/{{ packNumber }}/{{ cardID }}?doublePick={{ doublePick }}",
+      "url": "{{ base_url }}/game/{{ gameID }}/{{ accountID }}/draftCard/{{ packNumber }}/{{ cardID }}?doublePick={{ doublePick }}",
       "body": {},
       "parameters": [
         {
@@ -390,7 +390,7 @@
           "id": "__P12"
         },
         {
-          "name": "playerID",
+          "name": "accountID",
           "value": "player-1",
           "disabled": false,
           "id": "__P13"

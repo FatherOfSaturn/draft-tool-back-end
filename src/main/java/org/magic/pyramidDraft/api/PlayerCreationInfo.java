@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public record PlayerCreationInfo(
     @JsonProperty("name") String playerName,
-    @JsonProperty("playerID") String playerID
+    @JsonProperty("accountID") String accountID
 ) {
 
     public PlayerCreationInfo {
         Objects.requireNonNull(playerName, "name required for incoming Player");
-        Objects.requireNonNull(playerID, "playerID required for player");
+        Objects.requireNonNull(accountID, "accountID required for player");
     }
 }

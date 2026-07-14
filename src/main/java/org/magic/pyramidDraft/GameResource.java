@@ -1,5 +1,6 @@
 package org.magic.pyramidDraft;
 
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.common.util.JsonUtility;
@@ -57,7 +58,7 @@ public class GameResource {
      * Drafts a card from a player's pack. If the {@code doublePick} query parameter is true,
      * a double-pick token is consumed and the player may draft from the same pack again.
      *
-     * @param playerID  the player drafting
+     * @param accountID  the account drafting
      * @param packNumber the pack to draft from
      * @param cardID    the Scryfall card ID to draft
      * @param gameID    the game ID
@@ -65,15 +66,15 @@ public class GameResource {
      * @return the drafted card
      */
     @POST
-    @Path("/{gameID}/{playerID}/draftCard/{packNumber}/{cardID}")
+    @Path("/{gameID}/{accountID}/draftCard/{packNumber}/{cardID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<Card> draftCard(@PathParam("playerID") final String playerID,
+    public Uni<Card> draftCard(@PathParam("accountID") final String accountID,
                                @PathParam("packNumber") int packNumber,
                                @PathParam("cardID") final String cardID,
                                @PathParam("gameID") final String gameID,
                                @QueryParam("doublePick") final boolean isDoublePick) {
         LOGGER.info("Call to draft card: {}\n For game: {}\n", cardID, gameID);
-        return Uni.createFrom().item(gameWorker.draftCard(playerID, packNumber, cardID, isDoublePick, gameID));
+        return Uni.createFrom().item(gameWorker.draftCard(accountID, packNumber, cardID, isDoublePick, gameID));
     }
 
     /**
@@ -140,7 +141,7 @@ public class GameResource {
 
     /**
      * Fetches the game history for an account. Returns summaries of all games
-     * where the account is either the creator or the partner, sorted newest first.
+     * where the account is a player, sorted newest first.
      *
      * @param accountID the account to look up games for
      * @return a list of game summaries
@@ -148,7 +149,7 @@ public class GameResource {
     @GET
     @Path("/history/{accountID}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<java.util.List<GameSummary>> getGameHistory(@PathParam("accountID") final String accountID) {
+    public Uni<List<GameSummary>> getGameHistory(@PathParam("accountID") final String accountID) {
         LOGGER.info("Call to fetch game history for account: {}", accountID);
         return gameWorker.getGameHistory(accountID);
     }

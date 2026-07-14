@@ -14,10 +14,7 @@ public record GameCreationInfo(
     @JsonProperty("gameID") String gameID,
     @JsonProperty("cubeID") String cubeID,
     @JsonProperty("players") List<PlayerCreationInfo> playerInfo,
-    @JsonProperty("numberOfDoubleDraftPicksPerPlayer") int numberOfDoubleDraftPicksPerPlayer,
-    @JsonProperty("accountID") String accountID,
-    @JsonProperty("partnerAccountID") String partnerAccountID,
-    @JsonProperty("accountName") String accountName
+    @JsonProperty("numberOfDoubleDraftPicksPerPlayer") int numberOfDoubleDraftPicksPerPlayer
 ) {
 
     public GameCreationInfo {
