@@ -1,0 +1,13 @@
+cubeOwner: zach
+devCubeOwner: zach
+
+quarkus:
+  mongodb:
+    database: MTGames
+    connection-string: mongodb://localhost:27017
+  http:
+    cors:
+      origins: http://localhost:3000,http://localhost:5173
+
+google.oauth.client-id: 346763937043-5n1404id5rp57prha5ltf2rik6u5qnu5.apps.googleusercontent.com
+google.oauth.dev-mode: true

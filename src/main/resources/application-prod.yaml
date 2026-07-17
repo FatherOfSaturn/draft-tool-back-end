@@ -1,0 +1,13 @@
+cubeOwner: adam
+devCubeOwner: adam
+
+quarkus:
+  mongodb:
+    database: MTGames
+    connection-string: ${MONGO_CONNECTION:password}
+  http:
+    cors:
+      origins: https://pyramiddraft.xyz
+
+google.oauth.client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+google.oauth.dev-mode: true

@@ -1,0 +1,17 @@
+quarkus:
+  http:
+    access-log:
+      enabled: true
+    cors: true
+    cors:
+      paths: /*
+      methods: GET,POST,PATCH,PUT,DELETE,OPTIONS
+      headers: Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin
+
+scryfallApi/mp-rest/url: https://api.scryfall.com
+scryfall.max-search-pages: 5
+
+cubeCobraHostName/mp-rest/url: https://cubecobra.com
+
+google.oauth.client-id: ""
+google.oauth.dev-mode: true

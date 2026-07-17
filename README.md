@@ -21,22 +21,33 @@ json-server --watch db.json
 ./gradlew clean build quarkusDev
 ```
 
-## Profiles
+## Configuration
+
+Configuration uses YAML files with Quarkus profile support:
+
+| File | Purpose |
+|------|---------|
+| `application.yaml` | Shared config (CORS, Scryfall, CubeCobra, OAuth client ID) |
+| `application-dev.yaml` | Dev overrides (localhost MongoDB, dev CORS origins) |
+| `application-prod.yaml` | Prod overrides (env var MongoDB, production CORS origin) |
+
+### Profiles
 
 | Profile | Use |
 |---------|-----|
-| `dev`   | Local development with json-server |
+| `dev`   | Local development with local MongoDB |
 | `prod`  | Production with CubeCobra API |
-| `gapped`| Dev variant without local json-server |
 
-Configure via `quarkus.profile` in `application.properties`.
+- **Default:** `prod` is active by default in Quarkus
+- **Dev mode:** `./gradlew quarkusDev` automatically activates the `dev` profile
+- **Override:** Set `QUARKUS_PROFILE=dev` or `QUARKUS_PROFILE=prod` as an environment variable
 
 ## Testing the Account System
 
 ### Quick Start (Dev Mode)
 
 The backend ships with a **dev mode** that bypasses Google JWT signature verification.
-Dev mode is enabled by default in `application.properties` via `google.oauth.dev-mode=true`.
+Dev mode is enabled by default in `application-dev.yaml` via `google.oauth.dev-mode=true`.
 
 To test account endpoints with Insomnia:
 
@@ -65,10 +76,13 @@ For production or end-to-end testing with real Google authentication:
 6.  Add your front-end URL to **Authorized JavaScript origins** (e.g. `http://localhost:5173`)
 7.  Add your front-end URL to **Authorized redirect URIs** (e.g. `http://localhost:5173`)
 8.  Copy the generated **Client ID**
-9.  Set it in `application.properties`:
-    ```properties
-    google.oauth.client-id=YOUR_CLIENT_ID
-    google.oauth.dev-mode=false
+9.  Set it in `application.yaml`:
+    ```yaml
+    google.oauth.client-id: YOUR_CLIENT_ID
+    ```
+    And disable dev mode in `application-dev.yaml`:
+    ```yaml
+    google.oauth.dev-mode: false
     ```
 10. Your front-end should use the [Google Identity Services library](https://developers.google.com/identity/gsi/web) to obtain an ID token, then POST it to `/account/login`.
 
