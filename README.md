@@ -1,58 +1,50 @@
-# magic-draft
+# Pyramid Draft Backend
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Quarkus backend for the Pyramid Draft MTG cube drafting application.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+## Prerequisites
 
-1. Run MongoDB in docker
-2. Run Json-server locally (Serves the dummy local cubes)
-3. Update app.prop file to point to these locations
-4. Run with ./gradlew clean build quarkusDev
+- Java 17
+- Docker
+- Node.js (for json-server)
 
-To inspect the DB
-mongoexport   --db MTGames   --collection Games   --out games.json
+## Quick Start
 
-Small
-20
-After Merge
-13
+```bash
+# Start MongoDB
+docker compose -f src/main/docker/docker-compose.yml up -d
 
-=32 Total in tool?
+# Start json-server (dev only)
+json-server --watch db.json
 
-Medium
+# Run the app
+./gradlew clean build quarkusDev
+```
 
+## Profiles
 
-Large picks
-32
-after Merge
-18
+| Profile | Use |
+|---------|-----|
+| `dev`   | Local development with json-server |
+| `prod`  | Production with CubeCobra API |
+| `gapped`| Dev variant without local json-server |
 
-## TODO
+Configure via `quarkus.profile` in `application.properties`.
 
-### Core Improvements
-- [ ] Add good unit tests
-- [ ] Fix any weird styling errors
-- [ ] Add better documentation
-- [ ] Make the dev lifecycle easier and better documented
+## Testing
 
-### Quarkus Upgrade
-- [ ] Upgrade Quarkus to **3.20** and resolve related issues
-- [ ] Migrate configuration to `application.yaml` after upgrade
+```bash
+./gradlew test
+```
 
-### API & Cleanup
-- [ ] Clean up dummy REST endpoints (remove if not needed)
-- [ ] Add OpenAPI specifications
+Coverage reports are generated at `build/reports/jacoco/test/html/index.html`.
 
-### Nice-to-Haves
-- [ ] Investigate adding security / quality scans
+## Build & Deploy
 
-# Project Overall Upgrades
-- [ ] Get some nice display for reading through game data, is ELK the only option?
-- [ ] Same thing for metrics, it would be cool to look at
-- [ ] Add some integration tests for once the service is live
-- [ ] Add easier way to test new images out
-- [ ] Fix the auto renew process for good with the https Cert
-- [ ] Yet Another UI Overhaul
-- [ ] A draft engine partner would be cool for mock drafts, Timefold maybe?
-- [ ] Integration of booster pack creations, scryfall integration as well
-- [ ] Account Management for Games
+```bash
+# Build native executable
+./gradlew build -Dquarkus.package.type=native
+
+# Docker build
+docker build -f src/main/docker/Dockerfile.jvm -t pyramid-draft-backend .
+```

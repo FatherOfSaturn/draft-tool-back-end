@@ -1,0 +1,55 @@
+{
+  "mainboard": [
+    {
+      "cardID": "card-001",
+      "name": "Test Card Alpha",
+      "details": {
+        "set": "test",
+        "set_name": "Test Set",
+        "scryfall_id": "sf-card-001",
+        "image_small": "https://example.com/small/1.jpg",
+        "image_normal": "https://example.com/normal/1.jpg",
+        "name": "Test Card Alpha",
+        "type": "Creature",
+        "cmc": 1,
+        "parsed_cost": ["1"]
+      },
+      "cmc": 1,
+      "type_line": "Creature"
+    },
+    {
+      "cardID": "card-002",
+      "name": "Test Card Beta",
+      "details": {
+        "set": "test",
+        "set_name": "Test Set",
+        "scryfall_id": "sf-card-002",
+        "image_small": "https://example.com/small/2.jpg",
+        "image_normal": "https://example.com/normal/2.jpg",
+        "name": "Test Card Beta",
+        "type": "Instant",
+        "cmc": 2,
+        "parsed_cost": ["2"]
+      },
+      "cmc": 2,
+      "type_line": "Instant"
+    },
+    {
+      "cardID": "card-003",
+      "name": "Test Card Gamma",
+      "details": {
+        "set": "test",
+        "set_name": "Test Set",
+        "scryfall_id": "sf-card-003",
+        "image_small": "https://example.com/small/3.jpg",
+        "image_normal": "https://example.com/normal/3.jpg",
+        "name": "Test Card Gamma",
+        "type": "Sorcery",
+        "cmc": 3,
+        "parsed_cost": ["3"]
+      },
+      "cmc": 3,
+      "type_line": "Sorcery"
+    }
+  ]
+}

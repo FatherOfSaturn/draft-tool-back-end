@@ -1,6 +1,11 @@
 plugins {
     id 'java'
     id 'io.quarkus'
+    id 'jacoco'
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 repositories {
@@ -15,21 +20,22 @@ dependencies {
     implementation 'io.quarkus:quarkus-smallrye-health'
     implementation 'io.quarkus:quarkus-config-yaml'
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.1' // Jackson core functionality
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1' // Optional: Java 8 date/time support
-    implementation 'io.quarkus:quarkus-resteasy-jackson' // For Jackson support
+    implementation 'io.quarkus:quarkus-resteasy-jackson'
     implementation 'io.quarkus:quarkus-arc'
-
+    runtimeOnly 'org.jboss.logmanager:log4j2-jboss-logmanager'
     implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
-    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
 
     implementation 'io.quarkus:quarkus-mongodb-client'
     implementation 'org.mongodb:mongodb-driver-sync:4.8.0'
     implementation 'org.mongodb:mongodb-driver-core:4.8.0'
     implementation 'org.mongodb:bson:4.8.0'
 
-    testImplementation 'org.mockito:mockito-core:3.12.4'
-    testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+    testImplementation 'commons-io:commons-io:2.16.1'
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
 }
@@ -44,6 +50,7 @@ java {
 
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    finalizedBy jacocoTestReport
 }
 compileJava {
     options.encoding = 'UTF-8'
@@ -53,3 +60,48 @@ compileJava {
 compileTestJava {
     options.encoding = 'UTF-8'
 }
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                'org/magic/pyramidDraft/api/**',
+                'org/magic/common/util/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                'org/magic/pyramidDraft/api/**',
+                'org/magic/common/util/**'
+            ])
+        }))
+    }
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.30
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.30
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
