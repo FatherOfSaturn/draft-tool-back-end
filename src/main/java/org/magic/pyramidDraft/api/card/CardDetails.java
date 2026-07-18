@@ -18,6 +18,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Detailed metadata for a Magic card, including set info, images, type line,
+ * mana cost, and power/toughness. Populated from CubeCobra's cube data format.
+ */
 @Getter
 @Setter
 @ToString

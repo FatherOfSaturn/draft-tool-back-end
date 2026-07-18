@@ -1,11 +1,12 @@
 package org.magic.pyramidDraft.app;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.common.util.JsonUtility;
@@ -14,8 +15,6 @@ import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.api.card.CardPack;
 import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.pyramidDraft.app.PackCreator;
-import org.magic.pyramidDraft.app.PackMerger;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,7 +31,6 @@ public class PackMergerTest extends TestUtils {
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
 
         Cube cube = JsonUtility.getInstance().fromJson(cubeString, Cube.class);
-        PackCreator creator = new PackCreator(cube);
 
         // Test needs to add data for the merge flag being true
         InputStream player1IS = getClass().getClassLoader().getResourceAsStream("Player1.json");

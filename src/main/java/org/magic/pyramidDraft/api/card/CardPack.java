@@ -19,6 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * A pack of cards within a pyramid draft. Internally stores cards in a map keyed by
+ * card ID for O(1) removal during drafting. Tracks the original card count (before
+ * any double-pick removals) and whether the pack has been double-drafted.
+ */
 @Getter
 @Setter
 @ToString

@@ -19,6 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Represents the mainboard of a cube — the full ordered list of cards.
+ * Provides shuffle and draw operations via an internal iterator that
+ * sequentially deals cards into packs.
+ */
 @Getter
 @Setter
 @ToString
@@ -37,6 +42,14 @@ public class CardsInCube {
         this.mainboard = Objects.requireNonNull(mainboard, "List of Cards Required for mainboard");
     }
 
+    /**
+     * Draws the specified number of cards from the cube's mainboard using the
+     * internal iterator. Cards are dealt sequentially after shuffling.
+     *
+     * @param numberOfCardsToDraw the number of cards to draw
+     * @return the drawn cards
+     * @throws IllegalStateException if the iterator is exhausted before all cards are drawn
+     */
     public List<Card> drawCardsFromCube(final int numberOfCardsToDraw) {
         LOGGER.info("Attempting to Draw {} from the cube.", numberOfCardsToDraw);
         List<Card> cards = new ArrayList<>();

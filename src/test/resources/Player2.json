@@ -4243,7 +4243,7 @@
         "doubleDraftedFlag" : false
     } ],
     "doubleDraftPicksRemaining" : 4,
-    "playerID" : "2",
+    "accountID" : "2",
     "currentDraftPack" : 0,
     "readyForMerge" : false
 }

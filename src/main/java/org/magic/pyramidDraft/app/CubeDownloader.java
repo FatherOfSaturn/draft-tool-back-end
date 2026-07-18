@@ -11,6 +11,10 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+/**
+ * Downloads cube data from CubeCobra. In dev mode, fetches by owner name;
+ * in prod mode, fetches by cube ID. Supports retry on failure in prod.
+ */
 @ApplicationScoped
 public class CubeDownloader {
     private static final Logger LOGGER = LogManager.getLogger(CubeDownloader.class);
@@ -28,6 +32,13 @@ public class CubeDownloader {
         this.cubeCobraService = cubeCobraService;
     }
 
+    /**
+     * Fetches cube data based on the active Quarkus profile.
+     * In dev/gapped mode, uses the configured cube owner name; in prod, uses the cube ID directly.
+     *
+     * @param cubeID the cube ID to fetch (used in prod mode)
+     * @return a {@link Uni} emitting the {@link Cube}
+     */
     public Uni<Cube> getCubeForCubeID(final String cubeID) {
                 LOGGER.info("profile: {}", activeProfile);
         switch (activeProfile) {
