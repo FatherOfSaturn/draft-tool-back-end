@@ -1,0 +1,32 @@
+{
+  "id": "7673784e-db4b-43a1-8d55-1bb9fc1e284f",
+  "oracle_id": "4457ed35-7c10-48c8-9776-456485fdf070",
+  "name": "Lightning Bolt",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+  "colors": ["R"],
+  "color_identity": ["R"],
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "layout": "normal",
+  "set": "msc",
+  "set_name": "Marvel Super Heroes Commander",
+  "rarity": "uncommon",
+  "keywords": [],
+  "booster": false,
+  "uri": "https://api.scryfall.com/cards/7673784e-db4b-43a1-8d55-1bb9fc1e284f",
+  "image_uris": {
+    "small": "https://cards.scryfall.io/small/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.jpg?1783903008",
+    "normal": "https://cards.scryfall.io/normal/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.jpg?1783903008",
+    "large": "https://cards.scryfall.io/large/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.jpg?1783903008",
+    "png": "https://cards.scryfall.io/png/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.png?1783903008",
+    "art_crop": "https://cards.scryfall.io/art_crop/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.jpg?1783903008",
+    "border_crop": "https://cards.scryfall.io/border_crop/front/7/6/7673784e-db4b-43a1-8d55-1bb9fc1e284f.jpg?1783903008"
+  },
+  "legalities": {},
+  "card_faces": null,
+  "all_parts": null
+}

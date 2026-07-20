@@ -2,13 +2,18 @@ package org.magic.common.external;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.magic.common.api.scryfall.ScryfallCard;
+import org.magic.common.api.scryfall.ScryfallCollectionRequest;
+import org.magic.common.api.scryfall.ScryfallCollectionResponse;
 import org.magic.common.api.scryfall.ScryfallListResponse;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 
 /**
@@ -54,4 +59,16 @@ public interface ScryfallService {
     @GET
     @Path("/cards/{id}")
     Uni<ScryfallCard> getCardById(@PathParam("id") String scryfallId);
+
+    /**
+     * Looks up up to 75 cards by name or ID in a single request.
+     *
+     * @param request the collection request containing card identifiers
+     * @return a {@link Uni} emitting the collection response with matched cards and not-found entries
+     */
+    @POST
+    @Path("/cards/collection")
+    @Consumes("application/json")
+    @Produces("application/json")
+    Uni<ScryfallCollectionResponse> lookupByCollection(ScryfallCollectionRequest request);
 }

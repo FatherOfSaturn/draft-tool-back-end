@@ -1,7 +1,9 @@
 package org.magic.pyramidDraft.api.card;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -13,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.magic.common.api.scryfall.ScryfallCard;
+import org.magic.common.api.scryfall.ScryfallImageUris;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -75,5 +79,73 @@ public class CardDetails {
         }
         this.cmc = Objects.requireNonNull(cmc, "cmc Required for card details");
         this.type = Objects.requireNonNull(type, "type Required for card details");
+    }
+
+    /**
+     * Converts a {@link ScryfallCard} into a CubeCobra {@code CardDetails}.
+     * Handles DFC images by falling back to {@code card_faces} when {@code image_uris} is null.
+     */
+    public static CardDetails fromScryfallCard(final ScryfallCard card) {
+        return fromScryfallCard(card, null);
+    }
+
+    /**
+     * Converts a {@link ScryfallCard} into a CubeCobra {@code CardDetails},
+     * using the provided {@code backImageUris} for the flip image instead of
+     * deriving it from {@code card_faces}. Used for meld cards where the
+     * back image lives on a separate card.
+     */
+    public static CardDetails fromScryfallCard(final ScryfallCard card, final ScryfallImageUris backImageUris) {
+        String imageSmall = null;
+        String imageNormal = null;
+        String imageFlip = null;
+
+        if (card.imageUris() != null) {
+            imageSmall = card.imageUris().small();
+            imageNormal = card.imageUris().normal();
+        } else if (card.cardFaces() != null && !card.cardFaces().isEmpty()) {
+            var firstFace = card.cardFaces().get(0);
+            if (firstFace.imageUris() != null) {
+                imageSmall = firstFace.imageUris().small();
+                imageNormal = firstFace.imageUris().normal();
+            }
+            if (card.cardFaces().size() > 1) {
+                var secondFace = card.cardFaces().get(1);
+                if (secondFace.imageUris() != null) {
+                    imageFlip = secondFace.imageUris().normal();
+                }
+            }
+        }
+
+        if (imageFlip == null && backImageUris != null) {
+            imageFlip = backImageUris.normal();
+        }
+
+        String manaCost = card.manaCost();
+        if (manaCost == null && card.cardFaces() != null && !card.cardFaces().isEmpty()) {
+            manaCost = card.cardFaces().get(0).manaCost();
+        }
+
+        return new CardDetails(
+                card.set(),
+                card.setName(),
+                card.id(),
+                imageSmall,
+                imageNormal,
+                imageFlip,
+                card.name(),
+                card.typeLine(),
+                (int) card.cmc(),
+                parseManaCost(manaCost)
+        );
+    }
+
+    private static List<String> parseManaCost(final String manaCost) {
+        if (manaCost == null || manaCost.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(manaCost.split("\\}\\{"))
+                .map(s -> s.replace("{", "").replace("}", "").toLowerCase())
+                .collect(Collectors.toList());
     }
 }

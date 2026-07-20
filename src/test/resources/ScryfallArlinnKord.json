@@ -1,0 +1,64 @@
+{
+  "id": "e72d7c11-2165-4c72-80f3-3c1a7b4b5572",
+  "oracle_id": "6bb7d0df-7a9f-4e17-8c31-7628c4b12356",
+  "name": "Arlinn Kord // Arlinn, Embraced by the Moon",
+  "mana_cost": null,
+  "cmc": 4.0,
+  "type_line": "Legendary Planeswalker — Arlinn // Legendary Planeswalker — Arlinn",
+  "oracle_text": null,
+  "colors": ["G", "R"],
+  "color_identity": ["G", "R"],
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "layout": "transform",
+  "set": "inr",
+  "set_name": "Innistrad Remastered",
+  "rarity": "mythic",
+  "keywords": ["Transform"],
+  "booster": true,
+  "uri": "https://api.scryfall.com/cards/e72d7c11-2165-4c72-80f3-3c1a7b4b5572",
+  "image_uris": null,
+  "legalities": {},
+  "card_faces": [
+    {
+      "name": "Arlinn Kord",
+      "mana_cost": "{2}{R}{G}",
+      "type_line": "Legendary Planeswalker — Arlinn",
+      "oracle_text": "+1: Until end of turn, up to one target creature gets +2/+2 and gains vigilance and haste.\n0: Create a 2/2 green Wolf creature token. Transform Arlinn Kord.",
+      "colors": ["G", "R"],
+      "power": null,
+      "toughness": null,
+      "loyalty": "3",
+      "flavor_text": null,
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "normal": "https://cards.scryfall.io/normal/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "large": "https://cards.scryfall.io/large/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "png": "https://cards.scryfall.io/png/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.png?1783908089",
+        "art_crop": "https://cards.scryfall.io/art_crop/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "border_crop": "https://cards.scryfall.io/border_crop/front/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089"
+      }
+    },
+    {
+      "name": "Arlinn, Embraced by the Moon",
+      "mana_cost": "",
+      "type_line": "Legendary Planeswalker — Arlinn",
+      "oracle_text": "+1: Creatures you control get +1/+1 and gain trample until end of turn.\n-1: Arlinn deals 3 damage to any target. Transform Arlinn.\n-6: You get an emblem with \"Creatures you control have haste and '{T}: This creature deals damage equal to its power to any target.'\"",
+      "colors": ["G", "R"],
+      "power": null,
+      "toughness": null,
+      "loyalty": null,
+      "flavor_text": null,
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "normal": "https://cards.scryfall.io/normal/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "large": "https://cards.scryfall.io/large/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "png": "https://cards.scryfall.io/png/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.png?1783908089",
+        "art_crop": "https://cards.scryfall.io/art_crop/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089",
+        "border_crop": "https://cards.scryfall.io/border_crop/back/e/7/e72d7c11-2165-4c72-80f3-3c1a7b4b5572.jpg?1783908089"
+      }
+    }
+  ],
+  "all_parts": null
+}

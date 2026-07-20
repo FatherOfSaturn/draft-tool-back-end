@@ -1,0 +1,54 @@
+{
+  "id": "7e926e19-553c-470a-afde-358541af5caa",
+  "oracle_id": "b23587e0-9fb7-492e-8bb4-f218e8e4ce6c",
+  "name": "Brisela, Voice of Nightmares",
+  "mana_cost": "",
+  "cmc": 11.0,
+  "type_line": "Legendary Creature — Eldrazi Angel",
+  "oracle_text": "Flying, first strike, vigilance, lifelink\nYour opponents can't cast spells with mana value 3 or less.",
+  "colors": [],
+  "color_identity": ["W"],
+  "power": "9",
+  "toughness": "10",
+  "loyalty": null,
+  "layout": "meld",
+  "set": "inr",
+  "set_name": "Innistrad Remastered",
+  "rarity": "mythic",
+  "keywords": ["Flying", "Lifelink", "Vigilance", "First strike"],
+  "booster": true,
+  "uri": "https://api.scryfall.com/cards/7e926e19-553c-470a-afde-358541af5caa",
+  "image_uris": {
+    "small": "https://cards.scryfall.io/small/front/7/e/7e926e19-553c-470a-afde-358541af5caa.jpg?1783908189",
+    "normal": "https://cards.scryfall.io/normal/front/7/e/7e926e19-553c-470a-afde-358541af5caa.jpg?1783908189",
+    "large": "https://cards.scryfall.io/large/front/7/e/7e926e19-553c-470a-afde-358541af5caa.jpg?1783908189",
+    "png": "https://cards.scryfall.io/png/front/7/e/7e926e19-553c-470a-afde-358541af5caa.png?1783908189",
+    "art_crop": "https://cards.scryfall.io/art_crop/front/7/e/7e926e19-553c-470a-afde-358541af5caa.jpg?1783908189",
+    "border_crop": "https://cards.scryfall.io/border_crop/front/7/e/7e926e19-553c-470a-afde-358541af5caa.jpg?1783908189"
+  },
+  "legalities": {},
+  "card_faces": null,
+  "all_parts": [
+    {
+      "id": "7e926e19-553c-470a-afde-358541af5caa",
+      "component": "meld_result",
+      "name": "Brisela, Voice of Nightmares",
+      "type_line": "Legendary Creature — Eldrazi Angel",
+      "uri": "https://api.scryfall.com/cards/7e926e19-553c-470a-afde-358541af5caa"
+    },
+    {
+      "id": "6fccdb60-5fce-4a6e-a709-b986f9a4b653",
+      "component": "meld_part",
+      "name": "Bruna, the Fading Light",
+      "type_line": "Legendary Creature — Angel Horror",
+      "uri": "https://api.scryfall.com/cards/6fccdb60-5fce-4a6e-a709-b986f9a4b653"
+    },
+    {
+      "id": "04506bad-3856-4184-8dda-941ded60f41a",
+      "component": "meld_part",
+      "name": "Gisela, the Broken Blade",
+      "type_line": "Legendary Creature — Angel Horror",
+      "uri": "https://api.scryfall.com/cards/04506bad-3856-4184-8dda-941ded60f41a"
+    }
+  ]
+}
