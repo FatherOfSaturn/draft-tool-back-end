@@ -1,5 +1,7 @@
 package org.magic.supportService.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * Enumerates the lifecycle statuses of a support request:
  * {@link #NEW} → {@link #IN_PROGRESS} → {@link #BLOCKED}/{@link #COMPLETED} → {@link #DELETED}.
@@ -29,6 +31,7 @@ public enum SupportStatus {
      * @return the matching {@link SupportStatus}
      * @throws IllegalArgumentException if no matching status is found
      */
+    @JsonCreator
     public static SupportStatus fromString(final String description) {
         for (SupportStatus status : SupportStatus.values()) {
             if (status.description.equalsIgnoreCase(description)) {
