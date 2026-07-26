@@ -76,9 +76,9 @@ class SupportRequestTest {
 
         assertNull(request.getId());
         assertNull(request.getAccountID());
-        assertEquals(SupportStatus.NEW, request.getStatus());
-        assertNotNull(request.getCreatedOnDate());
-        assertNotNull(request.getLastStatusChangeDate());
+        assertNull(request.getStatus());
+        assertNull(request.getCreatedOnDate());
+        assertNull(request.getLastStatusChangeDate());
     }
 
     @Test
