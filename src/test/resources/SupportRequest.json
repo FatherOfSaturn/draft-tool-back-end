@@ -1,0 +1,12 @@
+{
+  "id": "507f1f77bcf86cd799439011",
+  "title": "Add dark mode support",
+  "description": "The application should support a dark mode theme for better accessibility during nighttime use.",
+  "contactEmail": "user@example.com",
+  "priority": "HIGH",
+  "accountID": "507f1f77bcf86cd799439099",
+  "status": "NEW",
+  "type": "NEW_FEATURE",
+  "createdOnDate": "2026-01-15T10:30:00Z",
+  "lastStatusChangeDate": "2026-01-15T10:30:00Z"
+}
