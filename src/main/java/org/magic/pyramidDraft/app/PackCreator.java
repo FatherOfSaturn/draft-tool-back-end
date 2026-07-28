@@ -54,7 +54,14 @@ public class PackCreator {
         int packsOf9;
         int packsOf11;
 
-        if (cubeSize <= 540 && cubeSize > 490) {
+        if (cubeSize > 540) {
+            LOGGER.info("XL Cube size detected: {}", cube.getName());
+            packsOf3 = 8;
+            packsOf7 = 8;
+            packsOf9 = 8;
+            packsOf11 = 8;
+        }
+        else if (cubeSize <= 540 && cubeSize > 490) {
             LOGGER.info("Large Cube size detected: {}", cube.getName());
             packsOf3 = 8;
             packsOf7 = 8;

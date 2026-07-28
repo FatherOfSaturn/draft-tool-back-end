@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bson.types.ObjectId;
 import org.magic.supportService.api.CreateSupportRequest;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
@@ -52,9 +53,9 @@ public class SupportWorker {
                     now
             );
 
-            String id = dbHandler.addRequest(supportRequest);
-            supportRequest.setId(id);
-            LOGGER.info("Created SupportRequest: {} - {}", id, request.title());
+            supportRequest.setId(new ObjectId().toHexString());
+            dbHandler.addRequest(supportRequest);
+            LOGGER.info("Created SupportRequest: {} - {}", supportRequest.getId(), request.title());
             return supportRequest;
         });
     }

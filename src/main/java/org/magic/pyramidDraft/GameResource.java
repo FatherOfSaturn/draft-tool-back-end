@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.GameStatusMessage;
 import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.card.Card;
@@ -14,7 +13,6 @@ import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -22,12 +20,11 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 /**
  * REST resource for managing pyramid draft games.
  * Provides endpoints for creating games, drafting cards, merging packs,
- * ending games, and administrative cleanup.
+ * and ending games.
  */
 @Path("/game")
 public class GameResource {
@@ -122,21 +119,6 @@ public class GameResource {
         LOGGER.info("Call to End Game: {}", gameID);
         return gameWorker.endGame(gameID)
                          .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
-    }
-
-    /**
-     * Deletes all games matching the specified state. Administrative endpoint for cleanup.
-     *
-     * @param gameState the game state to filter by (e.g., "game_started", "game_complete")
-     * @return a 200 OK response with a message indicating how many records were deleted
-     */
-    @DELETE
-    @Path("/admin/games/{gameState}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Uni<Response> deleteGamesWithStatus(@PathParam("gameState") final String gameState) {
-        LOGGER.info("Call to delete Games with state of {}", gameState);
-        
-        return gameWorker.deleteGamesWithStatus(GameState.fromString(gameState));
     }
 
     /**

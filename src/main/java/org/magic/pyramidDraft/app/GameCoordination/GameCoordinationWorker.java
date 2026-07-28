@@ -103,7 +103,16 @@ public class GameCoordinationWorker {
         LOGGER.info("\nSuccesfully Allocated Draft for Card: {}\n", cardDrafted.getName());
 
         dbHandler.updatePlayer(gameInfo, player);
-        
+
+        if (gameInfo.getGameState() == GameState.GAME_MERGED) {
+            Player p1 = gameInfo.getPlayers().get(0);
+            Player p2 = gameInfo.getPlayers().get(1);
+            if (p1.isReadyForMerge() && p2.isReadyForMerge()) {
+                LOGGER.info("Both players finished post-merge. Auto-completing game: {}", gameID);
+                dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE);
+            }
+        }
+
         return cardDrafted;
     }
 
@@ -219,14 +228,20 @@ public class GameCoordinationWorker {
         List<GameSummary> summaries = games.stream()
                 .map(game -> {
                     List<Player> players = game.getPlayers();
-                    String player1Name = players.size() > 0 ? players.get(0).getPlayerName() : null;
-                    String player2Name = players.size() > 1 ? players.get(1).getPlayerName() : null;
+                    Player p1 = players.size() > 0 ? players.get(0) : null;
+                    Player p2 = players.size() > 1 ? players.get(1) : null;
                     return new GameSummary(
                             game.getGameID(),
                             game.getCubeID(),
                             game.getGameState(),
-                            player1Name,
-                            player2Name,
+                            p1 != null ? p1.getPlayerName() : null,
+                            p1 != null ? p1.getCurrentDraftPack() : 0,
+                            p1 != null ? p1.getCardPacks().size() : 0,
+                            p1 != null && p1.isReadyForMerge(),
+                            p2 != null ? p2.getPlayerName() : null,
+                            p2 != null ? p2.getCurrentDraftPack() : 0,
+                            p2 != null ? p2.getCardPacks().size() : 0,
+                            p2 != null && p2.isReadyForMerge(),
                             game.getCreatedAt()
                     );
                 })

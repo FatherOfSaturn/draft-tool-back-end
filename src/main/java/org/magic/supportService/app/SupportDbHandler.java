@@ -41,12 +41,12 @@ public class SupportDbHandler {
 
     /**
      * Persists a new support request to the database.
+     * The request's ID must be pre-set before calling this method.
      *
      * @param request the request to insert
-     * @return the MongoDB-generated ObjectId as a hex string
      */
-    public String addRequest(final SupportRequest request) {
-        return getCollection().insertOne(request).getInsertedId().asObjectId().getValue().toHexString();
+    public void addRequest(final SupportRequest request) {
+        getCollection().insertOne(request);
     }
 
     /**

@@ -43,12 +43,10 @@ class SupportWorkerTest {
                 "Add dark mode", "Support dark mode theme", "user@example.com",
                 SupportPriority.HIGH, "acct-123", SupportType.NEW_FEATURE);
 
-        when(supportDbHandler.addRequest(any(SupportRequest.class))).thenReturn(testId);
-
         SupportRequest result = supportWorker.createRequest(request).await().indefinitely();
 
         assertNotNull(result);
-        assertEquals(testId, result.getId());
+        assertNotNull(result.getId());
         assertEquals("Add dark mode", result.getTitle());
         assertEquals(SupportStatus.NEW, result.getStatus());
         assertNotNull(result.getCreatedOnDate());
