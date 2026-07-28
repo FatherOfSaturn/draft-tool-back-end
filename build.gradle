@@ -99,12 +99,20 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
+<<<<<<< HEAD
                 minimum = 0.70
+=======
+                minimum = 0.20
+>>>>>>> 1bd94721ca23ba2e1809ed0068254876eddb3be8
             }
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
+<<<<<<< HEAD
                 minimum = 0.40
+=======
+                minimum = 0.15
+>>>>>>> 1bd94721ca23ba2e1809ed0068254876eddb3be8
             }
         }
     }
