@@ -169,4 +169,46 @@ class SupportRequestTest {
         assertNull(request.accountID());
         assertEquals("title", request.title());
     }
+
+    @Test
+    void testSupportRequestEqualsAndHashCode() {
+        Instant now = Instant.now();
+        SupportRequest a = new SupportRequest(
+                "id-1", "Title", "Desc", "e@e.com",
+                SupportPriority.HIGH, "acct-1", SupportStatus.NEW, SupportType.BUG_FIX, now, now);
+        SupportRequest b = new SupportRequest(
+                "id-1", "Title", "Desc", "e@e.com",
+                SupportPriority.HIGH, "acct-1", SupportStatus.NEW, SupportType.BUG_FIX, now, now);
+        SupportRequest c = new SupportRequest(
+                "id-2", "Other", "X", "x@x.com",
+                SupportPriority.LOW, "acct-2", SupportStatus.COMPLETED, SupportType.MISC_SUPPORT, null, null);
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+        assertNotEquals(a, c);
+        assertNotEquals(a, null);
+        assertNotEquals(a, "string");
+        assertEquals(a, a);
+    }
+
+    @Test
+    void testSupportRequestEqualsWithNullFields() {
+        SupportRequest a = new SupportRequest(null, null, null, null, null, null, null, null, null, null);
+        SupportRequest b = new SupportRequest(null, null, null, null, null, null, null, null, null, null);
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void testSupportRequestToString() {
+        Instant now = Instant.now();
+        SupportRequest request = new SupportRequest(
+                "id-1", "Title", null, null,
+                null, null, null, null, now, null);
+
+        String string = request.toString();
+        assertTrue(string.contains("id-1"));
+        assertTrue(string.contains("Title"));
+    }
 }
