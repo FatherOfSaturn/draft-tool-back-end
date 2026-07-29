@@ -7,6 +7,7 @@ services:
       - "8080:8080"
     environment:
       - MONGO_CONNECTION=$MONGO_CONNECTION
+      - QUARKUS_PROFILE=prod
     networks:
       - internal_network
   front:

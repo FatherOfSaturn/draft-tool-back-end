@@ -12,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.magic.common.api.scryfall.ScryfallCard;
+import org.magic.common.api.scryfall.ScryfallImageUris;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -68,5 +70,29 @@ public class Card {
         } else {
             this.type_line = type_line;
         }
+    }
+
+    /**
+     * Converts a {@link ScryfallCard} into a CubeCobra {@code Card}.
+     * Delegates to {@link CardDetails#fromScryfallCard(ScryfallCard)} for the detail mapping.
+     */
+    public static Card fromScryfallCard(final ScryfallCard card) {
+        return fromScryfallCard(card, null);
+    }
+
+    /**
+     * Converts a {@link ScryfallCard} into a CubeCobra {@code Card},
+     * using the provided {@code backImageUris} for the flip image.
+     * Used for meld cards where the back image lives on a separate card.
+     */
+    public static Card fromScryfallCard(final ScryfallCard card, final ScryfallImageUris backImageUris) {
+        CardDetails details = CardDetails.fromScryfallCard(card, backImageUris);
+        return new Card(
+                card.name(),
+                details,
+                card.id(),
+                (int) card.cmc(),
+                card.typeLine()
+        );
     }
 }

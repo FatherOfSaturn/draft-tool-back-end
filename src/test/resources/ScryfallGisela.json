@@ -1,0 +1,54 @@
+{
+  "id": "04506bad-3856-4184-8dda-941ded60f41a",
+  "oracle_id": "f3e23d5e-bd88-4e7c-a3fb-db2a8cb05b22",
+  "name": "Gisela, the Broken Blade",
+  "mana_cost": "{2}{W}{W}",
+  "cmc": 4.0,
+  "type_line": "Legendary Creature — Angel Horror",
+  "oracle_text": "Flying, first strike, lifelink\nAt the beginning of your end step, if you both own and control Gisela and a creature named Bruna, the Fading Light, exile them, then meld them into Brisela, Voice of Nightmares.",
+  "colors": ["W"],
+  "color_identity": ["W"],
+  "power": "4",
+  "toughness": "3",
+  "loyalty": null,
+  "layout": "meld",
+  "set": "inr",
+  "set_name": "Innistrad Remastered",
+  "rarity": "mythic",
+  "keywords": ["Flying", "Lifelink", "First strike", "Meld"],
+  "booster": true,
+  "uri": "https://api.scryfall.com/cards/04506bad-3856-4184-8dda-941ded60f41a",
+  "image_uris": {
+    "small": "https://cards.scryfall.io/small/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.jpg?1783908181",
+    "normal": "https://cards.scryfall.io/normal/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.jpg?1783908181",
+    "large": "https://cards.scryfall.io/large/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.jpg?1783908181",
+    "png": "https://cards.scryfall.io/png/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.png?1783908181",
+    "art_crop": "https://cards.scryfall.io/art_crop/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.jpg?1783908181",
+    "border_crop": "https://cards.scryfall.io/border_crop/front/0/4/04506bad-3856-4184-8dda-941ded60f41a.jpg?1783908181"
+  },
+  "legalities": {},
+  "card_faces": null,
+  "all_parts": [
+    {
+      "id": "7e926e19-553c-470a-afde-358541af5caa",
+      "component": "meld_result",
+      "name": "Brisela, Voice of Nightmares",
+      "type_line": "Legendary Creature — Eldrazi Angel",
+      "uri": "https://api.scryfall.com/cards/7e926e19-553c-470a-afde-358541af5caa"
+    },
+    {
+      "id": "6fccdb60-5fce-4a6e-a709-b986f9a4b653",
+      "component": "meld_part",
+      "name": "Bruna, the Fading Light",
+      "type_line": "Legendary Creature — Angel Horror",
+      "uri": "https://api.scryfall.com/cards/6fccdb60-5fce-4a6e-a709-b986f9a4b653"
+    },
+    {
+      "id": "04506bad-3856-4184-8dda-941ded60f41a",
+      "component": "meld_part",
+      "name": "Gisela, the Broken Blade",
+      "type_line": "Legendary Creature — Angel Horror",
+      "uri": "https://api.scryfall.com/cards/04506bad-3856-4184-8dda-941ded60f41a"
+    }
+  ]
+}

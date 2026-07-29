@@ -1,0 +1,64 @@
+{
+  "id": "318c363b-61cc-4e2f-8f86-a4287539ea07",
+  "oracle_id": "8faa4330-07bb-4b65-810a-bbce29d3cd42",
+  "name": "Invasion of Alara // Awaken the Maelstrom",
+  "mana_cost": null,
+  "cmc": 5.0,
+  "type_line": "Battle — Siege // Sorcery",
+  "oracle_text": null,
+  "colors": ["B", "G", "R", "U", "W"],
+  "color_identity": ["B", "G", "R", "U", "W"],
+  "power": null,
+  "toughness": null,
+  "loyalty": null,
+  "layout": "transform",
+  "set": "mom",
+  "set_name": "March of the Machine",
+  "rarity": "rare",
+  "keywords": ["Transform"],
+  "booster": true,
+  "uri": "https://api.scryfall.com/cards/318c363b-61cc-4e2f-8f86-a4287539ea07",
+  "image_uris": null,
+  "legalities": {},
+  "card_faces": [
+    {
+      "name": "Invasion of Alara",
+      "mana_cost": "{W}{U}{B}{R}{G}",
+      "type_line": "Battle — Siege",
+      "oracle_text": "When this Siege enters, exile cards from the top of your library until you exile two nonland cards with mana value 4 or less. You may cast one of those two cards without paying its mana cost. Put one of them into your hand. Then put the other cards exiled this way on the bottom of your library in a random order.",
+      "colors": ["B", "G", "R", "U", "W"],
+      "power": null,
+      "toughness": null,
+      "loyalty": null,
+      "flavor_text": null,
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "normal": "https://cards.scryfall.io/normal/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "large": "https://cards.scryfall.io/large/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "png": "https://cards.scryfall.io/png/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.png?1783951955",
+        "art_crop": "https://cards.scryfall.io/art_crop/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "border_crop": "https://cards.scryfall.io/border_crop/front/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955"
+      }
+    },
+    {
+      "name": "Awaken the Maelstrom",
+      "mana_cost": "",
+      "type_line": "Sorcery",
+      "oracle_text": "Awaken the Maelstrom is all colors.\nTarget player draws two cards. You may put an artifact card from your hand onto the battlefield. Create a token that's a copy of a permanent you control. Distribute three +1/+1 counters among one, two, or three creatures you control. Destroy target permanent an opponent controls.",
+      "colors": ["B", "G", "R", "U", "W"],
+      "power": null,
+      "toughness": null,
+      "loyalty": null,
+      "flavor_text": null,
+      "image_uris": {
+        "small": "https://cards.scryfall.io/small/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "normal": "https://cards.scryfall.io/normal/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "large": "https://cards.scryfall.io/large/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "png": "https://cards.scryfall.io/png/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.png?1783951955",
+        "art_crop": "https://cards.scryfall.io/art_crop/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955",
+        "border_crop": "https://cards.scryfall.io/border_crop/back/3/1/318c363b-61cc-4e2f-8f86-a4287539ea07.jpg?1783951955"
+      }
+    }
+  ],
+  "all_parts": null
+}

@@ -32,6 +32,7 @@ public record ScryfallCard(
     @JsonProperty("uri") String uri,
     @JsonProperty("image_uris") ScryfallImageUris imageUris,
     @JsonProperty("legalities") Map<String, String> legalities,
-    @JsonProperty("card_faces") List<ScryfallCardFace> cardFaces
+    @JsonProperty("card_faces") List<ScryfallCardFace> cardFaces,
+    @JsonProperty("all_parts") List<ScryfallRelatedCard> allParts
 ) {
 }
