@@ -1,5 +1,6 @@
 package org.magic.common;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +10,8 @@ import org.magic.accountService.app.AccountDbHandler;
 import org.magic.common.admin.AdminService;
 import org.magic.common.api.admin.AdminCheckResponse;
 import org.magic.common.api.admin.DonationStatsResponse;
+import org.magic.common.api.admin.ScryfallCacheStatusResponse;
+import org.magic.common.external.ScryfallBulkDataService;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
@@ -16,6 +19,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -35,14 +39,17 @@ public class AdminResource {
     private final AdminService adminService;
     private final AccountDbHandler accountDbHandler;
     private final GameCoordinationWorker gameWorker;
+    private final ScryfallBulkDataService bulkDataService;
 
     @Inject
     public AdminResource(final AdminService adminService,
                          final AccountDbHandler accountDbHandler,
-                         final GameCoordinationWorker gameWorker) {
+                         final GameCoordinationWorker gameWorker,
+                         final ScryfallBulkDataService bulkDataService) {
         this.adminService = adminService;
         this.accountDbHandler = accountDbHandler;
         this.gameWorker = gameWorker;
+        this.bulkDataService = bulkDataService;
     }
 
     /**
@@ -109,6 +116,52 @@ public class AdminResource {
         }
         LOGGER.info("Admin deleting games with state: {}", gameState);
         return gameWorker.deleteGamesWithStatus(GameState.fromString(gameState));
+    }
+
+    /**
+     * Triggers an immediate refresh of the Scryfall bulk data cache.
+     * Requires admin privileges.
+     *
+     * @param accountID the account ID of the caller (used to verify admin status)
+     * @return a JSON response with the import result, or 403 if not admin
+     */
+    @POST
+    @Path("/{accountID}/scryfall/cache/trigger")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response triggerCacheRefresh(@PathParam("accountID") final String accountID) {
+        if (!verifyAdmin(accountID)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+        try {
+            int count = bulkDataService.triggerRefresh();
+            LOGGER.info("Admin triggered Scryfall cache refresh: {} cards imported", count);
+            return Response.ok(new ScryfallCacheStatusResponse(
+                    true, count, bulkDataService.getStatus().lastImportedAt(),
+                    bulkDataService.getBulkDataType(), bulkDataService.isEnabled())).build();
+        } catch (IllegalStateException | IOException e) {
+            LOGGER.error("Admin-triggered cache refresh failed: {}", e.getMessage());
+            return Response.serverError().entity("Cache refresh failed: " + e.getMessage()).build();
+        }
+    }
+
+    /**
+     * Returns the current status of the Scryfall bulk data cache.
+     * Requires admin privileges.
+     *
+     * @param accountID the account ID of the caller (used to verify admin status)
+     * @return a JSON response with cache status, or 403 if not admin
+     */
+    @GET
+    @Path("/{accountID}/scryfall/cache/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCacheStatus(@PathParam("accountID") final String accountID) {
+        if (!verifyAdmin(accountID)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+        var status = bulkDataService.getStatus();
+        return Response.ok(new ScryfallCacheStatusResponse(
+                status.available(), status.cardCount(), status.lastImportedAt(),
+                status.bulkDataType(), bulkDataService.isEnabled())).build();
     }
 
     /**

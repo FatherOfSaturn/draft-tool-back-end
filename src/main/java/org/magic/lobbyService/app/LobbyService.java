@@ -283,7 +283,7 @@ public class LobbyService {
      * Empty lobbies are deleted immediately.
      * Lobbies where the host is alone for more than 5 minutes are auto-deleted.
      */
-    @Scheduled(every = "15s")
+    @Scheduled(every = "PT15S")
     void heartbeatCleanup() {
         List<Lobby> lobbies = dbHandler.findLobbiesByStatus(LobbyStatus.WAITING);
         Instant staleCutoff = Instant.now().minus(STALE_PLAYER_TIMEOUT);

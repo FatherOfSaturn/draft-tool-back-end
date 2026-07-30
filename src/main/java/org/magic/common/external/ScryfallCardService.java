@@ -2,8 +2,10 @@ package org.magic.common.external;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -37,14 +39,21 @@ public class ScryfallCardService {
     private static final int COLLECTION_BATCH_SIZE = 75;
 
     private final ScryfallService scryfallService;
+    private final ScryfallCardCache cardCache;
     private final int maxPages;
 
     @Inject
     public ScryfallCardService(@RestClient final ScryfallService scryfallService,
                                @ConfigProperty(name = "scryfall.max-search-pages", defaultValue = "5")
-                               final int maxPages) {
+                               final int maxPages,
+                               final ScryfallCardCache cardCache) {
         this.scryfallService = scryfallService;
+        this.cardCache = cardCache;
         this.maxPages = maxPages;
+    }
+
+    ScryfallCardService(final ScryfallService scryfallService, final int maxPages) {
+        this(scryfallService, maxPages, null);
     }
 
     public Uni<List<ScryfallCard>> searchAllCards(final String query) {
@@ -95,6 +104,12 @@ public class ScryfallCardService {
     }
 
     public Uni<ScryfallCard> getCardById(final String scryfallId) {
+        if (cardCache != null && cardCache.isAvailable()) {
+            ScryfallCard cached = cardCache.findById(scryfallId);
+            if (cached != null) {
+                return Uni.createFrom().item(cached);
+            }
+        }
         return scryfallService.getCardById(scryfallId);
     }
 
@@ -109,12 +124,24 @@ public class ScryfallCardService {
         return card.allParts().stream()
                 .filter(p -> "meld_result".equals(p.component()))
                 .findFirst()
-                .map(meldResult -> scryfallService.getCardById(meldResult.id())
-                        .map(meldCard -> Card.fromScryfallCard(card, meldCard != null ? meldCard.imageUris() : null))
-                        .onFailure().invoke(e -> LOGGER.warn("Failed to fetch meld result {} for {}: {}",
-                                meldResult.id(), card.name(), e.getMessage()))
-                        .onFailure().recoverWithItem(Card.fromScryfallCard(card)))
+                .map(meldResult -> {
+                    ScryfallImageUris meldImage = resolveMeldImageFromCache(meldResult.id());
+                    if (meldImage != null) {
+                        return Uni.createFrom().item(Card.fromScryfallCard(card, meldImage));
+                    }
+                    return scryfallService.getCardById(meldResult.id())
+                            .map(meldCard -> Card.fromScryfallCard(card, meldCard != null ? meldCard.imageUris() : null))
+                            .onFailure().invoke(e -> LOGGER.warn("Failed to fetch meld result {} for {}: {}",
+                                    meldResult.id(), card.name(), e.getMessage()))
+                            .onFailure().recoverWithItem(Card.fromScryfallCard(card));
+                })
                 .orElseGet(() -> Uni.createFrom().item(Card.fromScryfallCard(card)));
+    }
+
+    private ScryfallImageUris resolveMeldImageFromCache(final String meldResultId) {
+        if (cardCache == null || !cardCache.isAvailable()) return null;
+        ScryfallCard meldCard = cardCache.findById(meldResultId);
+        return meldCard != null ? meldCard.imageUris() : null;
     }
 
     /**
@@ -140,9 +167,71 @@ public class ScryfallCardService {
             return Uni.createFrom().item(new BatchResult(List.of(), List.of()));
         }
 
+        if (cardCache != null && cardCache.isAvailable()) {
+            return batchFromCache(filteredNames);
+        }
+
+        return batchFromScryfall(filteredNames);
+    }
+
+    private Uni<BatchResult> batchFromCache(final List<String> names) {
+        List<ScryfallCard> cached = cardCache.findByNames(names);
+        Set<String> cachedNames = cached.stream().map(ScryfallCard::name).collect(Collectors.toSet());
+        List<String> missing = names.stream()
+                .filter(n -> !cachedNames.contains(n))
+                .collect(Collectors.toList());
+
+        if (!missing.isEmpty()) {
+            LOGGER.debug("{} card(s) not found in cache, falling back to Scryfall API", missing.size());
+            return batchFromScryfall(missing).flatMap(scryfallResult -> {
+                List<Card> allCards = new ArrayList<>();
+                allCards.addAll(convertCachedToCards(cached));
+                allCards.addAll(scryfallResult.cards());
+                List<String> allNotFound = new ArrayList<>(scryfallResult.notFound());
+                return Uni.createFrom().item(new BatchResult(allCards, allNotFound));
+            });
+        }
+
+        return convertCachedToCardsUni(cached)
+                .map(cards -> new BatchResult(cards, List.of()));
+    }
+
+    private List<Card> convertCachedToCards(final List<ScryfallCard> cards) {
+        Map<String, ScryfallImageUris> meldImages = new HashMap<>();
+        if (cardCache != null && cardCache.isAvailable()) {
+            for (ScryfallCard card : cards) {
+                if ("meld".equals(card.layout()) && card.allParts() != null) {
+                    card.allParts().stream()
+                            .filter(p -> "meld_result".equals(p.component()))
+                            .findFirst()
+                            .ifPresent(part -> {
+                                ScryfallCard meldResult = cardCache.findById(part.id());
+                                if (meldResult != null && meldResult.imageUris() != null) {
+                                    meldImages.put(card.id(), meldResult.imageUris());
+                                }
+                            });
+                }
+            }
+        }
+        return cards.stream()
+                .map(card -> {
+                    ScryfallImageUris meldImage = meldImages.get(card.id());
+                    return meldImage != null ? Card.fromScryfallCard(card, meldImage) : Card.fromScryfallCard(card);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Uni<List<Card>> convertCachedToCardsUni(final List<ScryfallCard> cards) {
+        return Uni.createFrom().item(convertCachedToCards(cards));
+    }
+
+    private Uni<BatchResult> batchFromScryfall(final List<String> names) {
+        if (names.isEmpty()) {
+            return Uni.createFrom().item(new BatchResult(List.of(), List.of()));
+        }
         List<List<String>> chunks = new ArrayList<>();
-        for (int i = 0; i < filteredNames.size(); i += COLLECTION_BATCH_SIZE) {
-            chunks.add(filteredNames.subList(i, Math.min(i + COLLECTION_BATCH_SIZE, filteredNames.size())));
+        for (int i = 0; i < names.size(); i += COLLECTION_BATCH_SIZE) {
+            chunks.add(names.subList(i, Math.min(i + COLLECTION_BATCH_SIZE, names.size())));
         }
 
         List<ScryfallCard> allCards = new ArrayList<>();

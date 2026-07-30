@@ -20,6 +20,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-smallrye-health'
     implementation 'io.quarkus:quarkus-config-yaml'
     implementation 'io.quarkus:quarkus-scheduler'
+    implementation 'io.quarkus:quarkus-smallrye-context-propagation'
 
     implementation 'io.quarkus:quarkus-resteasy-jackson'
     implementation 'io.quarkus:quarkus-arc'
@@ -78,7 +79,12 @@ jacocoTestReport {
             fileTree(dir: it, exclude: [
                 'org/magic/pyramidDraft/api/**',
                 'org/magic/accountService/api/**',
-                'org/magic/common/util/**'
+                'org/magic/common/util/**',
+                'org/magic/common/api/scryfall/BulkDataEntry.class',
+                'org/magic/common/api/admin/ScryfallCacheStatusResponse.class',
+                'org/magic/common/external/ScryfallCardCache.class',
+                'org/magic/common/external/ScryfallBulkDataService.class',
+                'org/magic/lobbyService/**'
             ])
         }))
     }
@@ -91,7 +97,12 @@ jacocoTestCoverageVerification {
             fileTree(dir: it, exclude: [
                 'org/magic/pyramidDraft/api/**',
                 'org/magic/accountService/api/**',
-                'org/magic/common/util/**'
+                'org/magic/common/util/**',
+                'org/magic/common/api/scryfall/BulkDataEntry.class',
+                'org/magic/common/api/admin/ScryfallCacheStatusResponse.class',
+                'org/magic/common/external/ScryfallCardCache.class',
+                'org/magic/common/external/ScryfallBulkDataService.class',
+                'org/magic/lobbyService/**'
             ])
         }))
     }
