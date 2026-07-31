@@ -14,6 +14,8 @@ import org.magic.accountService.app.AccountDbHandler;
 import org.magic.common.admin.AdminService;
 import org.magic.common.api.admin.AdminCheckResponse;
 import org.magic.common.api.admin.DonationStatsResponse;
+import org.magic.common.api.admin.ScryfallCacheStatusResponse;
+import org.magic.common.external.ScryfallBulkDataService;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 import org.mockito.Mock;
@@ -31,12 +33,14 @@ class AdminResourceTest {
     AccountDbHandler accountDbHandler;
     @Mock
     GameCoordinationWorker gameWorker;
+    @Mock
+    ScryfallBulkDataService bulkDataService;
 
     AdminResource resource;
 
     @BeforeEach
     void setup() {
-        resource = new AdminResource(adminService, accountDbHandler, gameWorker);
+        resource = new AdminResource(adminService, accountDbHandler, gameWorker, bulkDataService);
     }
 
     private Account createAccount(final String email) {
@@ -145,5 +149,68 @@ class AdminResourceTest {
         Response response = resource.deleteGamesWithStatus("acc-123", "game_complete").await().indefinitely();
 
         assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void shouldGetCacheStatusWhenAdmin() {
+        when(accountDbHandler.findById("acc-123")).thenReturn(Optional.of(createAccount("admin@example.com")));
+        when(adminService.isAdmin("admin@example.com")).thenReturn(true);
+        when(bulkDataService.getStatus()).thenReturn(
+                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards"));
+        when(bulkDataService.isEnabled()).thenReturn(true);
+
+        Response response = resource.getCacheStatus("acc-123");
+
+        assertEquals(200, response.getStatus());
+        var status = (ScryfallCacheStatusResponse) response.getEntity();
+        assertTrue(status.available());
+        assertEquals(50000, status.cardCount());
+    }
+
+    @Test
+    void shouldReturnForbiddenForCacheStatusWhenNotAdmin() {
+        when(accountDbHandler.findById("acc-123")).thenReturn(Optional.of(createAccount("user@example.com")));
+        when(adminService.isAdmin("user@example.com")).thenReturn(false);
+
+        Response response = resource.getCacheStatus("acc-123");
+
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void shouldTriggerCacheRefreshWhenAdmin() throws Exception {
+        when(accountDbHandler.findById("acc-123")).thenReturn(Optional.of(createAccount("admin@example.com")));
+        when(adminService.isAdmin("admin@example.com")).thenReturn(true);
+        when(bulkDataService.triggerRefresh()).thenReturn(50000);
+        when(bulkDataService.getStatus()).thenReturn(
+                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards"));
+        when(bulkDataService.isEnabled()).thenReturn(true);
+
+        Response response = resource.triggerCacheRefresh("acc-123");
+
+        assertEquals(200, response.getStatus());
+        var status = (ScryfallCacheStatusResponse) response.getEntity();
+        assertTrue(status.available());
+    }
+
+    @Test
+    void shouldReturnForbiddenForCacheTriggerWhenNotAdmin() {
+        when(accountDbHandler.findById("acc-123")).thenReturn(Optional.of(createAccount("user@example.com")));
+        when(adminService.isAdmin("user@example.com")).thenReturn(false);
+
+        Response response = resource.triggerCacheRefresh("acc-123");
+
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void shouldHandleCacheRefreshFailure() throws Exception {
+        when(accountDbHandler.findById("acc-123")).thenReturn(Optional.of(createAccount("admin@example.com")));
+        when(adminService.isAdmin("admin@example.com")).thenReturn(true);
+        when(bulkDataService.triggerRefresh()).thenThrow(new java.io.IOException("Network error"));
+
+        Response response = resource.triggerCacheRefresh("acc-123");
+
+        assertEquals(500, response.getStatus());
     }
 }

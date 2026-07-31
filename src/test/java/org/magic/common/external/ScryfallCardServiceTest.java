@@ -9,28 +9,24 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.common.api.scryfall.ScryfallCard;
 import org.magic.common.api.scryfall.ScryfallCollectionRequest;
 import org.magic.common.api.scryfall.ScryfallCollectionResponse;
 import org.magic.common.api.scryfall.ScryfallImageUris;
 import org.magic.common.api.scryfall.ScryfallListResponse;
 import org.magic.common.api.scryfall.ScryfallRelatedCard;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.smallrye.mutiny.Uni;
 
-@ExtendWith(MockitoExtension.class)
 class ScryfallCardServiceTest {
 
-    @Mock
     ScryfallService scryfallService;
 
     ScryfallCardService cardService;
 
     @BeforeEach
     void setup() {
+        scryfallService = mock(ScryfallService.class);
         cardService = new ScryfallCardService(scryfallService, 5);
     }
 
@@ -345,6 +341,198 @@ class ScryfallCardServiceTest {
 
         var result = cardService.toCubeCobraCard(scryfallCard);
         assertNotNull(result.await().indefinitely());
+        assertEquals("Meld Card", result.await().indefinitely().getName());
+    }
+
+    @Test
+    void shouldUseCacheWhenAvailableForBatchLookup() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var cachedCard = mock(ScryfallCard.class);
+        when(cachedCard.id()).thenReturn("id");
+        when(cachedCard.name()).thenReturn("Bolt");
+        when(cachedCard.layout()).thenReturn("normal");
+        when(cachedCard.set()).thenReturn("set");
+        when(cachedCard.setName()).thenReturn("Set");
+        when(cachedCard.typeLine()).thenReturn("Instant");
+        when(cachedCard.cmc()).thenReturn(1.0);
+        when(cachedCard.manaCost()).thenReturn("{R}");
+        when(cachedCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findByNames(List.of("Bolt"))).thenReturn(List.of(cachedCard));
+
+        BatchResult result = cachedService.batchLookupByNames(List.of("Bolt")).await().indefinitely();
+
+        assertEquals(1, result.cards().size());
+        assertTrue(result.notFound().isEmpty());
+        verify(scryfallService, never()).lookupByCollection(any());
+    }
+
+    @Test
+    void shouldFallbackToScryfallWhenCacheMisses() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var cachedCard = mock(ScryfallCard.class);
+        when(cachedCard.id()).thenReturn("id");
+        when(cachedCard.name()).thenReturn("Bolt");
+        when(cachedCard.layout()).thenReturn("normal");
+        when(cachedCard.set()).thenReturn("set");
+        when(cachedCard.setName()).thenReturn("Set");
+        when(cachedCard.typeLine()).thenReturn("Instant");
+        when(cachedCard.cmc()).thenReturn(1.0);
+        when(cachedCard.manaCost()).thenReturn("{R}");
+        when(cachedCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+
+        var apiCard = mock(ScryfallCard.class);
+        when(apiCard.id()).thenReturn("id2");
+        when(apiCard.name()).thenReturn("Fire");
+        when(apiCard.layout()).thenReturn("normal");
+        when(apiCard.set()).thenReturn("set");
+        when(apiCard.setName()).thenReturn("Set");
+        when(apiCard.typeLine()).thenReturn("Sorcery");
+        when(apiCard.cmc()).thenReturn(1.0);
+        when(apiCard.manaCost()).thenReturn("{R}");
+        when(apiCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findByNames(List.of("Bolt", "Fire"))).thenReturn(List.of(cachedCard));
+
+        var apiResponse = new ScryfallCollectionResponse(List.of(apiCard), List.of());
+        when(scryfallService.lookupByCollection(any())).thenReturn(Uni.createFrom().item(apiResponse));
+
+        BatchResult result = cachedService.batchLookupByNames(List.of("Bolt", "Fire")).await().indefinitely();
+
+        assertEquals(2, result.cards().size());
+        assertTrue(result.notFound().isEmpty());
+        verify(scryfallService).lookupByCollection(any());
+    }
+
+    @Test
+    void shouldUseCacheForGetCardById() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var cachedCard = mock(ScryfallCard.class);
+        when(cachedCard.id()).thenReturn("id-123");
+        when(cachedCard.name()).thenReturn("Bolt");
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findById("id-123")).thenReturn(cachedCard);
+
+        ScryfallCard result = cachedService.getCardById("id-123").await().indefinitely();
+
+        assertNotNull(result);
+        assertEquals("Bolt", result.name());
+        verify(scryfallService, never()).getCardById(any());
+    }
+
+    @Test
+    void shouldFallbackToScryfallWhenCardNotInCache() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var apiCard = mock(ScryfallCard.class);
+        when(apiCard.id()).thenReturn("id-456");
+        when(apiCard.name()).thenReturn("Fire");
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findById("id-456")).thenReturn(null);
+        when(scryfallService.getCardById("id-456")).thenReturn(Uni.createFrom().item(apiCard));
+
+        ScryfallCard result = cachedService.getCardById("id-456").await().indefinitely();
+
+        assertNotNull(result);
+        assertEquals("Fire", result.name());
+        verify(scryfallService).getCardById("id-456");
+    }
+
+    @Test
+    void shouldHandleMeldCardsInCachedBatchLookup() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var meldCard = mock(ScryfallCard.class);
+        when(meldCard.id()).thenReturn("meld-id");
+        when(meldCard.name()).thenReturn("Meld Card");
+        when(meldCard.layout()).thenReturn("meld");
+        when(meldCard.set()).thenReturn("set");
+        when(meldCard.setName()).thenReturn("Set");
+        when(meldCard.typeLine()).thenReturn("Creature");
+        when(meldCard.cmc()).thenReturn(5.0);
+        when(meldCard.manaCost()).thenReturn("{3}{R}{W}");
+        when(meldCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+        var related = new ScryfallRelatedCard("result-id", "meld_result", "Result", "", "");
+        when(meldCard.allParts()).thenReturn(List.of(related));
+
+        var meldResultCard = mock(ScryfallCard.class);
+        when(meldResultCard.id()).thenReturn("result-id");
+        when(meldResultCard.imageUris()).thenReturn(new ScryfallImageUris("", "https://img.scryfall.com/meld-result.png", "", "", "", ""));
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findByNames(List.of("Meld Card"))).thenReturn(List.of(meldCard));
+        when(cardCache.findById("result-id")).thenReturn(meldResultCard);
+
+        BatchResult result = cachedService.batchLookupByNames(List.of("Meld Card")).await().indefinitely();
+
+        assertEquals(1, result.cards().size());
+        assertTrue(result.notFound().isEmpty());
+    }
+
+    @Test
+    void shouldResolveMeldImageFromCache() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var meldCard = mock(ScryfallCard.class);
+        when(meldCard.id()).thenReturn("meld-id");
+        when(meldCard.name()).thenReturn("Meld Card");
+        when(meldCard.layout()).thenReturn("meld");
+        when(meldCard.set()).thenReturn("set");
+        when(meldCard.setName()).thenReturn("Set");
+        when(meldCard.typeLine()).thenReturn("Creature");
+        when(meldCard.cmc()).thenReturn(5.0);
+        when(meldCard.manaCost()).thenReturn("{3}{R}{W}");
+        when(meldCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+        var related = new ScryfallRelatedCard("result-id", "meld_result", "Result", "", "");
+        when(meldCard.allParts()).thenReturn(List.of(related));
+
+        var meldResultCard = mock(ScryfallCard.class);
+        when(meldResultCard.id()).thenReturn("result-id");
+        when(meldResultCard.imageUris()).thenReturn(new ScryfallImageUris("", "https://img.scryfall.com/meld-result.png", "", "", "", ""));
+
+        when(cardCache.isAvailable()).thenReturn(true);
+        when(cardCache.findById("result-id")).thenReturn(meldResultCard);
+
+        var result = cachedService.toCubeCobraCard(meldCard);
+
+        assertNotNull(result.await().indefinitely());
+        assertEquals("Meld Card", result.await().indefinitely().getName());
+        verify(scryfallService, never()).getCardById(any());
+    }
+
+    @Test
+    void shouldHandleMeldCardWithNullAllPartsViaCache() {
+        var cardCache = mock(ScryfallCardCache.class);
+        ScryfallCardService cachedService = new ScryfallCardService(scryfallService, 5, cardCache);
+
+        var meldCard = mock(ScryfallCard.class);
+        when(meldCard.id()).thenReturn("id");
+        when(meldCard.name()).thenReturn("Meld Card");
+        when(meldCard.layout()).thenReturn("meld");
+        when(meldCard.allParts()).thenReturn(null);
+        when(meldCard.set()).thenReturn("set");
+        when(meldCard.setName()).thenReturn("Set");
+        when(meldCard.typeLine()).thenReturn("Creature");
+        when(meldCard.cmc()).thenReturn(5.0);
+        when(meldCard.manaCost()).thenReturn("{3}{R}{W}");
+        when(meldCard.imageUris()).thenReturn(new ScryfallImageUris("s.jpg", "n.jpg", "l.jpg", "p.png", "a.png", "b.png"));
+
+        when(cardCache.isAvailable()).thenReturn(true);
+
+        var result = cachedService.toCubeCobraCard(meldCard);
         assertEquals("Meld Card", result.await().indefinitely().getName());
     }
 }
