@@ -76,6 +76,7 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
                 'org/magic/pyramidDraft/api/**',
+                'org/magic/classicDraft/api/**',
                 'org/magic/accountService/api/**',
                 'org/magic/common/util/**'
             ])
@@ -89,6 +90,7 @@ jacocoTestCoverageVerification {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
                 'org/magic/pyramidDraft/api/**',
+                'org/magic/classicDraft/api/**',
                 'org/magic/accountService/api/**',
                 'org/magic/common/util/**'
             ])
