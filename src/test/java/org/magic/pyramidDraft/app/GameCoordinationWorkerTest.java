@@ -44,7 +44,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         GameInfo game = gameCoordinationWorker.startGame(createGameInfo).await().atMost(Duration.ofSeconds(3));
 
         assertNotNull(game);
-        assertEquals("gameID", game.getGameID());
+        assertNotNull(game.getGameID());
         assertEquals(GameState.GAME_STARTED, game.getGameState());
         assertNotNull(game.getPlayers());
         assertEquals(2, game.getPlayers().size());

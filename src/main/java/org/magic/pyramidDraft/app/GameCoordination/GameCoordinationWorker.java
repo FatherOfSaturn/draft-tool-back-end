@@ -2,6 +2,7 @@ package org.magic.pyramidDraft.app.GameCoordination;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +55,7 @@ public class GameCoordinationWorker {
      * @return a {@link Uni} emitting the created {@link GameInfo}
      */
     public Uni<GameInfo> startGame(final GameCreationInfo gameCreationInfo) {
+        String gameID = UUID.randomUUID().toString();
 
         PlayerCreationInfo player1Creation = gameCreationInfo.playerInfo().get(0);
         PlayerCreationInfo player2Creation = gameCreationInfo.playerInfo().get(1);
@@ -63,7 +65,7 @@ public class GameCoordinationWorker {
                              .map(packCreator -> packCreator.createPyramidPacks(player1Creation, 
                                                                                 player2Creation,
                                                                                 gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
-                             .map(players -> new GameInfo(gameCreationInfo.gameID(),
+                             .map(players -> new GameInfo(gameID,
                                                           gameCreationInfo.cubeID(),
                                                           players,
                                                           GameState.GAME_STARTED,

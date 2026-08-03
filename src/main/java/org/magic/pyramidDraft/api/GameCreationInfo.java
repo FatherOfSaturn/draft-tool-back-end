@@ -10,14 +10,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * player information, and the number of double-draft picks allowed per player.
  */
 public record GameCreationInfo(
-    @JsonProperty("gameID") String gameID,
     @JsonProperty("cubeID") String cubeID,
     @JsonProperty("players") List<PlayerCreationInfo> playerInfo,
     @JsonProperty("numberOfDoubleDraftPicksPerPlayer") int numberOfDoubleDraftPicksPerPlayer
 ) {
 
     public GameCreationInfo {
-        Objects.requireNonNull(gameID, "gameID Required for Game Info");
         Objects.requireNonNull(cubeID, "cubeID Required for Game Info");
         Objects.requireNonNull(playerInfo, "players Required for Game Info");
     }

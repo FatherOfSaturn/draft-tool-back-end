@@ -94,7 +94,6 @@ public class CubeTest {
 
         GameCreationInfo info = JsonUtility.getInstance().fromJson(json, GameCreationInfo.class);
 
-        assertEquals("gameID", info.gameID());
         assertEquals("f7314414-c2d2-48ed-af2c-764cf0207c62", info.cubeID());
         assertEquals(4, info.numberOfDoubleDraftPicksPerPlayer());
         assertNotNull(info.playerInfo());
