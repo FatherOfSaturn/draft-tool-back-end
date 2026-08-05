@@ -27,7 +27,6 @@ json-server --watch db.json
 |---------|-----|
 | `dev`   | Local development with json-server |
 | `prod`  | Production with CubeCobra API |
-| `gapped`| Dev variant without local json-server |
 
 Configure via `quarkus.profile` in `application.properties`.
 
