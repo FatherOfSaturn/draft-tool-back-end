@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,14 +20,11 @@ import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.LobbyPlayer;
 import org.magic.lobbyService.api.LobbyStatus;
 import org.magic.lobbyService.api.StartGameRequest;
-import org.magic.pyramidDraft.api.GameCreationInfo;
-import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.PlayerCreationInfo;
-import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 /**
@@ -46,12 +44,12 @@ public class LobbyService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final LobbyDbHandler dbHandler;
-    private final GameCoordinationWorker gameWorker;
+    private final Instance<DraftTypeHandler> draftTypeHandlers;
 
     @Inject
-    public LobbyService(final LobbyDbHandler dbHandler, final GameCoordinationWorker gameWorker) {
+    public LobbyService(final LobbyDbHandler dbHandler, final Instance<DraftTypeHandler> draftTypeHandlers) {
         this.dbHandler = dbHandler;
-        this.gameWorker = gameWorker;
+        this.draftTypeHandlers = draftTypeHandlers;
     }
 
     /**
@@ -65,8 +63,9 @@ public class LobbyService {
         return Uni.createFrom().item(() -> {
             String code = generateUniqueCode();
 
-            int minPlayers = request.minPlayers() != null ? request.minPlayers() : getMinPlayers(request.draftType());
-            int maxPlayers = request.maxPlayers() != null ? request.maxPlayers() : getMaxPlayers(request.draftType());
+            DraftTypeHandler handler = findHandler(request.draftType());
+            int minPlayers = request.minPlayers() != null ? request.minPlayers() : handler.defaultMinPlayers();
+            int maxPlayers = request.maxPlayers() != null ? request.maxPlayers() : handler.defaultMaxPlayers();
 
             String playerToken = UUID.randomUUID().toString();
             Instant now = Instant.now();
@@ -213,7 +212,8 @@ public class LobbyService {
 
     /**
      * Starts the game for a lobby. Validates the host identity and player count,
-     * assembles a {@link GameCreationInfo}, and delegates to the existing game service.
+     * resolves the {@link DraftTypeHandler} for the lobby's draft type, and
+     * delegates game creation to that handler.
      *
      * @param lobbyCode the lobby to start
      * @param request   the start request with the host's account ID
@@ -238,7 +238,6 @@ public class LobbyService {
         lobby.setStatus(LobbyStatus.STARTING);
         dbHandler.updateLobby(lobby);
 
-        String gameID = UUID.randomUUID().toString();
         String cubeID = (String) lobby.getConfig().get("cubeID");
         if (cubeID == null) {
             lobby.setStatus(LobbyStatus.WAITING);
@@ -246,26 +245,25 @@ public class LobbyService {
             throw new IllegalStateException("cubeID is required in lobby config");
         }
 
-        int doubleDraftPicks = 0;
-        Object picksVal = lobby.getConfig().get("numberOfDoubleDraftPicksPerPlayer");
-        if (picksVal instanceof Number) {
-            doubleDraftPicks = ((Number) picksVal).intValue();
+        DraftTypeHandler handler;
+        try {
+            handler = findHandler(lobby.getDraftType());
+        } catch (IllegalStateException e) {
+            lobby.setStatus(LobbyStatus.WAITING);
+            dbHandler.updateLobby(lobby);
+            throw e;
         }
 
-        List<PlayerCreationInfo> players = lobby.getPlayers().stream()
-                .map(p -> new PlayerCreationInfo(
-                        p.getDisplayName(),
-                        p.getAccountID() != null ? p.getAccountID() : "guest-" + p.getPlayerToken()))
+        List<LobbyPlayer> sortedPlayers = lobby.getPlayers().stream()
+                .sorted(Comparator.comparingInt(LobbyPlayer::getSlotIndex))
                 .toList();
 
-        GameCreationInfo gameCreationInfo = new GameCreationInfo(gameID, cubeID, players, doubleDraftPicks);
-
-        return gameWorker.startGame(gameCreationInfo)
-                .map(gameInfo -> {
-                    lobby.setGameID(gameInfo.getGameID());
+        return handler.startGame(cubeID, sortedPlayers, lobby.getConfig())
+                .map(gameID -> {
+                    lobby.setGameID(gameID);
                     lobby.setStatus(LobbyStatus.STARTED);
                     dbHandler.updateLobby(lobby);
-                    LOGGER.info("Lobby {} started game {}", lobbyCode, gameInfo.getGameID());
+                    LOGGER.info("Lobby {} started game {}", lobbyCode, gameID);
                     return lobby;
                 })
                 .onFailure().recoverWithItem(t -> {
@@ -360,12 +358,11 @@ public class LobbyService {
         return sb.toString();
     }
 
-    private static int getMinPlayers(final String draftType) {
-        return "pyramid".equalsIgnoreCase(draftType) ? 2 : 4;
-    }
-
-    private static int getMaxPlayers(final String draftType) {
-        return "pyramid".equalsIgnoreCase(draftType) ? 2 : 12;
+    private DraftTypeHandler findHandler(final String draftType) {
+        return draftTypeHandlers.stream()
+                .filter(handler -> handler.draftType().equalsIgnoreCase(draftType))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Unsupported draft type: " + draftType));
     }
 
     private static int findNextSlotIndex(final List<LobbyPlayer> players) {

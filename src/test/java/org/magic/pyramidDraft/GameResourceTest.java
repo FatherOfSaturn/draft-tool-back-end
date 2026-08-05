@@ -44,7 +44,7 @@ class GameResourceTest {
     @Test
     void shouldCreateAndStartGame() {
         var info = new GameCreationInfo("gid", "cube-123", List.of(new PlayerCreationInfo("P1", "acc1"), new PlayerCreationInfo("P2", "acc2")), 3);
-        var expectedGame = new GameInfo("game-456", "cube-123", List.of(), GameState.GAME_STARTED, Instant.now());
+        var expectedGame = new GameInfo("game-456", "cube-123", "pyramid", List.of(), GameState.GAME_STARTED, Instant.now());
 
         when(gameWorker.startGame(info)).thenReturn(Uni.createFrom().item(expectedGame));
 
@@ -69,7 +69,7 @@ class GameResourceTest {
 
     @Test
     void shouldFetchGameData() {
-        var gameInfo = new GameInfo("game-456", "cube-123", List.of(), GameState.GAME_STARTED, Instant.now());
+        var gameInfo = new GameInfo("game-456", "cube-123", "pyramid", List.of(), GameState.GAME_STARTED, Instant.now());
 
         when(gameWorker.getGameInfo("game-456")).thenReturn(Uni.createFrom().item(gameInfo));
 

@@ -55,7 +55,7 @@ class PyramidDraftDbHandlerTest {
     }
 
     private GameInfo createGame(String id, GameState state) {
-        return new GameInfo(id, "cube", List.of(), state, Instant.now());
+        return new GameInfo(id, "cube", "pyramid", List.of(), state, Instant.now());
     }
 
     @Test

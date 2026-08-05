@@ -23,10 +23,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Getter
 @Setter
 @EqualsAndHashCode
-@JsonPropertyOrder({ "gameID", "cubeID", "players", "gameState", "createdAt" })
+@JsonPropertyOrder({ "gameID", "cubeID", "gameType", "players", "gameState", "createdAt" })
 public class GameInfo {
     private final String gameID;
     private final String cubeID;
+    private final String gameType;
     @BsonProperty("players")
     private List<Player> players;
     private GameState gameState;
@@ -36,11 +37,13 @@ public class GameInfo {
     @BsonCreator
     public GameInfo(@JsonProperty("gameID") @BsonProperty("gameID") final String gameID,
                     @JsonProperty("cubeID") @BsonProperty("cubeID") final String cubeID,
+                    @JsonProperty("gameType") @BsonProperty("gameType") final String gameType,
                     @JsonProperty("players") @BsonProperty("players") final List<Player> players,
                     @JsonProperty("gameState") @BsonProperty("gameState") final GameState gameState,
                     @JsonProperty("createdAt") @BsonProperty("createdAt") final Instant createdAt) {
         this.gameID = Objects.requireNonNull(gameID, "gameID Required for Game Info");
         this.cubeID = cubeID;
+        this.gameType = Objects.requireNonNullElse(gameType, "pyramid");
         this.players = Objects.requireNonNull(players, "player list Required for Game Info");
         this.gameState = Objects.requireNonNull(gameState, "gameState flag Required for Game Info");
         this.createdAt = createdAt;

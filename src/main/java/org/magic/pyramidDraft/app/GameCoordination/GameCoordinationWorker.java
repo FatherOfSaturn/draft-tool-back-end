@@ -65,6 +65,7 @@ public class GameCoordinationWorker {
                                                                                 gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
                              .map(players -> new GameInfo(gameCreationInfo.gameID(),
                                                           gameCreationInfo.cubeID(),
+                                                          "pyramid",
                                                           players,
                                                           GameState.GAME_STARTED,
                                                           Instant.now()))
