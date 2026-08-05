@@ -27,6 +27,7 @@ import org.magic.pyramidDraft.api.card.Card;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.ws.rs.core.Response;
 
 @ExtendWith(MockitoExtension.class)
 public class GameCoordinationWorkerTest extends TestUtils {
@@ -158,6 +159,24 @@ public class GameCoordinationWorkerTest extends TestUtils {
         GameStatusMessage result = gameCoordinationWorker.endGame("gid").await().indefinitely();
 
         assertEquals(GameState.GAME_COMPLETE, result.gameState());
+    }
+
+    @Test
+    void shouldDeleteGameWhenFound() {
+        when(dbHandler.deleteGame("gid")).thenReturn(true);
+
+        Response response = gameCoordinationWorker.deleteGame("gid").await().indefinitely();
+
+        assertEquals(204, response.getStatus());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingMissingGame() {
+        when(dbHandler.deleteGame("missing")).thenReturn(false);
+
+        Response response = gameCoordinationWorker.deleteGame("missing").await().indefinitely();
+
+        assertEquals(404, response.getStatus());
     }
 
     @Test

@@ -216,6 +216,23 @@ public class GameCoordinationWorker {
     }
 
     /**
+     * Deletes a single game by its ID. Administrative cleanup utility.
+     * Players, packs, and drafted cards are embedded in the game document,
+     * so they are removed along with the game.
+     *
+     * @param gameID the game to delete
+     * @return a {@link Uni} emitting 204 No Content if deleted, 404 if not found
+     */
+    public Uni<Response> deleteGame(final String gameID) {
+        LOGGER.info("Deleting Game: {}", gameID);
+        final boolean deleted = dbHandler.deleteGame(gameID);
+
+        return Uni.createFrom().item(deleted
+                ? Response.noContent().build()
+                : Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+    /**
      * Fetches the game history for an account. Returns summaries of all games
      * where the account is a player, sorted newest first.
      *

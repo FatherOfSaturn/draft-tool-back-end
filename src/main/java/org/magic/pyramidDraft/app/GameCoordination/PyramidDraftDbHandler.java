@@ -167,6 +167,27 @@ public class PyramidDraftDbHandler {
     }
 
     /**
+     * Deletes a single game by its ID. Players, packs, and drafted cards are
+     * embedded in the game document, so removing the document removes all
+     * dependent data.
+     *
+     * @param gameID the game ID to delete
+     * @return {@code true} if the game was deleted, {@code false} if not found
+     */
+    public boolean deleteGame(final String gameID) {
+        Bson filter = Filters.eq("gameID", gameID);
+
+        DeleteResult result = getCollection().deleteOne(filter);
+
+        if (result.getDeletedCount() > 0) {
+            LOGGER.info("Deleted Game: {}", gameID);
+            return true;
+        }
+        LOGGER.warn("Game not found for delete: {}", gameID);
+        return false;
+    }
+
+    /**
      * Finds all games where the given account is a player.
      * Results are sorted by creation date descending (newest first).
      *

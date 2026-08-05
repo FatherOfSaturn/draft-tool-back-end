@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.ws.rs.core.Response;
 
 @ExtendWith(MockitoExtension.class)
 class GameResourceTest {
@@ -112,5 +113,23 @@ class GameResourceTest {
 
         assertEquals(1, result.size());
         assertEquals("g1", result.get(0).gameID());
+    }
+
+    @Test
+    void shouldDeleteGame() {
+        when(gameWorker.deleteGame("game-456")).thenReturn(Uni.createFrom().item(Response.noContent().build()));
+
+        Response result = resource.deleteGame("game-456").await().atMost(Duration.ofSeconds(3));
+
+        assertEquals(204, result.getStatus());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingMissingGame() {
+        when(gameWorker.deleteGame("missing")).thenReturn(Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build()));
+
+        Response result = resource.deleteGame("missing").await().atMost(Duration.ofSeconds(3));
+
+        assertEquals(404, result.getStatus());
     }
 }

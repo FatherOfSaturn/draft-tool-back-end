@@ -170,6 +170,26 @@ class PyramidDraftDbHandlerTest {
     }
 
     @Test
+    void shouldDeleteGameWhenFound() {
+        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+        when(deleteResult.getDeletedCount()).thenReturn(1L);
+
+        boolean result = handler.deleteGame("gid");
+
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenDeletingMissingGame() {
+        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+        when(deleteResult.getDeletedCount()).thenReturn(0L);
+
+        boolean result = handler.deleteGame("missing");
+
+        assertFalse(result);
+    }
+
+    @Test
     void shouldFindGamesByAccountID() {
         var games = List.of(createGame("g1", GameState.GAME_COMPLETE));
         when(collection.find(any(Bson.class))).thenReturn(findIterable);

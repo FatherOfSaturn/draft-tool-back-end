@@ -13,6 +13,7 @@ import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -20,6 +21,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * REST resource for managing pyramid draft games.
@@ -119,6 +121,21 @@ public class GameResource {
         LOGGER.info("Call to End Game: {}", gameID);
         return gameWorker.endGame(gameID)
                          .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
+    }
+
+    /**
+     * Deletes a single game by its ID. Administrative cleanup utility.
+     * Players, packs, and drafted cards embedded in the game are removed with it.
+     * Idempotent — if the game is already gone, a 404 is returned.
+     *
+     * @param gameID the game to delete
+     * @return 204 No Content if deleted, 404 if not found
+     */
+    @DELETE
+    @Path("/end/admin/delete/{gameID}")
+    public Uni<Response> deleteGame(@PathParam("gameID") final String gameID) {
+        LOGGER.info("Call to delete Game: {}", gameID);
+        return gameWorker.deleteGame(gameID);
     }
 
     /**
