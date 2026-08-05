@@ -13,9 +13,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * drafting player needs to see: their drafted cards and the pack they are
  * currently selecting from.
  */
-@JsonPropertyOrder({ "playerName", "activeCardPacks", "cardsDrafted" })
+@JsonPropertyOrder({ "playerName", "activeCardPacks", "cardsDrafted", "cardsLeftToDraft" })
 public record DraftPlayerSnapshot(
     @JsonProperty("playerName") String playerName,
     @JsonProperty("activeCardPacks") List<CardPack> activeCardPacks,
-    @JsonProperty("cardsDrafted") List<Card> cardsDrafted
+    @JsonProperty("cardsDrafted") List<Card> cardsDrafted,
+    @JsonProperty("cardsLeftToDraft") int cardsLeftToDraft
 ) {}

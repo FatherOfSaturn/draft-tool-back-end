@@ -441,6 +441,7 @@ class ClassicGameCoordinationWorkerTest {
         assertEquals("Alice", result.player().playerName());
         assertEquals(1, result.player().activeCardPacks().size());
         assertTrue(result.player().cardsDrafted().isEmpty());
+        assertEquals(12, result.player().cardsLeftToDraft());
     }
 
     @Test

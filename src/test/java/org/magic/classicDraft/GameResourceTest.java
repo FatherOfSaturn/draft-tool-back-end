@@ -107,7 +107,7 @@ class GameResourceTest {
 
     @Test
     void shouldGetDraftData() {
-        var snapshot = new DraftPlayerSnapshot("Alice", List.of(), List.of());
+        var snapshot = new DraftPlayerSnapshot("Alice", List.of(), List.of(), 0);
         var data = new PlayerDraftData("game-456", ClassicGameState.GAME_STARTED, DraftDirection.ASCENDING, snapshot);
 
         when(gameWorker.getDraftData("game-456", "Alice")).thenReturn(Uni.createFrom().item(data));

@@ -218,10 +218,16 @@ public class ClassicGameCoordinationWorker {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerName));
 
+        List<CardPack> dealtCardPacks = player.getDealtCardPacks();
+        int cardsLeftToDraft = dealtCardPacks.size()
+                * (dealtCardPacks.isEmpty() ? 0 : dealtCardPacks.get(0).getOriginalCardsInPack())
+                - player.getCardsDrafted().size();
+
         DraftPlayerSnapshot snapshot = new DraftPlayerSnapshot(
                 player.getPlayerName(),
                 player.getActiveCardPacks(),
-                player.getCardsDrafted());
+                player.getCardsDrafted(),
+                cardsLeftToDraft);
 
         return Uni.createFrom().item(new PlayerDraftData(gameID, game.getGameState(), game.getDraftDirection(), snapshot));
     }
