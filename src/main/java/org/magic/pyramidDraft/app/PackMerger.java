@@ -22,7 +22,26 @@ public class PackMerger {
     private static final Logger LOGGER = LogManager.getLogger(PackMerger.class);
 
     public PackMerger() {}
-    
+
+    /**
+     * Computes how many packs a player will have after merging, given the initial
+     * pack distribution counts. Mirrors the rules applied by {@link #mergePacksNew}.
+     *
+     * @param packsOf3  number of packs containing 3 cards
+     * @param packsOf7  number of packs containing 7 cards
+     * @param packsOf9  number of packs containing 9 cards
+     * @param packsOf11 number of packs containing 11 cards
+     * @return the total pack count after the merge
+     */
+    public static int mergedPackCount(int packsOf3, int packsOf7, int packsOf9, int packsOf11) {
+        int mergedThrees = switch (packsOf3) {
+            case 4, 6 -> 1;
+            case 8 -> 2;
+            default -> throw new IllegalStateException("Sorted Pack Count is incorrect for Merging.");
+        };
+        return mergedThrees + packsOf11 + packsOf7 / 2 + packsOf9 / 2;
+    }
+
     /**
      * Merges a player's remaining packs by grouping them by size (3, 7, 9, 11 cards),
      * then applies the merging rules to produce a consolidated list of packs for the

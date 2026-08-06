@@ -180,42 +180,6 @@ public class GameCoordinationWorkerTest extends TestUtils {
     }
 
     @Test
-    void shouldGetGameHistory() {
-        var p1 = mock(Player.class);
-        when(p1.getPlayerName()).thenReturn("Alice");
-        when(p1.getCurrentDraftPack()).thenReturn(3);
-        when(p1.getCardPacks()).thenReturn(List.of(mock(CardPack.class)));
-        when(p1.isReadyForMerge()).thenReturn(false);
-        var p2 = mock(Player.class);
-        when(p2.getPlayerName()).thenReturn("Bob");
-        when(p2.getCurrentDraftPack()).thenReturn(5);
-        when(p2.getCardPacks()).thenReturn(List.of(mock(CardPack.class), mock(CardPack.class)));
-        when(p2.isReadyForMerge()).thenReturn(true);
-
-        GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_STARTED, Instant.now());
-        when(dbHandler.findGamesByAccountID("acct-1")).thenReturn(List.of(game));
-
-        var result = gameCoordinationWorker.getGameHistory("acct-1").await().indefinitely();
-
-        assertEquals(1, result.size());
-        assertEquals("Alice", result.get(0).player1Name());
-        assertEquals("Bob", result.get(0).player2Name());
-    }
-
-    @Test
-    void shouldGetGameHistoryWithEmptyPlayers() {
-        GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(), GameState.GAME_STARTED, Instant.now());
-        when(dbHandler.findGamesByAccountID("acct-1")).thenReturn(List.of(game));
-
-        var result = gameCoordinationWorker.getGameHistory("acct-1").await().indefinitely();
-
-        assertEquals(1, result.size());
-        assertNull(result.get(0).player1Name());
-        assertNull(result.get(0).player2Name());
-        assertEquals(0, result.get(0).player1TotalPacks());
-    }
-
-    @Test
     void shouldAutoCompleteGameWhenMergedAndBothReadyDuringDraft() {
         var p1 = mock(Player.class);
         when(p1.isReadyForMerge()).thenReturn(true);

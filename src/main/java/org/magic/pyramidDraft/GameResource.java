@@ -7,7 +7,6 @@ import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
@@ -136,20 +135,5 @@ public class GameResource {
     public Uni<Response> deleteGame(@PathParam("gameID") final String gameID) {
         LOGGER.info("Call to delete Game: {}", gameID);
         return gameWorker.deleteGame(gameID);
-    }
-
-    /**
-     * Fetches the game history for an account. Returns summaries of all games
-     * where the account is a player, sorted newest first.
-     *
-     * @param accountID the account to look up games for
-     * @return a list of game summaries
-     */
-    @GET
-    @Path("/history/{accountID}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Uni<List<GameSummary>> getGameHistory(@PathParam("accountID") final String accountID) {
-        LOGGER.info("Call to fetch game history for account: {}", accountID);
-        return gameWorker.getGameHistory(accountID);
     }
 }

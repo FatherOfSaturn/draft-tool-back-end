@@ -49,6 +49,11 @@ public class PackCreatorTest {
         assertEquals(expectedPacksPerPlayer, player1.getCardPacks().size());
         assertEquals(expectedPacksPerPlayer, player2.getCardPacks().size());
 
+        assertEquals(20, player1.getPhase1TotalPacks());
+        assertEquals(13, player1.getPhase2TotalPacks());
+        assertEquals(20, player2.getPhase1TotalPacks());
+        assertEquals(13, player2.getPhase2TotalPacks());
+
         int totalCardsConsumed = 0;
         for (int i = 0; i < expectedPacksPerPlayer; i++) {
             totalCardsConsumed += player1.getCardPacks().get(i).getCardsInPack().size();

@@ -15,7 +15,6 @@ import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
 import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.api.card.CardDetails;
@@ -101,18 +100,6 @@ class GameResourceTest {
 
         assertNotNull(result);
         assertEquals(GameState.GAME_COMPLETE, result.gameState());
-    }
-
-    @Test
-    void shouldGetGameHistory() {
-        var summaries = List.of(new GameSummary("g1", "cube-1", GameState.GAME_COMPLETE, "P1", 0, 0, false, "P2", 0, 0, false, Instant.now()));
-
-        when(gameWorker.getGameHistory("player-1")).thenReturn(Uni.createFrom().item(summaries));
-
-        List<GameSummary> result = resource.getGameHistory("player-1").await().atMost(Duration.ofSeconds(3));
-
-        assertEquals(1, result.size());
-        assertEquals("g1", result.get(0).gameID());
     }
 
     @Test

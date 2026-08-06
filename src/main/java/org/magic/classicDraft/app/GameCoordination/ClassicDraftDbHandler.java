@@ -161,4 +161,13 @@ public class ClassicDraftDbHandler {
                 .sort(Sorts.descending("createdAt"))
                 .into(new ArrayList<>());
     }
+
+    public java.util.List<ClassicGameInfo> findGamesByAccountID(final String accountID) {
+        Bson filter = Filters.eq("players.accountID", accountID);
+
+        return getCollection()
+                .find(filter)
+                .sort(Sorts.descending("createdAt"))
+                .into(new ArrayList<>());
+    }
 }

@@ -9,7 +9,6 @@ import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
 import org.magic.pyramidDraft.api.card.Card;
@@ -231,40 +230,5 @@ public class GameCoordinationWorker {
         return Uni.createFrom().item(deleted
                 ? Response.noContent().build()
                 : Response.status(Response.Status.NOT_FOUND).build());
-    }
-
-    /**
-     * Fetches the game history for an account. Returns summaries of all games
-     * where the account is a player, sorted newest first.
-     *
-     * @param accountID the account to look up games for
-     * @return a {@link Uni} emitting the list of {@link GameSummary} objects
-     */
-    public Uni<List<GameSummary>> getGameHistory(final String accountID) {
-        List<GameInfo> games = dbHandler.findGamesByAccountID(accountID);
-
-        List<GameSummary> summaries = games.stream()
-                .map(game -> {
-                    List<Player> players = game.getPlayers();
-                    Player p1 = players.size() > 0 ? players.get(0) : null;
-                    Player p2 = players.size() > 1 ? players.get(1) : null;
-                    return new GameSummary(
-                            game.getGameID(),
-                            game.getCubeID(),
-                            game.getGameState(),
-                            p1 != null ? p1.getPlayerName() : null,
-                            p1 != null ? p1.getCurrentDraftPack() : 0,
-                            p1 != null ? p1.getCardPacks().size() : 0,
-                            p1 != null && p1.isReadyForMerge(),
-                            p2 != null ? p2.getPlayerName() : null,
-                            p2 != null ? p2.getCurrentDraftPack() : 0,
-                            p2 != null ? p2.getCardPacks().size() : 0,
-                            p2 != null && p2.isReadyForMerge(),
-                            game.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        return Uni.createFrom().item(summaries);
     }
 }
