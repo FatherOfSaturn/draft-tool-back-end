@@ -56,7 +56,7 @@ public class LobbyDbHandler {
         Lobby lobby = getCollection().find(filter).first();
 
         if (lobby == null) {
-            LOGGER.error("Unable to find lobby with code: {}", lobbyCode);
+            LOGGER.warn("Unable to find lobby with code: {}", lobbyCode);
             throw new IllegalStateException("Unable to find lobby with code: " + lobbyCode);
         }
         return lobby;

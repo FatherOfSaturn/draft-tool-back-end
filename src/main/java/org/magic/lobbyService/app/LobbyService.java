@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.magic.lobbyService.api.CreateLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyResponse;
+import org.magic.lobbyService.api.KickPlayerRequest;
 import org.magic.lobbyService.api.LeaveLobbyRequest;
 import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.LobbyPlayer;
@@ -100,7 +102,8 @@ public class LobbyService {
 
     /**
      * Adds a player to an existing waiting lobby. Generates a unique player token
-     * used for subsequent poll and leave operations.
+     * used for subsequent poll and leave operations. Rejects duplicate accounts,
+     * duplicate display names (trimmed, case-insensitive), blank names, and full lobbies.
      *
      * @param lobbyCode the lobby to join
      * @param request   the join payload
@@ -110,6 +113,11 @@ public class LobbyService {
         return Uni.createFrom().item(() -> {
             Lobby lobby = dbHandler.findByCode(lobbyCode);
 
+            String displayName = request.displayName().trim();
+            if (displayName.isEmpty()) {
+                throw new IllegalStateException("displayName cannot be blank");
+            }
+
             if (lobby.getStatus() != LobbyStatus.WAITING) {
                 throw new IllegalStateException("Lobby " + lobbyCode + " is no longer accepting players");
             }
@@ -118,12 +126,20 @@ public class LobbyService {
                 boolean alreadyJoined = lobby.getPlayers().stream()
                         .anyMatch(p -> request.accountID().equals(p.getAccountID()));
                 if (alreadyJoined) {
-                    throw new IllegalStateException("Player " + request.accountID() + " is already in lobby " + lobbyCode);
+                    throw new IllegalStateException("Already in lobby");
                 }
             }
 
+            boolean nameTaken = lobby.getPlayers().stream()
+                    .map(LobbyPlayer::getDisplayName)
+                    .filter(Objects::nonNull)
+                    .anyMatch(existing -> displayName.equalsIgnoreCase(existing.trim()));
+            if (nameTaken) {
+                throw new IllegalStateException("That name is already taken in this lobby");
+            }
+
             if (lobby.getPlayers().size() >= lobby.getMaxPlayers()) {
-                throw new IllegalStateException("Lobby " + lobbyCode + " is full");
+                throw new IllegalStateException("Lobby is full");
             }
 
             int slotIndex = findNextSlotIndex(lobby.getPlayers());
@@ -132,7 +148,7 @@ public class LobbyService {
 
             LobbyPlayer newPlayer = new LobbyPlayer(
                     request.accountID(),
-                    request.displayName(),
+                    displayName,
                     slotIndex,
                     playerToken,
                     now
@@ -142,7 +158,7 @@ public class LobbyService {
             lobby.setHostAloneSince(null);
             dbHandler.updateLobby(lobby);
 
-            LOGGER.info("Player {} joined lobby {} at slot {}", request.displayName(), lobbyCode, slotIndex);
+            LOGGER.info("Player {} joined lobby {} at slot {}", displayName, lobbyCode, slotIndex);
             return new JoinLobbyResponse(lobby, playerToken);
         });
     }
@@ -188,6 +204,50 @@ public class LobbyService {
     }
 
     /**
+     * Kicks a player from a waiting lobby. Only the host may kick players.
+     * The host themselves can never be kicked. When the kick leaves the host
+     * alone in the lobby, the {@code hostAloneSince} clock is started so the
+     * heartbeat can eventually clean up the empty lobby.
+     *
+     * @param lobbyCode the lobby to kick from
+     * @param request   the kick payload with the host's account ID and the target's token
+     * @return the updated lobby
+     */
+    public Uni<Lobby> kickPlayer(final String lobbyCode, final KickPlayerRequest request) {
+        return Uni.createFrom().item(() -> {
+            Lobby lobby = dbHandler.findByCode(lobbyCode);
+
+            if (request.hostAccountID() == null || !request.hostAccountID().equals(lobby.getHostAccountID())) {
+                throw new IllegalStateException("Only the host can kick players");
+            }
+
+            LobbyPlayer target = lobby.getPlayers().stream()
+                    .filter(p -> request.playerToken().equals(p.getPlayerToken()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Player with token " + request.playerToken() + " not found in lobby " + lobbyCode));
+
+            if (isHost(lobby, target)) {
+                throw new IllegalStateException("The host cannot be kicked from the lobby");
+            }
+
+            if (lobby.getStatus() != LobbyStatus.WAITING) {
+                throw new IllegalStateException("Cannot kick players from lobby " + lobbyCode + " in status " + lobby.getStatus());
+            }
+
+            lobby.getPlayers().remove(target);
+
+            if (onlyHostRemains(lobby)) {
+                lobby.setHostAloneSince(Instant.now());
+            }
+
+            dbHandler.updateLobby(lobby);
+            LOGGER.info("Player {} kicked from lobby {}", target.getDisplayName(), lobbyCode);
+            return lobby;
+        });
+    }
+
+    /**
      * Polls the current lobby state and updates the polling player's {@code lastPollAt}
      * timestamp for heartbeat tracking.
      *
@@ -220,58 +280,62 @@ public class LobbyService {
      * @return the updated lobby with a populated {@code gameID}
      */
     public Uni<Lobby> startGame(final String lobbyCode, final StartGameRequest request) {
-        Lobby lobby = dbHandler.findByCode(lobbyCode);
+        return Uni.createFrom().item(() -> {
+            Lobby lobby = dbHandler.findByCode(lobbyCode);
 
-        if (lobby.getStatus() != LobbyStatus.WAITING) {
-            throw new IllegalStateException("Lobby " + lobbyCode + " has already been started");
-        }
+            if (lobby.getStatus() != LobbyStatus.WAITING) {
+                throw new IllegalStateException("Lobby " + lobbyCode + " has already been started");
+            }
 
-        if (!request.hostAccountID().equals(lobby.getHostAccountID())) {
-            throw new IllegalStateException("Only the host can start the game");
-        }
+            if (!request.hostAccountID().equals(lobby.getHostAccountID())) {
+                throw new IllegalStateException("Only the host can start the game");
+            }
 
-        if (lobby.getPlayers().size() < lobby.getMinPlayers()) {
-            throw new IllegalStateException("Not enough players to start (have " +
-                    lobby.getPlayers().size() + ", need " + lobby.getMinPlayers() + ")");
-        }
+            if (lobby.getPlayers().size() < lobby.getMinPlayers()) {
+                throw new IllegalStateException("Not enough players to start (have " +
+                        lobby.getPlayers().size() + ", need " + lobby.getMinPlayers() + ")");
+            }
 
-        lobby.setStatus(LobbyStatus.STARTING);
-        dbHandler.updateLobby(lobby);
-
-        String cubeID = (String) lobby.getConfig().get("cubeID");
-        if (cubeID == null) {
-            lobby.setStatus(LobbyStatus.WAITING);
+            return lobby;
+        }).chain(lobby -> {
+            lobby.setStatus(LobbyStatus.STARTING);
             dbHandler.updateLobby(lobby);
-            throw new IllegalStateException("cubeID is required in lobby config");
-        }
 
-        DraftTypeHandler handler;
-        try {
-            handler = findHandler(lobby.getDraftType());
-        } catch (IllegalStateException e) {
-            lobby.setStatus(LobbyStatus.WAITING);
-            dbHandler.updateLobby(lobby);
-            throw e;
-        }
+            String cubeID = (String) lobby.getConfig().get("cubeID");
+            if (cubeID == null) {
+                lobby.setStatus(LobbyStatus.WAITING);
+                dbHandler.updateLobby(lobby);
+                throw new IllegalStateException("cubeID is required in lobby config");
+            }
 
-        List<LobbyPlayer> sortedPlayers = lobby.getPlayers().stream()
-                .sorted(Comparator.comparingInt(LobbyPlayer::getSlotIndex))
-                .toList();
+            DraftTypeHandler handler;
+            try {
+                handler = findHandler(lobby.getDraftType());
+            } catch (IllegalStateException e) {
+                lobby.setStatus(LobbyStatus.WAITING);
+                dbHandler.updateLobby(lobby);
+                throw e;
+            }
 
-        return handler.startGame(cubeID, sortedPlayers, lobby.getConfig())
-                .map(gameID -> {
-                    lobby.setGameID(gameID);
-                    lobby.setStatus(LobbyStatus.STARTED);
-                    dbHandler.updateLobby(lobby);
-                    LOGGER.info("Lobby {} started game {}", lobbyCode, gameID);
-                    return lobby;
-                })
-                .onFailure().recoverWithItem(t -> {
-                    lobby.setStatus(LobbyStatus.WAITING);
-                    dbHandler.updateLobby(lobby);
-                    LOGGER.error("Failed to start game for lobby {}: {}", lobbyCode, t.getMessage());
-                    throw new IllegalStateException("Game creation failed: " + t.getMessage());
-                });
+            List<LobbyPlayer> sortedPlayers = lobby.getPlayers().stream()
+                    .sorted(Comparator.comparingInt(LobbyPlayer::getSlotIndex))
+                    .toList();
+
+            return handler.startGame(cubeID, sortedPlayers, lobby.getConfig())
+                    .map(gameID -> {
+                        lobby.setGameID(gameID);
+                        lobby.setStatus(LobbyStatus.STARTED);
+                        dbHandler.updateLobby(lobby);
+                        LOGGER.info("Lobby {} started game {}", lobbyCode, gameID);
+                        return lobby;
+                    })
+                    .onFailure().transform(t -> {
+                        lobby.setStatus(LobbyStatus.WAITING);
+                        dbHandler.updateLobby(lobby);
+                        LOGGER.error("Failed to start game for lobby {}: {}", lobbyCode, t.getMessage());
+                        return new IllegalStateException("Game creation failed: " + t.getMessage());
+                    });
+        });
     }
 
     /**
@@ -388,5 +452,25 @@ public class LobbyService {
                             "Player with token " + playerToken + " not found in lobby " + lobby.getLobbyCode()));
         }
         throw new IllegalStateException("accountID or playerToken is required to identify the player");
+    }
+
+    /**
+     * Determines whether a player is the lobby host. Handles both authenticated hosts
+     * (matched by account ID) and guest hosts (whose {@code hostAccountID} is stored
+     * as {@code guest-<playerToken>}).
+     */
+    private static boolean isHost(final Lobby lobby, final LobbyPlayer player) {
+        String hostID = lobby.getHostAccountID();
+        if (hostID == null) {
+            return false;
+        }
+        if (hostID.equals(player.getAccountID())) {
+            return true;
+        }
+        return player.getPlayerToken() != null && hostID.equals("guest-" + player.getPlayerToken());
+    }
+
+    private static boolean onlyHostRemains(final Lobby lobby) {
+        return lobby.getPlayers().size() == 1 && isHost(lobby, lobby.getPlayers().get(0));
     }
 }
