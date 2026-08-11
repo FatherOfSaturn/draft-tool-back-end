@@ -55,7 +55,7 @@ class PyramidDraftDbHandlerTest {
     }
 
     private GameInfo createGame(String id, GameState state) {
-        return new GameInfo(id, "cube", List.of(), state, Instant.now());
+        return new GameInfo(id, "cube", "pyramid", List.of(), state, Instant.now());
     }
 
     @Test
@@ -167,6 +167,26 @@ class PyramidDraftDbHandlerTest {
         int result = handler.clearGamesWithStatus(GameState.GAME_COMPLETE);
 
         assertEquals(3, result);
+    }
+
+    @Test
+    void shouldDeleteGameWhenFound() {
+        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+        when(deleteResult.getDeletedCount()).thenReturn(1L);
+
+        boolean result = handler.deleteGame("gid");
+
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenDeletingMissingGame() {
+        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+        when(deleteResult.getDeletedCount()).thenReturn(0L);
+
+        boolean result = handler.deleteGame("missing");
+
+        assertFalse(result);
     }
 
     @Test

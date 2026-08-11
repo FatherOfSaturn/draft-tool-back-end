@@ -3,6 +3,7 @@ package org.magic.lobbyService;
 import org.magic.lobbyService.api.CreateLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyResponse;
+import org.magic.lobbyService.api.KickPlayerRequest;
 import org.magic.lobbyService.api.LeaveLobbyRequest;
 import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.StartGameRequest;
@@ -62,10 +63,25 @@ public class LobbyResource {
                                              final JoinLobbyRequest request) {
         return lobbyService.joinLobby(lobbyCode, request)
                 .onFailure(IllegalStateException.class)
-                .recoverWithItem(t -> {
-                    throw new WebApplicationException(t.getMessage(),
-                            isFullOrAlreadyJoined(t) ? Response.Status.CONFLICT : Response.Status.NOT_FOUND);
-                });
+                .transform(t -> new WebApplicationException(t.getMessage(),
+                        isJoinConflict(t) ? Response.Status.CONFLICT : Response.Status.NOT_FOUND));
+    }
+
+    /**
+     * Kicks a player from a waiting lobby. Only the host may kick players.
+     *
+     * @param lobbyCode the lobby to kick from
+     * @param request   the kick payload with the host's account ID and the target's token
+     * @return the updated lobby
+     */
+    @POST
+    @Path("/{lobbyCode}/kick")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Uni<Lobby> kickPlayer(@PathParam("lobbyCode") final String lobbyCode,
+                                  final KickPlayerRequest request) {
+        return lobbyService.kickPlayer(lobbyCode, request)
+                .onFailure(IllegalStateException.class)
+                .transform(t -> toKickException(t));
     }
 
     /**
@@ -82,9 +98,7 @@ public class LobbyResource {
                                   final LeaveLobbyRequest request) {
         return lobbyService.leaveLobby(lobbyCode, request)
                 .onFailure(IllegalStateException.class)
-                .recoverWithItem(t -> {
-                    throw new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND);
-                });
+                .transform(t -> new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND));
     }
 
     /**
@@ -101,9 +115,7 @@ public class LobbyResource {
                                 @QueryParam("playerToken") final String playerToken) {
         return lobbyService.getLobby(lobbyCode, playerToken)
                 .onFailure(IllegalStateException.class)
-                .recoverWithItem(t -> {
-                    throw new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND);
-                });
+                .transform(t -> new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND));
     }
 
     /**
@@ -121,27 +133,43 @@ public class LobbyResource {
                                  final StartGameRequest request) {
         return lobbyService.startGame(lobbyCode, request)
                 .onFailure(IllegalStateException.class)
-                .recoverWithItem(t -> {
-                    String msg = t.getMessage();
-                    if (msg != null && msg.contains("Only the host")) {
-                        throw new WebApplicationException(msg, Response.Status.FORBIDDEN);
-                    }
-                    if (msg != null && msg.contains("Not enough players")) {
-                        throw new WebApplicationException(msg, Response.Status.BAD_REQUEST);
-                    }
-                    if (msg != null && msg.contains("already been started")) {
-                        throw new WebApplicationException(msg, Response.Status.CONFLICT);
-                    }
-                    if (msg != null && msg.contains("Game creation failed")) {
-                        throw new WebApplicationException(msg, Response.Status.INTERNAL_SERVER_ERROR);
-                    }
-                    throw new WebApplicationException(msg, Response.Status.BAD_REQUEST);
-                });
+                .transform(t -> toStartGameException(t));
     }
 
-    private static boolean isFullOrAlreadyJoined(final Throwable t) {
+    private static boolean isJoinConflict(final Throwable t) {
         String msg = t.getMessage();
-        return msg != null && (msg.contains("full") || msg.contains("already in lobby")
-                || msg.contains("no longer accepting"));
+        return msg != null && (msg.contains("Already in lobby")
+                || msg.contains("name is already taken")
+                || msg.contains("Lobby is full")
+                || msg.contains("no longer accepting")
+                || msg.contains("cannot be blank"));
+    }
+
+    private static WebApplicationException toKickException(final Throwable t) {
+        String msg = t.getMessage();
+        if (msg != null && msg.contains("Only the host")) {
+            return new WebApplicationException(msg, Response.Status.FORBIDDEN);
+        }
+        if (msg != null && (msg.contains("Unable to find lobby") || msg.contains("not found in lobby"))) {
+            return new WebApplicationException(msg, Response.Status.NOT_FOUND);
+        }
+        return new WebApplicationException(msg, Response.Status.CONFLICT);
+    }
+
+    private static WebApplicationException toStartGameException(final Throwable t) {
+        String msg = t.getMessage();
+        if (msg != null && msg.contains("Only the host")) {
+            return new WebApplicationException(msg, Response.Status.FORBIDDEN);
+        }
+        if (msg != null && msg.contains("Not enough players")) {
+            return new WebApplicationException(msg, Response.Status.BAD_REQUEST);
+        }
+        if (msg != null && msg.contains("already been started")) {
+            return new WebApplicationException(msg, Response.Status.CONFLICT);
+        }
+        if (msg != null && msg.contains("Game creation failed")) {
+            return new WebApplicationException(msg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return new WebApplicationException(msg, Response.Status.BAD_REQUEST);
     }
 }

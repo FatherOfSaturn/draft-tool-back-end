@@ -51,6 +51,14 @@ public class PackMergerTest extends TestUtils {
 
         assertEquals(18, mergedPlayer1Packs.size());
         assertEquals(18, mergedPlayer2Packs.size());
+        assertEquals(18, PackMerger.mergedPackCount(8, 8, 8, 8));
+    }
+
+    @Test
+    void mergedPackCountMatchesMergedSizes() {
+        assertEquals(18, PackMerger.mergedPackCount(8, 8, 8, 8));
+        assertEquals(15, PackMerger.mergedPackCount(6, 4, 8, 8));
+        assertEquals(13, PackMerger.mergedPackCount(4, 4, 4, 8));
     }
 
     @Test

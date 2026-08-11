@@ -33,7 +33,7 @@ class PlayerTest {
     @Test
     void testDraftCardNormalPick() {
         List<CardPack> packs = List.of(createPack(0, 3), createPack(1, 3));
-        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 0, 0);
 
         assertEquals(0, player.getCardsDrafted().size());
         assertEquals(0, player.getCurrentDraftPack());
@@ -48,7 +48,7 @@ class PlayerTest {
     @Test
     void testDraftCardExhaustsPacksSetsReadyForMerge() {
         List<CardPack> packs = new java.util.ArrayList<>(List.of(createPack(0, 3), createPack(1, 3)));
-        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 0, 0);
 
         assertFalse(player.isReadyForMerge());
 
@@ -64,7 +64,7 @@ class PlayerTest {
     @Test
     void testDoubleDraftDecrementsRemaining() {
         List<CardPack> packs = List.of(createPack(0, 5), createPack(1, 5));
-        Player player = new Player("TestPlayer", "player-1", packs, 2, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 2, null, 0, false, 0, 0);
 
         assertEquals(2, player.getDoubleDraftPicksRemaining());
 
@@ -76,7 +76,7 @@ class PlayerTest {
     @Test
     void testDoubleDraftWithNoRemainingThrows() {
         List<CardPack> packs = List.of(createPack(0, 3));
-        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 0, 0);
 
         assertThrows(IllegalStateException.class, () -> {
             player.draftCard("card-0-0", 0, true);
@@ -86,7 +86,7 @@ class PlayerTest {
     @Test
     void testDraftInvalidCardIdThrows() {
         List<CardPack> packs = List.of(createPack(0, 3));
-        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 0, 0);
 
         assertThrows(IllegalArgumentException.class, () -> {
             player.draftCard("nonexistent-card", 0, false);
@@ -96,7 +96,7 @@ class PlayerTest {
     @Test
     void testResetAfterMerge() {
         List<CardPack> packs = List.of(createPack(0, 3));
-        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false);
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 0, 0);
 
         player.draftCard("card-0-0", 0, false);
         player.draftCard("card-0-1", 0, false);
@@ -108,5 +108,23 @@ class PlayerTest {
 
         assertFalse(player.isReadyForMerge());
         assertEquals(0, player.getCurrentDraftPack());
+    }
+
+    @Test
+    void testPhaseTotalsDefaultToZeroWhenAbsent() {
+        List<CardPack> packs = List.of(createPack(0, 3));
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, null, null);
+
+        assertEquals(0, player.getPhase1TotalPacks());
+        assertEquals(0, player.getPhase2TotalPacks());
+    }
+
+    @Test
+    void testPhaseTotalsPreservedFromConstructor() {
+        List<CardPack> packs = List.of(createPack(0, 3));
+        Player player = new Player("TestPlayer", "player-1", packs, 0, null, 0, false, 20, 13);
+
+        assertEquals(20, player.getPhase1TotalPacks());
+        assertEquals(13, player.getPhase2TotalPacks());
     }
 }

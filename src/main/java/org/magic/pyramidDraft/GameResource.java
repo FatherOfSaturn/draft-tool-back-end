@@ -7,12 +7,12 @@ import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -20,6 +20,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * REST resource for managing pyramid draft games.
@@ -122,17 +123,17 @@ public class GameResource {
     }
 
     /**
-     * Fetches the game history for an account. Returns summaries of all games
-     * where the account is a player, sorted newest first.
+     * Deletes a single game by its ID. Administrative cleanup utility.
+     * Players, packs, and drafted cards embedded in the game are removed with it.
+     * Idempotent — if the game is already gone, a 404 is returned.
      *
-     * @param accountID the account to look up games for
-     * @return a list of game summaries
+     * @param gameID the game to delete
+     * @return 204 No Content if deleted, 404 if not found
      */
-    @GET
-    @Path("/history/{accountID}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Uni<List<GameSummary>> getGameHistory(@PathParam("accountID") final String accountID) {
-        LOGGER.info("Call to fetch game history for account: {}", accountID);
-        return gameWorker.getGameHistory(accountID);
+    @DELETE
+    @Path("/end/admin/delete/{gameID}")
+    public Uni<Response> deleteGame(@PathParam("gameID") final String gameID) {
+        LOGGER.info("Call to delete Game: {}", gameID);
+        return gameWorker.deleteGame(gameID);
     }
 }

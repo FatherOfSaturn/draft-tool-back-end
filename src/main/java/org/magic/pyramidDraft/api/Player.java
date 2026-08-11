@@ -28,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Getter
 @Setter
 @EqualsAndHashCode
-@JsonPropertyOrder({ "playerName", "cardsDrafted", "cardPacks", "doubleDraftPicksRemaining" })
+@JsonPropertyOrder({ "playerName", "cardsDrafted", "cardPacks", "doubleDraftPicksRemaining",
+                     "phase1TotalPacks", "phase2TotalPacks" })
 public class Player {
     private static final Logger LOGGER = LogManager.getLogger(Player.class);
     private final String playerName;
@@ -42,6 +43,10 @@ public class Player {
     private int currentDraftPack;
     @Setter(AccessLevel.NONE)
     private boolean readyForMerge;
+    @Setter(AccessLevel.NONE)
+    private int phase1TotalPacks;
+    @Setter(AccessLevel.NONE)
+    private int phase2TotalPacks;
 
     @JsonCreator
     @BsonCreator
@@ -58,7 +63,11 @@ public class Player {
                   @JsonProperty("currentDraftPack") @BsonProperty("currentDraftPack") 
                   final int currentDraftPack, 
                   @JsonProperty("readyForMerge") @BsonProperty("readyForMerge") 
-                  final boolean readyForMerge) {
+                  final boolean readyForMerge,
+                  @JsonProperty("phase1TotalPacks") @BsonProperty("phase1TotalPacks") 
+                  final Integer phase1TotalPacks,
+                  @JsonProperty("phase2TotalPacks") @BsonProperty("phase2TotalPacks") 
+                  final Integer phase2TotalPacks) {
         this.playerName = Objects.requireNonNull(playerName, "player name Required for Player");
         this.accountID = Objects.requireNonNull(accountID, "account id Required for Player");
         this.cardPacks = Objects.requireNonNull(cardPacks, "card packs Required for Player");
@@ -66,6 +75,8 @@ public class Player {
         this.doubleDraftPicksRemaining = Objects.requireNonNull(doubleDraftPicksRemaining, "double picks amount required for Player");
         this.currentDraftPack = Objects.requireNonNullElse(currentDraftPack, 0);
         this.readyForMerge = Objects.requireNonNullElse(readyForMerge, false);
+        this.phase1TotalPacks = Objects.requireNonNullElse(phase1TotalPacks, 0);
+        this.phase2TotalPacks = Objects.requireNonNullElse(phase2TotalPacks, 0);
     }
 
     /**

@@ -9,7 +9,6 @@ import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.GameSummary;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
 import org.magic.pyramidDraft.api.card.Card;
@@ -65,6 +64,7 @@ public class GameCoordinationWorker {
                                                                                 gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
                              .map(players -> new GameInfo(gameCreationInfo.gameID(),
                                                           gameCreationInfo.cubeID(),
+                                                          "pyramid",
                                                           players,
                                                           GameState.GAME_STARTED,
                                                           Instant.now()))
@@ -216,37 +216,19 @@ public class GameCoordinationWorker {
     }
 
     /**
-     * Fetches the game history for an account. Returns summaries of all games
-     * where the account is a player, sorted newest first.
+     * Deletes a single game by its ID. Administrative cleanup utility.
+     * Players, packs, and drafted cards are embedded in the game document,
+     * so they are removed along with the game.
      *
-     * @param accountID the account to look up games for
-     * @return a {@link Uni} emitting the list of {@link GameSummary} objects
+     * @param gameID the game to delete
+     * @return a {@link Uni} emitting 204 No Content if deleted, 404 if not found
      */
-    public Uni<List<GameSummary>> getGameHistory(final String accountID) {
-        List<GameInfo> games = dbHandler.findGamesByAccountID(accountID);
+    public Uni<Response> deleteGame(final String gameID) {
+        LOGGER.info("Deleting Game: {}", gameID);
+        final boolean deleted = dbHandler.deleteGame(gameID);
 
-        List<GameSummary> summaries = games.stream()
-                .map(game -> {
-                    List<Player> players = game.getPlayers();
-                    Player p1 = players.size() > 0 ? players.get(0) : null;
-                    Player p2 = players.size() > 1 ? players.get(1) : null;
-                    return new GameSummary(
-                            game.getGameID(),
-                            game.getCubeID(),
-                            game.getGameState(),
-                            p1 != null ? p1.getPlayerName() : null,
-                            p1 != null ? p1.getCurrentDraftPack() : 0,
-                            p1 != null ? p1.getCardPacks().size() : 0,
-                            p1 != null && p1.isReadyForMerge(),
-                            p2 != null ? p2.getPlayerName() : null,
-                            p2 != null ? p2.getCurrentDraftPack() : 0,
-                            p2 != null ? p2.getCardPacks().size() : 0,
-                            p2 != null && p2.isReadyForMerge(),
-                            game.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        return Uni.createFrom().item(summaries);
+        return Uni.createFrom().item(deleted
+                ? Response.noContent().build()
+                : Response.status(Response.Status.NOT_FOUND).build());
     }
 }
