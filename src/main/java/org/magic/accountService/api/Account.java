@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -27,7 +28,7 @@ public class Account {
     private String accountID;
 
     @BsonProperty("email")
-    @JsonProperty("email")
+    @JsonIgnore
     private String email;
 
     @BsonProperty("displayName")
@@ -35,7 +36,7 @@ public class Account {
     private String displayName;
 
     @BsonProperty("googleSub")
-    @JsonProperty("googleSub")
+    @JsonIgnore
     private String googleSub;
 
     @JsonProperty("deckIDs")

@@ -1,5 +1,8 @@
 package org.magic.pyramidDraft.app;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,7 +58,8 @@ public class PyramidDraftTypeHandler implements DraftTypeHandler {
         List<PlayerCreationInfo> playerInfo = players.stream()
                 .map(p -> new PlayerCreationInfo(
                         p.getDisplayName(),
-                        p.getAccountID() != null ? p.getAccountID() : "guest-" + p.getPlayerToken()))
+                        p.getAccountID() != null ? p.getAccountID() : guestAccountId(p.getPlayerToken()),
+                        p.getPlayerToken()))
                 .toList();
 
         GameCreationInfo creationInfo = new GameCreationInfo(gameID, cubeID, playerInfo, doubleDraftPicks);
@@ -70,5 +74,15 @@ public class PyramidDraftTypeHandler implements DraftTypeHandler {
             return number.intValue();
         }
         return defaultValue;
+    }
+
+    private static String guestAccountId(final String playerToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(playerToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return "guest-" + HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 }

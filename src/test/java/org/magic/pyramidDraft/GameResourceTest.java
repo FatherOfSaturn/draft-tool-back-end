@@ -42,7 +42,7 @@ class GameResourceTest {
 
     @Test
     void shouldCreateAndStartGame() {
-        var info = new GameCreationInfo("gid", "cube-123", List.of(new PlayerCreationInfo("P1", "acc1"), new PlayerCreationInfo("P2", "acc2")), 3);
+        var info = new GameCreationInfo("gid", "cube-123", List.of(new PlayerCreationInfo("P1", "acc1", null), new PlayerCreationInfo("P2", "acc2", null)), 3);
         var expectedGame = new GameInfo("game-456", "cube-123", "pyramid", List.of(), GameState.GAME_STARTED, Instant.now());
 
         when(gameWorker.startGame(info)).thenReturn(Uni.createFrom().item(expectedGame));
@@ -58,9 +58,9 @@ class GameResourceTest {
     void shouldDraftCard() {
         var card = new Card("Lightning Bolt", details, "card-789", 1, "Instant");
 
-        when(gameWorker.draftCard("player-1", 2, "card-789", false, "game-456")).thenReturn(card);
+        when(gameWorker.draftCard("tok-0", 2, "card-789", false, "game-456")).thenReturn(card);
 
-        Card result = resource.draftCard("player-1", 2, "card-789", "game-456", false).await().atMost(Duration.ofSeconds(3));
+        Card result = resource.draftCard("game-456", 2, "card-789", "tok-0", false).await().atMost(Duration.ofSeconds(3));
 
         assertNotNull(result);
         assertEquals("Lightning Bolt", result.getName());

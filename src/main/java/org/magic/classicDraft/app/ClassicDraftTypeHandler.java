@@ -53,7 +53,7 @@ public class ClassicDraftTypeHandler implements DraftTypeHandler {
 
         List<ClassicPlayerCreationInfo> playerInfo = players.stream()
                 .sorted(Comparator.comparingInt(LobbyPlayer::getSlotIndex))
-                .map(p -> new ClassicPlayerCreationInfo(p.getDisplayName(), p.getAccountID()))
+                .map(p -> new ClassicPlayerCreationInfo(p.getDisplayName(), p.getAccountID(), p.getPlayerToken()))
                 .toList();
 
         int numberOfPacks = playerInfo.size() * packsPerPlayer;

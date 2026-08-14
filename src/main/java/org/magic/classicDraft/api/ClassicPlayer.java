@@ -16,6 +16,7 @@ import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.api.card.CardPack;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -32,6 +33,15 @@ public class ClassicPlayer {
     private List<CardPack> dealtCardPacks;
     private List<CardPack> activeCardPacks;
     private List<Card> cardsDrafted;
+
+    /**
+     * Bearer credential used to draft, fetch draft data, and check draft status.
+     * Assigned at game creation (from the lobby token when started via a lobby) and
+     * never serialized in API responses — only its owner knows it.
+     */
+    @BsonProperty("playerToken")
+    @JsonIgnore
+    private String playerToken;
 
     @JsonCreator
     @BsonCreator

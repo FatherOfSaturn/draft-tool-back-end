@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!--
+      No suppressions are currently required.
+      OpenTelemetry opentelemetry-api is present only as a compile-time API jar
+      (no OpenTelemetry SDK or trace-propagators extension is bundled), so the
+      W3C baggage propagation advisory (GHSA-rcgg-9c38-7xpx / CVE-2026-45292)
+      is not exploitable in this application.
+    -->
+</suppressions>

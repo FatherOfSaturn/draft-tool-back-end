@@ -49,6 +49,7 @@ public class ClassicPackCreator {
                     dealtPacks,
                     null,
                     null);
+            player.setPlayerToken(info.playerToken());
             players.add(player);
         }
 

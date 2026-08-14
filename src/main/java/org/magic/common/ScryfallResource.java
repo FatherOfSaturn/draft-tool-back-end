@@ -10,6 +10,8 @@ import org.magic.pyramidDraft.api.card.Card;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -22,6 +24,9 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 /**
  * REST resource that exposes Scryfall API functionality through the backend.
  * Provides card search, card-by-ID lookup, batch lookup by name, and
@@ -29,6 +34,7 @@ import jakarta.ws.rs.core.Response;
  */
 @Path("/scryfall")
 @Produces(MediaType.APPLICATION_JSON)
+@Tag(name = "Scryfall", description = "Card search and lookup proxied through the Scryfall API.")
 public class ScryfallResource {
 
     private final ScryfallCardService scryfallCardService;
@@ -49,11 +55,14 @@ public class ScryfallResource {
      */
     @GET
     @Path("/cards/search")
+    @Operation(summary = "Search cards",
+            description = "Searches Scryfall for cards matching the query and returns all accumulated results. " +
+                    "Returns 400 if the q parameter is missing.")
     public Uni<List<ScryfallCard>> searchCards(
-            @QueryParam("q") final String query,
-            @QueryParam("order") @DefaultValue("name") final String order,
-            @QueryParam("dir") @DefaultValue("auto") final String dir,
-            @QueryParam("unique") @DefaultValue("cards") final String unique) {
+            @QueryParam("q") @Size(max = 300) final String query,
+            @QueryParam("order") @DefaultValue("name") @Size(max = 20) final String order,
+            @QueryParam("dir") @DefaultValue("auto") @Size(max = 20) final String dir,
+            @QueryParam("unique") @DefaultValue("cards") @Size(max = 20) final String unique) {
         if (query == null || query.isBlank()) {
             throw new WebApplicationException("Query parameter 'q' is required",
                     Response.status(Response.Status.BAD_REQUEST).build());
@@ -73,11 +82,14 @@ public class ScryfallResource {
      */
     @GET
     @Path("/cards/search/cubecobra")
+    @Operation(summary = "Search cards as CubeCobra definitions",
+            description = "Searches Scryfall for cards and returns the first match converted to CubeCobra format. " +
+                    "Returns 400 if the q parameter is missing.")
     public Uni<List<Card>> searchCardsAsCubeCobraDef(
-            @QueryParam("q") final String query,
-            @QueryParam("order") @DefaultValue("name") final String order,
-            @QueryParam("dir") @DefaultValue("auto") final String dir,
-            @QueryParam("unique") @DefaultValue("cards") final String unique) {
+            @QueryParam("q") @Size(max = 300) final String query,
+            @QueryParam("order") @DefaultValue("name") @Size(max = 20) final String order,
+            @QueryParam("dir") @DefaultValue("auto") @Size(max = 20) final String dir,
+            @QueryParam("unique") @DefaultValue("cards") @Size(max = 20) final String unique) {
         if (query == null || query.isBlank()) {
             throw new WebApplicationException("Query parameter 'q' is required",
                     Response.status(Response.Status.BAD_REQUEST).build());
@@ -97,7 +109,9 @@ public class ScryfallResource {
      */
     @GET
     @Path("/cards/{id}")
-    public Uni<ScryfallCard> getCardById(@PathParam("id") final String scryfallId) {
+    @Operation(summary = "Get a card by ID",
+            description = "Returns the card with the given Scryfall ID, or 404 if not found.")
+    public Uni<ScryfallCard> getCardById(@PathParam("id") @Size(max = 64) final String scryfallId) {
         return scryfallCardService.getCardById(scryfallId)
                 .map(card -> {
                     if (card == null) {
@@ -116,7 +130,9 @@ public class ScryfallResource {
      */
     @GET
     @Path("/cards/{id}/cubecobra")
-    public Uni<Card> getCardByIdAsCubeCobraDef(@PathParam("id") final String scryfallId) {
+    @Operation(summary = "Get a card as a CubeCobra definition",
+            description = "Returns the card with the given Scryfall ID converted to CubeCobra format, or 404 if not found.")
+    public Uni<Card> getCardByIdAsCubeCobraDef(@PathParam("id") @Size(max = 64) final String scryfallId) {
         return scryfallCardService.getCardById(scryfallId)
                 .flatMap(card -> {
                     if (card == null) {
@@ -136,7 +152,11 @@ public class ScryfallResource {
     @POST
     @Path("/cards/batch/cubecobra")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Uni<BatchResult> batchLookupAsCubeCobraDef(final BatchNamesRequest request) {
+    @Operation(summary = "Batch lookup cards by name",
+            description = "Looks up multiple card names in a single Scryfall collection request and returns them " +
+                    "as CubeCobra definitions, along with any names that were not found. Returns 400 if the body " +
+                    "is missing an non-empty names list.")
+    public Uni<BatchResult> batchLookupAsCubeCobraDef(@Valid final BatchNamesRequest request) {
         if (request == null || request.names() == null || request.names().isEmpty()) {
             throw new WebApplicationException("Request body with 'names' list is required",
                     Response.status(Response.Status.BAD_REQUEST).build());
@@ -146,6 +166,8 @@ public class ScryfallResource {
 
     /**
      * Request body for the batch card lookup endpoint.
+     * The list is bounded to prevent cost amplification against the upstream API.
      */
-    public record BatchNamesRequest(@JsonProperty("names") List<String> names) {}
+    public record BatchNamesRequest(
+            @JsonProperty("names") @Size(max = 300) java.util.List<@Size(max = 64) @jakarta.validation.constraints.NotBlank String> names) {}
 }

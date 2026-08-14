@@ -17,6 +17,7 @@ import org.magic.pyramidDraft.api.card.Card;
 import org.magic.pyramidDraft.api.card.CardPack;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -34,6 +35,15 @@ public class Player {
     private static final Logger LOGGER = LogManager.getLogger(Player.class);
     private final String playerName;
     private final String accountID;
+
+    /**
+     * Credential used to draft cards and poll game state. Assigned at game
+     * creation (from the lobby token) and never serialized in API responses.
+     */
+    @BsonProperty("playerToken")
+    @JsonIgnore
+    private String playerToken;
+
     private List<CardPack> cardPacks;
     @Setter(AccessLevel.NONE)
     private List<Card> cardsDrafted;

@@ -1,10 +1,13 @@
 package org.magic.lobbyService.app;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,10 +41,12 @@ public class LobbyService {
     private static final Logger LOGGER = LogManager.getLogger(LobbyService.class);
 
     private static final String CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int CODE_LENGTH = 5;
+    private static final int CODE_LENGTH = 8;
     private static final int MAX_CODE_ATTEMPTS = 10;
     private static final Duration STALE_PLAYER_TIMEOUT = Duration.ofSeconds(60);
     private static final Duration HOST_ALONE_TIMEOUT = Duration.ofMinutes(5);
+    private static final java.util.regex.Pattern CUBE_ID_PATTERN =
+            java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1,64}");
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -55,13 +60,14 @@ public class LobbyService {
     }
 
     /**
-     * Creates a new lobby, generates a unique 5-character code, and adds the host
-     * as the first player.
+     * Creates a new lobby, generates a unique 8-character code, and adds the host
+     * as the first player. The host's lobby token is returned to the creator so it
+     * can be used for polling, kicking, and starting the game.
      *
      * @param request the creation payload
-     * @return the created {@link Lobby}
+     * @return the created {@link Lobby} plus the host's token
      */
-    public Uni<Lobby> createLobby(final CreateLobbyRequest request) {
+    public Uni<JoinLobbyResponse> createLobby(final CreateLobbyRequest request) {
         return Uni.createFrom().item(() -> {
             String code = generateUniqueCode();
 
@@ -96,7 +102,7 @@ public class LobbyService {
 
             dbHandler.insertLobby(lobby);
             LOGGER.info("Created lobby {} for draft type {}", code, request.draftType());
-            return lobby;
+            return new JoinLobbyResponse(lobby, playerToken);
         });
     }
 
@@ -179,7 +185,7 @@ public class LobbyService {
                 throw new IllegalStateException("Cannot leave lobby " + lobbyCode + " in status " + lobby.getStatus());
             }
 
-            LobbyPlayer player = findPlayer(lobby, request.accountID(), request.playerToken());
+            LobbyPlayer player = findPlayerByToken(lobby, request.playerToken());
 
             lobby.getPlayers().remove(player);
 
@@ -204,28 +210,28 @@ public class LobbyService {
     }
 
     /**
-     * Kicks a player from a waiting lobby. Only the host may kick players.
-     * The host themselves can never be kicked. When the kick leaves the host
-     * alone in the lobby, the {@code hostAloneSince} clock is started so the
-     * heartbeat can eventually clean up the empty lobby.
+     * Kicks a player from a waiting lobby. Only the host may kick players, proven
+     * by presenting the host's lobby token. The host themselves can never be kicked.
+     * When the kick leaves the host alone in the lobby, the {@code hostAloneSince}
+     * clock is started so the heartbeat can eventually clean up the empty lobby.
      *
      * @param lobbyCode the lobby to kick from
-     * @param request   the kick payload with the host's account ID and the target's token
+     * @param request   the caller's own token and the target's slot index
      * @return the updated lobby
      */
     public Uni<Lobby> kickPlayer(final String lobbyCode, final KickPlayerRequest request) {
         return Uni.createFrom().item(() -> {
             Lobby lobby = dbHandler.findByCode(lobbyCode);
 
-            if (request.hostAccountID() == null || !request.hostAccountID().equals(lobby.getHostAccountID())) {
+            if (!isCallerHost(lobby, request.playerToken())) {
                 throw new IllegalStateException("Only the host can kick players");
             }
 
             LobbyPlayer target = lobby.getPlayers().stream()
-                    .filter(p -> request.playerToken().equals(p.getPlayerToken()))
+                    .filter(p -> p.getSlotIndex() == request.targetSlotIndex())
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
-                            "Player with token " + request.playerToken() + " not found in lobby " + lobbyCode));
+                            "Player at slot " + request.targetSlotIndex() + " not found in lobby " + lobbyCode));
 
             if (isHost(lobby, target)) {
                 throw new IllegalStateException("The host cannot be kicked from the lobby");
@@ -271,12 +277,12 @@ public class LobbyService {
     }
 
     /**
-     * Starts the game for a lobby. Validates the host identity and player count,
-     * resolves the {@link DraftTypeHandler} for the lobby's draft type, and
-     * delegates game creation to that handler.
+     * Starts the game for a lobby. Validates the host identity (proven by the
+     * host's lobby token) and player count, resolves the {@link DraftTypeHandler}
+     * for the lobby's draft type, and delegates game creation to that handler.
      *
      * @param lobbyCode the lobby to start
-     * @param request   the start request with the host's account ID
+     * @param request   the caller's own lobby token
      * @return the updated lobby with a populated {@code gameID}
      */
     public Uni<Lobby> startGame(final String lobbyCode, final StartGameRequest request) {
@@ -287,7 +293,7 @@ public class LobbyService {
                 throw new IllegalStateException("Lobby " + lobbyCode + " has already been started");
             }
 
-            if (!request.hostAccountID().equals(lobby.getHostAccountID())) {
+            if (!isCallerHost(lobby, request.playerToken())) {
                 throw new IllegalStateException("Only the host can start the game");
             }
 
@@ -306,6 +312,11 @@ public class LobbyService {
                 lobby.setStatus(LobbyStatus.WAITING);
                 dbHandler.updateLobby(lobby);
                 throw new IllegalStateException("cubeID is required in lobby config");
+            }
+            if (!CUBE_ID_PATTERN.matcher(cubeID).matches()) {
+                lobby.setStatus(LobbyStatus.WAITING);
+                dbHandler.updateLobby(lobby);
+                throw new IllegalStateException("cubeID in lobby config is invalid");
             }
 
             DraftTypeHandler handler;
@@ -352,9 +363,12 @@ public class LobbyService {
         Instant aloneCutoff = Instant.now().minus(HOST_ALONE_TIMEOUT);
 
         for (Lobby lobby : lobbies) {
+            Optional<LobbyPlayer> hostBefore = findHostPlayer(lobby);
             List<LobbyPlayer> toRemove = lobby.getPlayers().stream()
                     .filter(p -> p.getLastPollAt() == null || p.getLastPollAt().isBefore(staleCutoff))
                     .toList();
+
+            boolean hostRemoved = hostBefore.map(toRemove::contains).orElse(false);
 
             if (!toRemove.isEmpty()) {
                 LOGGER.info("Heartbeat: removing {} stale player(s) from lobby {}",
@@ -368,25 +382,17 @@ public class LobbyService {
                 continue;
             }
 
-            String hostID = lobby.getHostAccountID();
-            boolean hostRemoved = toRemove.stream()
-                    .anyMatch(p -> hostID != null && hostID.equals(p.getAccountID()));
-
-            if (hostRemoved && !lobby.getPlayers().isEmpty()) {
+            if (hostRemoved) {
                 lobby.getPlayers().sort((a, b) -> Integer.compare(a.getSlotIndex(), b.getSlotIndex()));
                 LobbyPlayer newHost = lobby.getPlayers().get(0);
                 lobby.setHostAccountID(newHost.getAccountID() != null
-                        ? newHost.getAccountID() : "guest-" + newHost.getPlayerToken());
+                        ? newHost.getAccountID() : guestHostId(newHost.getPlayerToken()));
                 lobby.setHostAloneSince(null);
                 LOGGER.info("Heartbeat: reassigned host of lobby {} to slot {}",
                         lobby.getLobbyCode(), newHost.getSlotIndex());
             }
 
-            boolean onlyHost = lobby.getPlayers().size() == 1
-                    && lobby.getPlayers().get(0).getAccountID() != null
-                    && lobby.getPlayers().get(0).getAccountID().equals(lobby.getHostAccountID());
-
-            if (onlyHost) {
+            if (onlyHostRemains(lobby)) {
                 if (lobby.getHostAloneSince() == null) {
                     lobby.setHostAloneSince(Instant.now());
                 } else if (lobby.getHostAloneSince().isBefore(aloneCutoff)) {
@@ -436,28 +442,26 @@ public class LobbyService {
                 .orElse(-1) + 1;
     }
 
-    private static LobbyPlayer findPlayer(final Lobby lobby, final String accountID, final String playerToken) {
-        if (accountID != null) {
-            return lobby.getPlayers().stream()
-                    .filter(p -> accountID.equals(p.getAccountID()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Player with accountID " + accountID + " not found in lobby " + lobby.getLobbyCode()));
+    /**
+     * Locates a player by their lobby token. A token is always assigned on create
+     * or join, and its possession is the proof of identity required to leave a
+     * lobby — a raw account ID alone can never be used to remove another player.
+     */
+    private static LobbyPlayer findPlayerByToken(final Lobby lobby, final String playerToken) {
+        if (playerToken == null || playerToken.isBlank()) {
+            throw new IllegalStateException("playerToken is required to leave the lobby");
         }
-        if (playerToken != null) {
-            return lobby.getPlayers().stream()
-                    .filter(p -> playerToken.equals(p.getPlayerToken()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Player with token " + playerToken + " not found in lobby " + lobby.getLobbyCode()));
-        }
-        throw new IllegalStateException("accountID or playerToken is required to identify the player");
+        return lobby.getPlayers().stream()
+                .filter(p -> playerToken.equals(p.getPlayerToken()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No player in lobby " + lobby.getLobbyCode() + " matches the provided token"));
     }
 
     /**
      * Determines whether a player is the lobby host. Handles both authenticated hosts
      * (matched by account ID) and guest hosts (whose {@code hostAccountID} is stored
-     * as {@code guest-<playerToken>}).
+     * as a hashed {@code guest-<digest>} marker to avoid leaking the bearer token).
      */
     private static boolean isHost(final Lobby lobby, final LobbyPlayer player) {
         String hostID = lobby.getHostAccountID();
@@ -467,10 +471,54 @@ public class LobbyService {
         if (hostID.equals(player.getAccountID())) {
             return true;
         }
-        return player.getPlayerToken() != null && hostID.equals("guest-" + player.getPlayerToken());
+        return player.getPlayerToken() != null && hostID.equals(guestHostId(player.getPlayerToken()));
+    }
+
+    /**
+     * Locates the current host player in the lobby, if any. Authenticated hosts are
+     * matched by account ID; guest hosts are matched by the hashed {@code guest-<digest>}
+     * marker stored in {@code hostAccountID}.
+     */
+    private static Optional<LobbyPlayer> findHostPlayer(final Lobby lobby) {
+        return lobby.getPlayers().stream()
+                .filter(player -> isHost(lobby, player))
+                .findFirst();
+    }
+
+    /**
+     * Verifies that the presented lobby token belongs to the current host. Host
+     * identity is never taken from the request body — it must be proven by possession
+     * of the host's token.
+     */
+    private static boolean isCallerHost(final Lobby lobby, final String callerToken) {
+        if (callerToken == null) {
+            return false;
+        }
+        return findHostPlayer(lobby)
+                .map(host -> callerToken.equals(host.getPlayerToken()))
+                .orElse(false);
+    }
+
+    /**
+     * Produces a non-reversible host marker for a guest-host lobby so the player's
+     * bearer token is never stored or serialized in plain text.
+     */
+    private static String guestHostId(final String playerToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(playerToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return "guest-" + HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 
     private static boolean onlyHostRemains(final Lobby lobby) {
-        return lobby.getPlayers().size() == 1 && isHost(lobby, lobby.getPlayers().get(0));
+        if (lobby.getPlayers().size() != 1) {
+            return false;
+        }
+        return findHostPlayer(lobby)
+                .map(host -> host == lobby.getPlayers().get(0))
+                .orElse(false);
     }
 }

@@ -4,6 +4,10 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 /**
  * Request body for joining an existing lobby.
  *
@@ -11,8 +15,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param displayName the display name of the joining player
  */
 public record JoinLobbyRequest(
-    @JsonProperty("accountID") String accountID,
-    @JsonProperty("displayName") String displayName
+    @JsonProperty("accountID") @Size(max = 100) String accountID,
+    @JsonProperty("displayName")
+    @NotBlank
+    @Size(max = 50)
+    @Pattern(regexp = "[^\\p{Cntrl}]+", message = "displayName must not contain control characters")
+    String displayName
 ) {
 
     public JoinLobbyRequest {

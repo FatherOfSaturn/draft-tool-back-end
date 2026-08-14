@@ -50,6 +50,14 @@ public class ClassicGameCoordinationWorker {
                 .map(packCreator -> packCreator.createClassicPacks(creationInfo.players()))
                 .map(players -> {
                     for (ClassicPlayer p : players) {
+                        if (p.getPlayerToken() == null || p.getPlayerToken().isBlank()) {
+                            p.setPlayerToken(UUID.randomUUID().toString());
+                        }
+                    }
+                    return players;
+                })
+                .map(players -> {
+                    for (ClassicPlayer p : players) {
                         p.getActiveCardPacks().add(deepCopyPack(p.getDealtCardPacks().get(0)));
                     }
                     return players;
@@ -66,7 +74,7 @@ public class ClassicGameCoordinationWorker {
                 .invoke(gameInfo -> dbHandler.addGame(gameInfo));
     }
 
-    public Card draftCard(final String playerName,
+    public Card draftCard(final String playerToken,
                           final String cardID,
                           final String gameID) {
         LOGGER.info("Fetching Classic Game with ID: {}", gameID);
@@ -77,12 +85,12 @@ public class ClassicGameCoordinationWorker {
         }
 
         ClassicPlayer player = gameInfo.getPlayers().stream()
-                .filter(p -> p.getPlayerName().equals(playerName))
+                .filter(p -> playerToken.equals(p.getPlayerToken()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerName));
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
         if (player.getActiveCardPacks().isEmpty()) {
-            throw new IllegalStateException("Player " + playerName + " has no active pack to draft from");
+            throw new IllegalStateException("Player has no active pack to draft from");
         }
 
         CardPack currentPack = player.getActiveCardPacks().remove(0);
@@ -90,7 +98,7 @@ public class ClassicGameCoordinationWorker {
         player.getCardsDrafted().add(draftedCard);
 
         if (!currentPack.getCardsInPack().isEmpty()) {
-            int playerIndex = findPlayerIndex(gameInfo.getPlayers(), playerName);
+            int playerIndex = gameInfo.getPlayers().indexOf(player);
             int numPlayers = gameInfo.getPlayers().size();
             int nextIndex;
             if (gameInfo.getDraftDirection() == DraftDirection.ASCENDING) {
@@ -101,7 +109,7 @@ public class ClassicGameCoordinationWorker {
             gameInfo.getPlayers().get(nextIndex).getActiveCardPacks().add(currentPack);
         }
 
-        LOGGER.info("Successfully drafted Card: {} for Player: {}", draftedCard.getName(), playerName);
+        LOGGER.info("Successfully drafted Card: {} for Player: {}", draftedCard.getName(), player.getPlayerName());
 
         dbHandler.updateGame(gameInfo);
 
@@ -199,8 +207,8 @@ public class ClassicGameCoordinationWorker {
         return Uni.createFrom().item(summaries);
     }
 
-    public Uni<PlayerDraftCheck> getDraftCheck(final String gameID, final String playerName) {
-        Document doc = dbHandler.findDraftCheck(gameID, playerName);
+    public Uni<PlayerDraftCheck> getDraftCheck(final String gameID, final String playerToken) {
+        Document doc = dbHandler.findDraftCheck(gameID, playerToken);
         if (doc == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -210,13 +218,13 @@ public class ClassicGameCoordinationWorker {
         return Uni.createFrom().item(new PlayerDraftCheck(canDraft, state));
     }
 
-    public Uni<PlayerDraftData> getDraftData(final String gameID, final String playerName) {
+    public Uni<PlayerDraftData> getDraftData(final String gameID, final String playerToken) {
         ClassicGameInfo game = dbHandler.findGame(gameID);
 
         ClassicPlayer player = game.getPlayers().stream()
-                .filter(p -> p.getPlayerName().equals(playerName))
+                .filter(p -> playerToken.equals(p.getPlayerToken()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerName));
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
         List<CardPack> dealtCardPacks = player.getDealtCardPacks();
         int cardsLeftToDraft = dealtCardPacks.size()
