@@ -8,9 +8,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Issues signed application JWTs after a successful Google login. The tokens
- * are signed with the symmetric key configured via
- * {@code smallrye.jwt.new-token.signing-key.secret-key} and verified on every
- * request by Quarkus SmallRye JWT.
+ * are signed with the symmetric key configured via {@code smallrye.jwt.sign.key}
+ * (an {@code oct} JWK whose {@code k} is the base64url-encoded {@code APP_JWT_SECRET})
+ * and verified on every request by Quarkus SmallRye JWT.
  */
 @ApplicationScoped
 public class JwtService {

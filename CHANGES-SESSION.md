@@ -155,3 +155,33 @@ Frontend `adminApi.getAccountByID` / `getGameHistoryByID` / `getDecksByID` /
   store (e.g. Redis) for cross-instance revocation.
 - `quarkus.http.cors.paths` produces an "unrecognized configuration key" warning
   (cosmetic; the CORS extension is enabled via `quarkus.http.cors=true`).
+
+## 12. JWT signing/verification key config fix (login 500)
+
+- **Symptom**: `POST /account/login` returned 500 —
+  `JwtSignatureException SRJWT05009` caused by
+  `SRJWT05021: Please set 'smallrye.jwt.sign.key.location' or 'smallrye.jwt.sign.key'`.
+- **Root cause** (verified against the bundled jars, smallrye-jwt(-build) 4.6.2 /
+  Quarkus 3.20.6.2): the signing key was configured as
+  `smallrye.jwt.new-token.signing-key.secret-key`, which no class in the stack
+  reads — `JwtSignatureImpl.sign()` reads only `smallrye.jwt.sign.key.location`
+  / `smallrye.jwt.sign.key`. The verify key (`smallrye.jwt.verify.key.secret-key`)
+  was likewise dead; the real property is `smallrye.jwt.verify.secretkey`.
+- **Second wrinkle**: in 4.6.2 the key *content* for both properties must be a
+  JWK (`kty: oct`) — a raw secret string is not interpreted (no base64/raw
+  fallback in `JwtSignatureImpl.getSigningKeyFromKeyContent` /
+  `KeyLocationResolver.initializeKeyContent`).
+- **Fix** in `application.properties`, `application-dev.properties`,
+  `application-prod.properties`:
+  - `smallrye.jwt.sign.key={"kty":"oct","k":"${APP_JWT_SECRET}"}`
+  - `smallrye.jwt.verify.secretkey={"kty":"oct","k":"${APP_JWT_SECRET}"}`
+  - `smallrye.jwt.verify.algorithm=HS256`
+  - kept `smallrye.jwt.new-token.signature-algorithm=HS256` (sets the `alg` header).
+  - Dev fallback replaced with a proper base64url-encoded key so the JWK parses.
+- **Contract change**: `APP_JWT_SECRET` must now be a **base64url-encoded key of
+  >= 32 bytes when decoded** (e.g. a 48-byte secret → 64 base64url chars). Prod
+  has no fallback; a missing env fails config expansion at startup.
+- **Verified end-to-end**: `GET /dev/token` → `POST /account/login` returns a
+  JWT whose header is `{"alg":"HS256","typ":"JWT"}`; the token authenticates a
+  `@RolesAllowed("user")` request (`GET /account`) → 200. Build green; **387 tests
+  pass, 0 failures**.
