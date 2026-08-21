@@ -53,11 +53,11 @@ public class ClassicDraftDbHandler {
             LOGGER.error("Unable to find Classic Game with ID: {}", gameID);
             throw new jakarta.ws.rs.NotFoundException("Unable to find Classic Game with ID: " + gameID);
         }
-        LOGGER.info("Found Classic Game Info: {}", gameDocument);
+        LOGGER.info("Found Classic Game Info for game: {}", gameDocument.getGameID());
         return gameDocument;
     }
 
-    public Document findDraftCheck(String gameID, String playerName) {
+    public Document findDraftCheck(String gameID, String playerToken) {
         Bson filter = Filters.eq("gameID", gameID);
 
         Document playerVar = new Document("player", new Document(
@@ -65,7 +65,7 @@ public class ClassicDraftDbHandler {
                 new Document("$filter", new Document()
                     .append("input", "$players")
                     .append("as", "p")
-                    .append("cond", new Document("$eq", java.util.List.of("$$p.playerName", playerName)))
+                    .append("cond", new Document("$eq", java.util.List.of("$$p.playerToken", playerToken)))
                 ), 0
             )
         ));

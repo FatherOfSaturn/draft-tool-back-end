@@ -1,7 +1,9 @@
 package org.magic.accountService.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +25,9 @@ class AccountTest {
 
         assertNotNull(account);
         assertEquals("507f1f77bcf86cd799439011", account.getAccountID());
-        assertEquals("test@example.com", account.getEmail());
+        assertNull(account.getEmail());
         assertEquals("Test User", account.getDisplayName());
-        assertEquals("1234567890", account.getGoogleSub());
+        assertNull(account.getGoogleSub());
         assertEquals(0, account.getDeckIDs().size());
         assertEquals(LocalDateTime.of(2024, 1, 1, 0, 0, 0), account.getCreatedAt());
     }
@@ -41,12 +43,16 @@ class AccountTest {
         account.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0, 0));
 
         String json = JsonUtility.getInstance().toJson(account);
+
+        assertFalse(json.contains("test@example.com"));
+        assertFalse(json.contains("1234567890"));
+
         Account deserialized = JsonUtility.getInstance().fromJson(json, Account.class);
 
         assertEquals(account.getAccountID(), deserialized.getAccountID());
-        assertEquals(account.getEmail(), deserialized.getEmail());
+        assertNull(deserialized.getEmail());
         assertEquals(account.getDisplayName(), deserialized.getDisplayName());
-        assertEquals(account.getGoogleSub(), deserialized.getGoogleSub());
+        assertNull(deserialized.getGoogleSub());
         assertEquals(account.getDeckIDs(), deserialized.getDeckIDs());
     }
 }

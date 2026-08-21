@@ -15,6 +15,7 @@ import org.magic.lobbyService.api.CreateLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyResponse;
 import org.magic.lobbyService.api.KickPlayerRequest;
+import org.magic.lobbyService.api.LeaveLobbyRequest;
 import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.LobbyPlayer;
 import org.magic.lobbyService.api.LobbyStatus;
@@ -59,7 +60,7 @@ class LobbyServiceTest {
 
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        Lobby result = service.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely();
+        Lobby result = service.startGame("ABC12", new StartGameRequest("tok-0")).await().indefinitely();
 
         assertEquals("game-123", result.getGameID());
         assertEquals(LobbyStatus.STARTED, result.getStatus());
@@ -76,7 +77,7 @@ class LobbyServiceTest {
 
         service = new LobbyService(dbHandler, instanceOf(classicHandler));
 
-        Lobby result = service.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely();
+        Lobby result = service.startGame("ABC12", new StartGameRequest("tok-0")).await().indefinitely();
 
         assertEquals("classic-game-1", result.getGameID());
         assertEquals(LobbyStatus.STARTED, result.getStatus());
@@ -95,7 +96,7 @@ class LobbyServiceTest {
 
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        service.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely();
+        service.startGame("ABC12", new StartGameRequest("tok-0")).await().indefinitely();
 
         ArgumentCaptor<List<LobbyPlayer>> captor = ArgumentCaptor.forClass(List.class);
         verify(pyramidHandler).startGame(anyString(), captor.capture(), anyMap());
@@ -112,7 +113,7 @@ class LobbyServiceTest {
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         assertThrows(IllegalStateException.class,
-                () -> service.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely());
+                () -> service.startGame("ABC12", new StartGameRequest("tok-0")).await().indefinitely());
 
         assertEquals(LobbyStatus.WAITING, lobby.getStatus());
         verify(dbHandler, times(2)).updateLobby(lobby);
@@ -129,7 +130,7 @@ class LobbyServiceTest {
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely());
+                () -> service.startGame("ABC12", new StartGameRequest("tok-0")).await().indefinitely());
 
         assertEquals("Game creation failed: boom", ex.getMessage());
         assertEquals(LobbyStatus.WAITING, lobby.getStatus());
@@ -140,10 +141,13 @@ class LobbyServiceTest {
         when(dbHandler.lobbyExists(anyString())).thenReturn(false);
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        Lobby result = service.createLobby(createLobbyRequest("pyramid", null, null)).await().indefinitely();
+        JoinLobbyResponse response = service.createLobby(createLobbyRequest("pyramid", null, null)).await().indefinitely();
 
-        assertEquals(2, result.getMinPlayers());
-        assertEquals(2, result.getMaxPlayers());
+        assertEquals(2, response.lobby().getMinPlayers());
+        assertEquals(2, response.lobby().getMaxPlayers());
+        assertEquals("host-1", response.lobby().getHostAccountID());
+        assertNotNull(response.playerToken());
+        assertEquals(response.playerToken(), response.lobby().getPlayers().get(0).getPlayerToken());
     }
 
     @Test
@@ -151,10 +155,10 @@ class LobbyServiceTest {
         when(dbHandler.lobbyExists(anyString())).thenReturn(false);
         service = new LobbyService(dbHandler, instanceOf(classicHandler));
 
-        Lobby result = service.createLobby(createLobbyRequest("classic", null, null)).await().indefinitely();
+        JoinLobbyResponse response = service.createLobby(createLobbyRequest("classic", null, null)).await().indefinitely();
 
-        assertEquals(4, result.getMinPlayers());
-        assertEquals(12, result.getMaxPlayers());
+        assertEquals(4, response.lobby().getMinPlayers());
+        assertEquals(12, response.lobby().getMaxPlayers());
     }
 
     @Test
@@ -162,10 +166,23 @@ class LobbyServiceTest {
         when(dbHandler.lobbyExists(anyString())).thenReturn(false);
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        Lobby result = service.createLobby(createLobbyRequest("pyramid", 3, 5)).await().indefinitely();
+        JoinLobbyResponse response = service.createLobby(createLobbyRequest("pyramid", 3, 5)).await().indefinitely();
 
-        assertEquals(3, result.getMinPlayers());
-        assertEquals(5, result.getMaxPlayers());
+        assertEquals(3, response.lobby().getMinPlayers());
+        assertEquals(5, response.lobby().getMaxPlayers());
+    }
+
+    @Test
+    void shouldRejectStartWhenCallerIsNotHost() {
+        Lobby lobby = lobby("pyramid", 2, 2, 2);
+        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> service.startGame("ABC12", new StartGameRequest("some-other-token")).await().indefinitely());
+
+        assertEquals("Only the host can start the game", ex.getMessage());
+        verify(dbHandler, never()).updateLobby(any());
     }
 
     @Test
@@ -240,20 +257,20 @@ class LobbyServiceTest {
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.kickPlayer("ABC12", new KickPlayerRequest("someone-else", "tok-guest")).await().indefinitely());
+                () -> service.kickPlayer("ABC12", new KickPlayerRequest("someone-else", 1)).await().indefinitely());
 
         assertEquals("Only the host can kick players", ex.getMessage());
         verify(dbHandler, never()).updateLobby(any());
     }
 
     @Test
-    void shouldRejectKickWhenTargetTokenNotFound() {
+    void shouldRejectKickWhenTargetSlotNotFound() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
         when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.kickPlayer("ABC12", new KickPlayerRequest("host-1", "bogus-token")).await().indefinitely());
+                () -> service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 99)).await().indefinitely());
 
         assertTrue(ex.getMessage().contains("not found in lobby ABC12"));
     }
@@ -265,7 +282,7 @@ class LobbyServiceTest {
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok-host")).await().indefinitely());
+                () -> service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 0)).await().indefinitely());
 
         assertEquals("The host cannot be kicked from the lobby", ex.getMessage());
     }
@@ -278,7 +295,7 @@ class LobbyServiceTest {
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> service.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok-guest")).await().indefinitely());
+                () -> service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely());
 
         assertTrue(ex.getMessage().contains("in status STARTED"));
     }
@@ -289,7 +306,7 @@ class LobbyServiceTest {
         when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok-guest")).await().indefinitely();
+        Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely();
 
         assertEquals(1, result.getPlayers().size());
         assertEquals("host-1", result.getPlayers().get(0).getAccountID());
@@ -305,10 +322,49 @@ class LobbyServiceTest {
         when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
-        Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok-guest-1")).await().indefinitely();
+        Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely();
 
         assertEquals(2, result.getPlayers().size());
         assertNull(result.getHostAloneSince());
+    }
+
+    @Test
+    void shouldLeaveLobbyByToken() {
+        Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
+        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
+
+        Lobby result = service.leaveLobby("ABC12", new LeaveLobbyRequest("tok-guest")).await().indefinitely();
+
+        assertEquals(1, result.getPlayers().size());
+        assertEquals("host-1", result.getPlayers().get(0).getAccountID());
+        verify(dbHandler).updateLobby(lobby);
+    }
+
+    @Test
+    void shouldRejectLeaveWhenTokenDoesNotMatchAnyPlayer() {
+        Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
+        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> service.leaveLobby("ABC12", new LeaveLobbyRequest("some-other-token")).await().indefinitely());
+
+        assertTrue(ex.getMessage().contains("No player in lobby ABC12 matches the provided token"));
+        verify(dbHandler, never()).updateLobby(any());
+    }
+
+    @Test
+    void shouldRejectLeaveWithoutToken() {
+        Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
+        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> service.leaveLobby("ABC12", new LeaveLobbyRequest(null)).await().indefinitely());
+
+        assertEquals("playerToken is required to leave the lobby", ex.getMessage());
+        verify(dbHandler, never()).updateLobby(any());
     }
 
     private Lobby lobbyWithHost(final String hostAccountID, final LobbyPlayer... others) {
@@ -350,7 +406,7 @@ class LobbyServiceTest {
                 "ABC12",
                 draftType,
                 Map.of("cubeID", "cube-1"),
-                "host-1",
+                "acc-0",
                 players,
                 minPlayers,
                 maxPlayers,

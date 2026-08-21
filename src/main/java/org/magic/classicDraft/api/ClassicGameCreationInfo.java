@@ -5,12 +5,24 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 public record ClassicGameCreationInfo(
-    @JsonProperty("cubeID") String cubeID,
-    @JsonProperty("players") List<ClassicPlayerCreationInfo> players,
-    @JsonProperty("numberOfPacks") int numberOfPacks,
-    @JsonProperty("cardsPerPack") int cardsPerPack,
-    @JsonProperty("packsPerPlayer") int packsPerPlayer
+    @JsonProperty("cubeID")
+    @NotBlank
+    @Size(max = 64)
+    @Pattern(regexp = "[A-Za-z0-9._-]+", message = "cubeID may only contain letters, digits, '.', '_' and '-'")
+    String cubeID,
+    @JsonProperty("players") @NotNull @Size(min = 4, max = 12) List<@Valid ClassicPlayerCreationInfo> players,
+    @JsonProperty("numberOfPacks") @Min(1) @Max(300) int numberOfPacks,
+    @JsonProperty("cardsPerPack") @Min(1) @Max(25) int cardsPerPack,
+    @JsonProperty("packsPerPlayer") @Min(1) @Max(30) int packsPerPlayer
 ) {
 
     public ClassicGameCreationInfo {

@@ -4,6 +4,11 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 /**
  * Request body for creating a new support request.
  * All fields except {@code accountID} are required.
@@ -16,12 +21,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param type        the type of request
  */
 public record CreateSupportRequest(
-    @JsonProperty("title") String title,
-    @JsonProperty("description") String description,
-    @JsonProperty("contactEmail") String contactEmail,
-    @JsonProperty("priority") SupportPriority priority,
-    @JsonProperty("accountID") String accountID,
-    @JsonProperty("type") SupportType type
+    @JsonProperty("title") @NotBlank @Size(max = 200) String title,
+    @JsonProperty("description") @NotBlank @Size(max = 4000) String description,
+    @JsonProperty("contactEmail") @NotBlank @Email @Size(max = 254) String contactEmail,
+    @JsonProperty("priority") @NotNull SupportPriority priority,
+    @JsonProperty("accountID") @Size(max = 100) String accountID,
+    @JsonProperty("type") @NotNull SupportType type
 ) {
 
     public CreateSupportRequest {

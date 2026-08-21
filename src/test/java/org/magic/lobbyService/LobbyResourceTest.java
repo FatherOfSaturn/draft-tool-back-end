@@ -88,7 +88,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("Only the host can kick players")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok")).await().indefinitely());
+                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("tok", 1)).await().indefinitely());
 
         assertEquals(403, ex.getResponse().getStatus());
     }
@@ -96,10 +96,10 @@ class LobbyResourceTest {
     @Test
     void shouldMapKickNotFoundTo404() {
         when(lobbyService.kickPlayer(eq("ABC12"), any()))
-                .thenReturn(Uni.createFrom().failure(new IllegalStateException("Player with token tok not found in lobby ABC12")));
+                .thenReturn(Uni.createFrom().failure(new IllegalStateException("Player at slot 99 not found in lobby ABC12")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok")).await().indefinitely());
+                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("tok", 99)).await().indefinitely());
 
         assertEquals(404, ex.getResponse().getStatus());
     }
@@ -110,7 +110,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("The host cannot be kicked from the lobby")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok")).await().indefinitely());
+                () -> resource.kickPlayer("ABC12", new KickPlayerRequest("tok", 0)).await().indefinitely());
 
         assertEquals(409, ex.getResponse().getStatus());
     }
@@ -123,7 +123,7 @@ class LobbyResourceTest {
 
         when(lobbyService.kickPlayer(eq("ABC12"), any())).thenReturn(Uni.createFrom().item(lobby));
 
-        Lobby result = resource.kickPlayer("ABC12", new KickPlayerRequest("host-1", "tok-guest")).await().indefinitely();
+        Lobby result = resource.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely();
 
         assertNotNull(result);
         assertEquals("ABC12", result.getLobbyCode());
@@ -151,7 +151,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("Unable to find lobby with code: ABC12")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.leaveLobby("ABC12", new LeaveLobbyRequest("acc-1", null)).await().indefinitely());
+                () -> resource.leaveLobby("ABC12", new LeaveLobbyRequest("tok-1")).await().indefinitely());
 
         assertEquals(404, ex.getResponse().getStatus());
     }
@@ -164,7 +164,7 @@ class LobbyResourceTest {
 
         when(lobbyService.leaveLobby(eq("ABC12"), any())).thenReturn(Uni.createFrom().item(lobby));
 
-        Lobby result = resource.leaveLobby("ABC12", new LeaveLobbyRequest("host-1", null)).await().indefinitely();
+        Lobby result = resource.leaveLobby("ABC12", new LeaveLobbyRequest("tok-host")).await().indefinitely();
 
         assertNotNull(result);
         assertEquals("ABC12", result.getLobbyCode());
@@ -201,7 +201,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("Only the host can start the game")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.startGame("ABC12", new StartGameRequest("someone-else")).await().indefinitely());
+                () -> resource.startGame("ABC12", new StartGameRequest("tok")).await().indefinitely());
 
         assertEquals(403, ex.getResponse().getStatus());
     }
@@ -213,7 +213,7 @@ class LobbyResourceTest {
                         new IllegalStateException("Not enough players to start (have 1, need 2)")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely());
+                () -> resource.startGame("ABC12", new StartGameRequest("tok")).await().indefinitely());
 
         assertEquals(400, ex.getResponse().getStatus());
     }
@@ -224,7 +224,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("Lobby ABC12 has already been started")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely());
+                () -> resource.startGame("ABC12", new StartGameRequest("tok")).await().indefinitely());
 
         assertEquals(409, ex.getResponse().getStatus());
     }
@@ -235,7 +235,7 @@ class LobbyResourceTest {
                 .thenReturn(Uni.createFrom().failure(new IllegalStateException("Game creation failed: boom")));
 
         WebApplicationException ex = assertThrows(WebApplicationException.class,
-                () -> resource.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely());
+                () -> resource.startGame("ABC12", new StartGameRequest("tok")).await().indefinitely());
 
         assertEquals(500, ex.getResponse().getStatus());
     }
@@ -248,7 +248,7 @@ class LobbyResourceTest {
 
         when(lobbyService.startGame(eq("ABC12"), any())).thenReturn(Uni.createFrom().item(lobby));
 
-        Lobby result = resource.startGame("ABC12", new StartGameRequest("host-1")).await().indefinitely();
+        Lobby result = resource.startGame("ABC12", new StartGameRequest("tok")).await().indefinitely();
 
         assertNotNull(result);
         assertEquals("game-123", result.getGameID());

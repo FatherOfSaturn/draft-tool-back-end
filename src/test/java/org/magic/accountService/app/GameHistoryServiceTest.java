@@ -30,17 +30,21 @@ class GameHistoryServiceTest {
     @Mock
     GameHistoryProvider classicProvider;
 
+    private final String googleSub = "sub-123";
+    private final String accountID = "acc-1";
+
     @Test
     void shouldAggregateHistoryFromAllProvidersSortedNewestFirst() {
-        var older = entry("game-1", "pyramid", Instant.parse("2024-01-01T00:00:00Z"), player("Alice", "acc-1"));
-        var newer = entry("game-2", "classic", Instant.parse("2024-06-01T00:00:00Z"), player("Alice", "acc-1"));
+        var older = entry("game-1", "pyramid", Instant.parse("2024-01-01T00:00:00Z"), player("Alice", accountID));
+        var newer = entry("game-2", "classic", Instant.parse("2024-06-01T00:00:00Z"), player("Alice", accountID));
 
-        when(pyramidProvider.findGamesByAccountID("acc-1")).thenReturn(List.of(older));
-        when(classicProvider.findGamesByAccountID("acc-1")).thenReturn(List.of(newer));
+        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account(accountID)));
+        when(pyramidProvider.findGamesByAccountID(accountID)).thenReturn(List.of(older));
+        when(classicProvider.findGamesByAccountID(accountID)).thenReturn(List.of(newer));
 
         GameHistoryService service = new GameHistoryService(instanceOf(pyramidProvider, classicProvider), accountDbHandler);
 
-        List<GameHistoryEntry> result = service.getGameHistory("acc-1");
+        List<GameHistoryEntry> result = service.getGameHistory(googleSub);
 
         assertEquals(2, result.size());
         assertEquals("game-2", result.get(0).gameID());
@@ -49,19 +53,19 @@ class GameHistoryServiceTest {
 
     @Test
     void shouldResolveDisplayNameFromAccountCollection() {
-        var account = new Account();
-        account.setAccountID("acc-1");
-        account.setDisplayName("Alice Smith");
+        var aliceAccount = account(accountID);
+        aliceAccount.setDisplayName("Alice Smith");
 
-        when(pyramidProvider.findGamesByAccountID("acc-1"))
+        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account(accountID)));
+        when(pyramidProvider.findGamesByAccountID(accountID))
                 .thenReturn(List.of(entry("game-1", "pyramid", Instant.parse("2024-01-01T00:00:00Z"),
-                        player("Alice", "acc-1"), player("Bob", "acc-2"))));
-        when(accountDbHandler.findById("acc-1")).thenReturn(Optional.of(account));
+                        player("Alice", accountID), player("Bob", "acc-2"))));
+        when(accountDbHandler.findById(accountID)).thenReturn(Optional.of(aliceAccount));
         when(accountDbHandler.findById("acc-2")).thenReturn(Optional.empty());
 
         GameHistoryService service = new GameHistoryService(instanceOf(pyramidProvider), accountDbHandler);
 
-        List<GameHistoryEntry> result = service.getGameHistory("acc-1");
+        List<GameHistoryEntry> result = service.getGameHistory(googleSub);
 
         GameHistoryPlayer alice = result.get(0).players().get(0);
         GameHistoryPlayer bob = result.get(0).players().get(1);
@@ -71,14 +75,33 @@ class GameHistoryServiceTest {
 
     @Test
     void shouldReturnEmptyWhenNoProviderHasGames() {
-        when(pyramidProvider.findGamesByAccountID("acc-1")).thenReturn(List.of());
-        when(classicProvider.findGamesByAccountID("acc-1")).thenReturn(List.of());
+        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account(accountID)));
+        when(pyramidProvider.findGamesByAccountID(accountID)).thenReturn(List.of());
+        when(classicProvider.findGamesByAccountID(accountID)).thenReturn(List.of());
 
         GameHistoryService service = new GameHistoryService(instanceOf(pyramidProvider, classicProvider), accountDbHandler);
 
-        List<GameHistoryEntry> result = service.getGameHistory("acc-1");
+        List<GameHistoryEntry> result = service.getGameHistory(googleSub);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenAccountNotFound() {
+        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+
+        GameHistoryService service = new GameHistoryService(instanceOf(pyramidProvider, classicProvider), accountDbHandler);
+
+        List<GameHistoryEntry> result = service.getGameHistory(googleSub);
+
+        assertTrue(result.isEmpty());
+        verify(pyramidProvider, never()).findGamesByAccountID(any());
+    }
+
+    private Account account(final String id) {
+        var account = new Account();
+        account.setAccountID(id);
+        return account;
     }
 
     private GameHistoryPlayer player(final String name, final String accountID) {
@@ -94,7 +117,7 @@ class GameHistoryServiceTest {
     @SuppressWarnings("unchecked")
     private Instance<GameHistoryProvider> instanceOf(final GameHistoryProvider... providers) {
         Instance<GameHistoryProvider> instance = mock(Instance.class);
-        when(instance.stream()).thenReturn(List.of(providers).stream());
+        lenient().when(instance.stream()).thenReturn(List.of(providers).stream());
         return instance;
     }
 }

@@ -53,7 +53,9 @@ class PyramidDraftTypeHandlerTest {
         assertEquals(3, info.numberOfDoubleDraftPicksPerPlayer());
         assertEquals(2, info.playerInfo().size());
         assertEquals("acc-1", info.playerInfo().get(0).accountID());
-        assertEquals("guest-tok-2", info.playerInfo().get(1).accountID());
+        assertTrue(info.playerInfo().get(1).accountID().startsWith("guest-"));
+        assertNotEquals("guest-tok-2", info.playerInfo().get(1).accountID(),
+                "guest account ID should be hashed, not raw token");
     }
 
     @Test

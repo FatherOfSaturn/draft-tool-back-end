@@ -2,6 +2,7 @@ package org.magic.pyramidDraft.app.GameCoordination;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,8 +61,16 @@ public class GameCoordinationWorker {
         return cubeDownloader.getCubeForCubeID(gameCreationInfo.cubeID())
                              .map(cube -> new PackCreator(cube))
                              .map(packCreator -> packCreator.createPyramidPacks(player1Creation, 
-                                                                                player2Creation,
-                                                                                gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
+                                                                               player2Creation,
+                                                                               gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
+                             .map(players -> {
+                                 for (Player p : players) {
+                                     if (p.getPlayerToken() == null || p.getPlayerToken().isBlank()) {
+                                         p.setPlayerToken(UUID.randomUUID().toString());
+                                     }
+                                 }
+                                 return players;
+                             })
                              .map(players -> new GameInfo(gameCreationInfo.gameID(),
                                                           gameCreationInfo.cubeID(),
                                                           "pyramid",
@@ -82,7 +91,7 @@ public class GameCoordinationWorker {
      * @param gameID     the game to draft from
      * @return the drafted {@link Card}
      */
-    public Card draftCard(final String accountID, 
+    public Card draftCard(final String playerToken, 
                           final int packNumber, 
                           final String cardID, 
                           final boolean isDoublePick,
@@ -94,8 +103,9 @@ public class GameCoordinationWorker {
         LOGGER.info("\nRetrieved Game: {}\n", gameID);
         final Player player = gameInfo.getPlayers()
                                        .stream()
-                                       .filter(pl -> pl.getAccountID().equals(accountID))
-                                       .findFirst().get();
+                                       .filter(pl -> playerToken.equals(pl.getPlayerToken()))
+                                       .findFirst()
+                                       .orElseThrow(() -> new IllegalArgumentException("Player not found"));
         LOGGER.info("\nDrafting {} Card for {}\n", cardID, player.getPlayerName());
         
         Card cardDrafted = player.draftCard(cardID, packNumber, isDoublePick);
@@ -170,7 +180,7 @@ public class GameCoordinationWorker {
             game.setGameState(GameState.GAME_MERGED);
             game.updatePlayers(List.of(player1, player2));
 
-            LOGGER.info("Game Object Updating to: {}", game);
+            LOGGER.info("Merging game: {}", gameID);
 
             dbHandler.updateGame(game);
 

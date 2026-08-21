@@ -26,10 +26,10 @@ class ClassicPackCreatorTest {
         assertEquals(360, cubeSize);
 
         List<ClassicPlayerCreationInfo> infos = List.of(
-                new ClassicPlayerCreationInfo("Alice", "acct-1"),
-                new ClassicPlayerCreationInfo("Bob", "acct-2"),
-                new ClassicPlayerCreationInfo("Charlie", "acct-3"),
-                new ClassicPlayerCreationInfo("Diana", "acct-4"));
+                new ClassicPlayerCreationInfo("Alice", "acct-1", null),
+                new ClassicPlayerCreationInfo("Bob", "acct-2", null),
+                new ClassicPlayerCreationInfo("Charlie", "acct-3", null),
+                new ClassicPlayerCreationInfo("Diana", "acct-4", null));
 
         int cardsPerPack = 4;
         int packsPerPlayer = 3;
@@ -64,7 +64,7 @@ class ClassicPackCreatorTest {
 
         List<ClassicPlayerCreationInfo> infos = new java.util.ArrayList<>();
         for (int i = 0; i < 12; i++) {
-            infos.add(new ClassicPlayerCreationInfo("Player" + i, "acct-" + i));
+            infos.add(new ClassicPlayerCreationInfo("Player" + i, "acct-" + i, null));
         }
 
         int cardsPerPack = 12;
@@ -84,10 +84,10 @@ class ClassicPackCreatorTest {
         Cube cube = createCubeFromJson("JoshCube.json");
 
         List<ClassicPlayerCreationInfo> infos = List.of(
-                new ClassicPlayerCreationInfo("Alice", "acct-1"),
-                new ClassicPlayerCreationInfo("Bob", "acct-2"),
-                new ClassicPlayerCreationInfo("Charlie", "acct-3"),
-                new ClassicPlayerCreationInfo("Diana", "acct-4"));
+                new ClassicPlayerCreationInfo("Alice", "acct-1", null),
+                new ClassicPlayerCreationInfo("Bob", "acct-2", null),
+                new ClassicPlayerCreationInfo("Charlie", "acct-3", null),
+                new ClassicPlayerCreationInfo("Diana", "acct-4", null));
 
         ClassicPackCreator creator = new ClassicPackCreator(cube, 25, 4);
 
@@ -101,8 +101,8 @@ class ClassicPackCreatorTest {
         Cube cube = createCubeFromJson("JoshCube.json");
 
         List<ClassicPlayerCreationInfo> infos = List.of(
-                new ClassicPlayerCreationInfo("Alice", null),
-                new ClassicPlayerCreationInfo("Bob", "acct-bob"));
+                new ClassicPlayerCreationInfo("Alice", null, null),
+                new ClassicPlayerCreationInfo("Bob", "acct-bob", null));
 
         ClassicPackCreator creator = new ClassicPackCreator(cube, 4, 3);
         List<ClassicPlayer> players = creator.createClassicPacks(infos);
@@ -119,7 +119,7 @@ class ClassicPackCreatorTest {
 
         List<ClassicPlayerCreationInfo> infos = new java.util.ArrayList<>();
         for (int i = 0; i < 8; i++) {
-            infos.add(new ClassicPlayerCreationInfo("Player" + i, "acct-" + i));
+            infos.add(new ClassicPlayerCreationInfo("Player" + i, "acct-" + i, null));
         }
 
         ClassicPackCreator creator = new ClassicPackCreator(cube, 8, 6);

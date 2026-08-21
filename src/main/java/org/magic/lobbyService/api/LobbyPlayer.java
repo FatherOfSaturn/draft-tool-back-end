@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -15,11 +16,13 @@ import lombok.NoArgsConstructor;
  * A participant in a lobby session.
  * Each player is assigned a unique {@code playerToken} on join to allow
  * anonymous (unauthenticated) participants to identify themselves for polling and leaving.
+ * The token is never serialized in API responses — it is only persisted and
+ * returned once to its owner (in the create/join response).
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({ "accountID", "displayName", "slotIndex", "playerToken", "lastPollAt" })
+@JsonPropertyOrder({ "accountID", "displayName", "slotIndex", "lastPollAt" })
 public class LobbyPlayer {
 
     @BsonProperty("accountID")
@@ -35,7 +38,7 @@ public class LobbyPlayer {
     private int slotIndex;
 
     @BsonProperty("playerToken")
-    @JsonProperty("playerToken")
+    @JsonIgnore
     private String playerToken;
 
     @BsonProperty("lastPollAt")

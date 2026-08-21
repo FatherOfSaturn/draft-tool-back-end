@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.supportService.api.CreateSupportRequest;
+import org.magic.supportService.api.PublicSupportRequest;
 import org.magic.supportService.api.SupportPriority;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
@@ -52,14 +53,30 @@ class SupportResourceTest {
 
     @Test
     void shouldGetRequestWhenFound() {
-        var expected = new SupportRequest("id123", "Subject", "Desc", "test@example.com", SupportPriority.HIGH, null, SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null);
+        var expected = new SupportRequest("id123", "Subject", "Desc", "test@example.com", SupportPriority.HIGH, "acct-9", SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null);
 
         when(supportWorker.getRequest("id123")).thenReturn(Uni.createFrom().item(expected));
 
-        SupportRequest result = resource.getRequest("id123").await().indefinitely();
+        PublicSupportRequest result = resource.getRequest("id123").await().indefinitely();
 
         assertNotNull(result);
-        assertEquals("id123", result.getId());
+        assertEquals("id123", result.id());
+        assertEquals("Subject", result.title());
+        assertEquals(SupportPriority.HIGH, result.priority());
+        assertEquals(SupportStatus.NEW, result.status());
+        assertEquals(SupportType.NEW_FEATURE, result.type());
+    }
+
+    @Test
+    void shouldNotExposePiiInPublicGet() {
+        var expected = new SupportRequest("id123", "Subject", "Desc", "test@example.com", SupportPriority.HIGH, "acct-9", SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null);
+
+        when(supportWorker.getRequest("id123")).thenReturn(Uni.createFrom().item(expected));
+
+        PublicSupportRequest result = resource.getRequest("id123").await().indefinitely();
+
+        assertFalse(result.toString().contains("test@example.com"));
+        assertFalse(result.toString().contains("acct-9"));
     }
 
     @Test
@@ -81,6 +98,35 @@ class SupportResourceTest {
         List<SupportRequest> result = resource.getAllRequests().await().indefinitely();
 
         assertEquals(2, result.size());
+    }
+
+    @Test
+    void shouldListPublicRequestsExcludingDeleted() {
+        var requests = List.of(
+                new SupportRequest("id1", "S1", "D1", "a@b.com", SupportPriority.HIGH, null, SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null),
+                new SupportRequest("id2", "S2", "D2", "c@d.com", SupportPriority.CRITICAL, null, SupportStatus.DELETED, SupportType.BUG_FIX, Instant.now(), null)
+        );
+
+        when(supportWorker.getAllRequests()).thenReturn(Uni.createFrom().item(requests));
+
+        List<PublicSupportRequest> result = resource.getPublicRequests().await().indefinitely();
+
+        assertEquals(1, result.size());
+        assertEquals("id1", result.get(0).id());
+    }
+
+    @Test
+    void shouldNotExposePiiInPublicList() {
+        var requests = List.of(
+                new SupportRequest("id1", "S1", "D1", "a@b.com", SupportPriority.HIGH, "acct-9", SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null)
+        );
+
+        when(supportWorker.getAllRequests()).thenReturn(Uni.createFrom().item(requests));
+
+        List<PublicSupportRequest> result = resource.getPublicRequests().await().indefinitely();
+
+        assertFalse(result.toString().contains("a@b.com"));
+        assertFalse(result.toString().contains("acct-9"));
     }
 
     @Test

@@ -62,7 +62,7 @@ public class PyramidDraftDbHandler {
             throw new IllegalStateException("Unable to find Game with ID: " + gameID);
         }
         else {
-            LOGGER.info("Found Game Info: {}", gameDocument);
+            LOGGER.info("Found Game Info for game: {}", gameDocument.getGameID());
         }
         return gameDocument;
     }

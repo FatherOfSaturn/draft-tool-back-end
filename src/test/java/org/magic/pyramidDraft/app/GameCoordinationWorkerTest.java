@@ -3,9 +3,10 @@ package org.magic.pyramidDraft.app;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -183,7 +184,8 @@ public class GameCoordinationWorkerTest extends TestUtils {
     void shouldAutoCompleteGameWhenMergedAndBothReadyDuringDraft() {
         var p1 = mock(Player.class);
         when(p1.isReadyForMerge()).thenReturn(true);
-        when(p1.getAccountID()).thenReturn("acct-1");
+        lenient().when(p1.getAccountID()).thenReturn("acct-1");
+        when(p1.getPlayerToken()).thenReturn("tok-1");
         var p2 = mock(Player.class);
         when(p2.isReadyForMerge()).thenReturn(true);
         var card = mock(Card.class);
@@ -193,14 +195,15 @@ public class GameCoordinationWorkerTest extends TestUtils {
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_MERGED, Instant.now());
         when(dbHandler.findGame("gid")).thenReturn(game);
 
-        gameCoordinationWorker.draftCard("acct-1", 0, "card-1", false, "gid");
+        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid");
     }
 
     @Test
     void shouldAutoCompleteGameWhenBothReadyAfterMerge() {
         var p1 = mock(Player.class);
         when(p1.isReadyForMerge()).thenReturn(true);
-        when(p1.getAccountID()).thenReturn("acct-1");
+        lenient().when(p1.getAccountID()).thenReturn("acct-1");
+        when(p1.getPlayerToken()).thenReturn("tok-1");
         var p2 = mock(Player.class);
         when(p2.isReadyForMerge()).thenReturn(true);
         var card = mock(Card.class);
@@ -210,6 +213,6 @@ public class GameCoordinationWorkerTest extends TestUtils {
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_MERGED, Instant.now());
         when(dbHandler.findGame("gid")).thenReturn(game);
 
-        gameCoordinationWorker.draftCard("acct-1", 0, "card-1", false, "gid");
+        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid");
     }
 }

@@ -96,6 +96,8 @@ public class PackCreator {
 
         Player fullPlayer1 = new Player(player1.playerName(), player1.accountID(), player1Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false, phase1TotalPacks, phase2TotalPacks);
         Player fullPlayer2 = new Player(player2.playerName(), player2.accountID(), player2Packs, numberOfDoubleDraftPicksPerPlayer, null, 0, false, phase1TotalPacks, phase2TotalPacks);
+        fullPlayer1.setPlayerToken(player1.playerToken());
+        fullPlayer2.setPlayerToken(player2.playerToken());
 
         return List.of(fullPlayer1, fullPlayer2);
     }

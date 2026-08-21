@@ -48,10 +48,10 @@ class GameResourceTest {
     void shouldCreateAndStartGame() {
         var info = new ClassicGameCreationInfo("cube-123",
                 List.of(
-                    new ClassicPlayerCreationInfo("P1", "acc1"),
-                    new ClassicPlayerCreationInfo("P2", "acc2"),
-                    new ClassicPlayerCreationInfo("P3", "acc3"),
-                    new ClassicPlayerCreationInfo("P4", "acc4")),
+                    new ClassicPlayerCreationInfo("P1", "acc1", null),
+                    new ClassicPlayerCreationInfo("P2", "acc2", null),
+                    new ClassicPlayerCreationInfo("P3", "acc3", null),
+                    new ClassicPlayerCreationInfo("P4", "acc4", null)),
                 12, 4, 3);
 
         var expectedGame = new ClassicGameInfo("game-456", "cube-123", "classic",
@@ -70,9 +70,9 @@ class GameResourceTest {
     void shouldDraftCard() {
         var card = new Card("Lightning Bolt", details, "card-789", 1, "Instant");
 
-        when(gameWorker.draftCard("Alice", "card-789", "game-456")).thenReturn(card);
+        when(gameWorker.draftCard("tok-0", "card-789", "game-456")).thenReturn(card);
 
-        Card result = resource.draftCard("Alice", "card-789", "game-456")
+        Card result = resource.draftCard("game-456", "card-789", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));
 
         assertNotNull(result);
@@ -96,11 +96,10 @@ class GameResourceTest {
     void shouldGetDraftCheck() {
         var check = new PlayerDraftCheck(true, ClassicGameState.GAME_STARTED);
 
-        when(gameWorker.getDraftCheck("game-456", "Alice")).thenReturn(Uni.createFrom().item(check));
+        when(gameWorker.getDraftCheck("game-456", "tok-0")).thenReturn(Uni.createFrom().item(check));
 
-        PlayerDraftCheck result = resource.getDraftCheck("game-456", "Alice")
+        PlayerDraftCheck result = resource.getDraftCheck("game-456", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));
-
         assertTrue(result.canDraft());
         assertEquals(ClassicGameState.GAME_STARTED, result.gameState());
     }
@@ -110,9 +109,9 @@ class GameResourceTest {
         var snapshot = new DraftPlayerSnapshot("Alice", List.of(), List.of(), 0);
         var data = new PlayerDraftData("game-456", ClassicGameState.GAME_STARTED, DraftDirection.ASCENDING, snapshot);
 
-        when(gameWorker.getDraftData("game-456", "Alice")).thenReturn(Uni.createFrom().item(data));
+        when(gameWorker.getDraftData("game-456", "tok-0")).thenReturn(Uni.createFrom().item(data));
 
-        PlayerDraftData result = resource.getDraftData("game-456", "Alice")
+        PlayerDraftData result = resource.getDraftData("game-456", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));
 
         assertEquals("game-456", result.gameID());

@@ -2,6 +2,9 @@ package org.magic.supportService.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+
 /**
  * Request body for updating an existing support request.
  * All fields are optional — only provided fields are updated.
@@ -13,9 +16,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param type         the new type, or {@code null} to leave unchanged
  */
 public record UpdateSupportRequest(
-    @JsonProperty("title") String title,
-    @JsonProperty("description") String description,
-    @JsonProperty("contactEmail") String contactEmail,
+    @JsonProperty("title") @Size(max = 200) String title,
+    @JsonProperty("description") @Size(max = 4000) String description,
+    @JsonProperty("contactEmail") @Email @Size(max = 254) String contactEmail,
     @JsonProperty("priority") SupportPriority priority,
     @JsonProperty("type") SupportType type
 ) {

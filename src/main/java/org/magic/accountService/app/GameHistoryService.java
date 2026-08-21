@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,12 +37,27 @@ public class GameHistoryService {
     }
 
     /**
-     * Fetches the full game history for an account across all draft types.
+     * Fetches the full game history for the authenticated user (resolved from the
+     * Google {@code sub} to their account ID) across all draft types.
      *
-     * @param accountID the account to look up games for
+     * @param googleSub the authenticated user's Google subject
      * @return the aggregated entries, sorted by creation time descending
      */
-    public List<GameHistoryEntry> getGameHistory(final String accountID) {
+    public List<GameHistoryEntry> getGameHistory(final String googleSub) {
+        return accountDbHandler.findByGoogleSub(googleSub)
+                .map(Account::getAccountID)
+                .map(this::getGameHistoryByAccountID)
+                .orElseGet(List::of);
+    }
+
+    /**
+     * Fetches the full game history for an arbitrary account, bypassing the
+     * caller-identity check. Admin-only callers.
+     *
+     * @param accountID the account to look up
+     * @return the aggregated entries, sorted by creation time descending
+     */
+    public List<GameHistoryEntry> getGameHistoryByAccountID(final String accountID) {
         List<GameHistoryEntry> entries = new ArrayList<>();
         providers.stream()
                 .forEach(provider -> entries.addAll(provider.findGamesByAccountID(accountID)));
