@@ -1,3 +1,25 @@
+buildscript {
+    repositories { mavenCentral() }
+    configurations.classpath {
+        resolutionStrategy.eachDependency { details ->
+            // Hardening for VMware buildscript-only deps (Quarkus Gradle plugin stack).
+            // These are build-time only and never ship in the application image.
+            if (details.requested.group == 'com.fasterxml.jackson.core' && details.requested.name == 'jackson-core') {
+                details.useVersion '2.22.3'
+                details.because 'CVE fixes (buildscript classpath): _reportInvalidToken error-token DoS (GHSA-7hhh-6rmp-j9qf), NumberInput.PATTERN_FLOAT ReDoS (GHSA-p6pp-m3f8-5c89)'
+            }
+            if (details.requested.group == 'org.codehaus.plexus' && details.requested.name == 'plexus-utils') {
+                details.useVersion '4.0.3'
+                details.because 'CVE fix (buildscript classpath): directory traversal in extractFile (GHSA-6fmv-xxpf-w3cw)'
+            }
+            if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+                details.useVersion '33.7.2-jre'
+                details.because 'CVE fix (buildscript classpath): CompactHashMap/MapMakerInternalMap deserialization DoS (GHSA-xxph-c9ww-hj94)'
+            }
+        }
+    }
+}
+
 plugins {
     id 'java'
     id 'io.quarkus'
@@ -63,8 +85,21 @@ configurations.all {
         }
         if (details.requested.group == 'com.fasterxml.jackson.core' &&
                 details.requested.name in ['jackson-databind', 'jackson-core']) {
-            details.useVersion '2.18.9'
-            details.because 'CVE fixes: @JsonIgnore/JsonIgnoreProperties/JsonView bypasses (CVE-2026-59888, CVE-2026-59889, CVE-2026-54515, GHSA-mhm7-754m-9p8w), polymorphic validator bypasses (CVE-2026-54512, CVE-2026-54513), InetSocketAddress DNS SSRF (CVE-2026-54514), async parser DoS (GHSA-r7wm-3cxj-wff9, CVE-2026-18401)'
+            details.useVersion '2.18.11'
+            details.because 'CVE fixes: @JsonIgnore/JsonIgnoreProperties/JsonView bypasses (CVE-2026-59888, CVE-2026-59889, CVE-2026-54515, GHSA-mhm7-754m-9p8w), polymorphic validator bypasses (CVE-2026-54512, CVE-2026-54513), InetSocketAddress DNS SSRF (CVE-2026-54514), async parser DoS (GHSA-r7wm-3cxj-wff9, CVE-2026-18401), forward-reference completion DoS (GHSA-cxp5-3px4-pw24), unknown raw type ID retention DoS (GHSA-wv8q-qhhj-9h54), _reportInvalidToken error-token DoS in jackson-core (GHSA-7hhh-6rmp-j9qf), NumberInput.PATTERN_FLOAT ReDoS in jackson-core (GHSA-p6pp-m3f8-5c89)'
+        }
+        if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+            details.useVersion '33.7.2-jre'
+            details.because 'CVE fix: CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (GHSA-xxph-c9ww-hj94)'
+        }
+        if (details.requested.group == 'org.jsoup' && details.requested.name == 'jsoup') {
+            details.useVersion '1.23.2'
+            details.because 'CVE fix: XmlTreeBuilder memory exhaustion via deeply nested element names (GHSA-65r4-943x-97jj)'
+        }
+        if (details.requested.group == 'io.opentelemetry' &&
+                details.requested.name in ['opentelemetry-api', 'opentelemetry-context']) {
+            details.useVersion '1.67.0'
+            details.because 'CVE fixes: W3C tracestate quadratic CPU consumption (GHSA-ccrj-gw8r-854m), W3C Baggage Propagator unbounded memory allocation (GHSA-rcgg-9c38-7xpx)'
         }
     }
 }
