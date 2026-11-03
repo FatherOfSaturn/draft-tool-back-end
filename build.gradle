@@ -88,6 +88,10 @@ configurations.all {
             details.useVersion '2.18.11'
             details.because 'CVE fixes: @JsonIgnore/JsonIgnoreProperties/JsonView bypasses (CVE-2026-59888, CVE-2026-59889, CVE-2026-54515, GHSA-mhm7-754m-9p8w), polymorphic validator bypasses (CVE-2026-54512, CVE-2026-54513), InetSocketAddress DNS SSRF (CVE-2026-54514), async parser DoS (GHSA-r7wm-3cxj-wff9, CVE-2026-18401), forward-reference completion DoS (GHSA-cxp5-3px4-pw24), unknown raw type ID retention DoS (GHSA-wv8q-qhhj-9h54), _reportInvalidToken error-token DoS in jackson-core (GHSA-7hhh-6rmp-j9qf), NumberInput.PATTERN_FLOAT ReDoS in jackson-core (GHSA-p6pp-m3f8-5c89)'
         }
+        if (details.requested.group == 'org.apache.logging.log4j' && details.requested.name == 'log4j-api') {
+            details.useVersion '2.25.5'
+            details.because 'CVE fix: improper encoding of non-finite floating-point values during MDC/RingBuffer SafeFormatter logging (GHSA-qv9r-c865-cp47). quarkus-bom 3.20.6.2 strictly constrains log4j-api to 2.24.3 (Forced), which silently overrides the Dependabot bump in the implementation block, so it must be pinned here.'
+        }
         if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
             details.useVersion '33.7.2-jre'
             details.because 'CVE fix: CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (GHSA-xxph-c9ww-hj94)'
