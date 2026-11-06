@@ -83,7 +83,9 @@ public class SupportResource {
                         throw new WebApplicationException(Response.Status.NOT_FOUND);
                     }
                     return PublicSupportRequest.from(req);
-                });
+                })
+                .onFailure(IllegalStateException.class)
+                .transform(t -> new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND));
     }
 
     /**
@@ -142,7 +144,9 @@ public class SupportResource {
                         throw new WebApplicationException(Response.Status.NOT_FOUND);
                     }
                     return req;
-                });
+                })
+                .onFailure(IllegalStateException.class)
+                .transform(t -> new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND));
     }
 
     /**
@@ -168,7 +172,9 @@ public class SupportResource {
                         throw new WebApplicationException(Response.Status.NOT_FOUND);
                     }
                     return req;
-                });
+                })
+                .onFailure(IllegalStateException.class)
+                .transform(t -> new WebApplicationException(t.getMessage(), Response.Status.NOT_FOUND));
     }
 
     /**
