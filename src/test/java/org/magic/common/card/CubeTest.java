@@ -1,4 +1,4 @@
-package org.magic.pyramidDraft.api;
+package org.magic.common.card;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,10 +7,14 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.magic.common.util.JsonUtility;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardDetails;
-import org.magic.pyramidDraft.api.card.CardsInCube;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.pyramidDraft.api.GameCreationInfo;
+import org.magic.pyramidDraft.api.GameInfo;
+import org.magic.pyramidDraft.api.GameState;
+import org.magic.pyramidDraft.api.Player;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardDetails;
+import org.magic.common.card.CardsInCube;
+import org.magic.common.card.Cube;
 
 import static org.junit.jupiter.api.Assertions.*;
 

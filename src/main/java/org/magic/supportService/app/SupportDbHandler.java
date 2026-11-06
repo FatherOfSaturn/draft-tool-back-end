@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
 

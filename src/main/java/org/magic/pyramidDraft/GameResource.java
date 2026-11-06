@@ -6,8 +6,8 @@ import org.apache.logging.log4j.Logger;
 import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.game.GameStatusMessage;
+import org.magic.common.card.Card;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;

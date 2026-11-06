@@ -3,6 +3,7 @@ package org.magic.pyramidDraft.app.GameCoordination;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
+import org.magic.common.mongo.MongoService;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.Player;

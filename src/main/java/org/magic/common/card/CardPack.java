@@ -1,4 +1,4 @@
-package org.magic.pyramidDraft.api.card;
+package org.magic.common.card;
 
 import java.util.Collection;
 import java.util.List;

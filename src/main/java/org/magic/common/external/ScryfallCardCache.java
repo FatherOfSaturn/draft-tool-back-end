@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
 import org.magic.common.api.scryfall.ScryfallCard;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;

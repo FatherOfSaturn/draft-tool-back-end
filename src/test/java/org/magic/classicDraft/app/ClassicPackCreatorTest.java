@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Cube;
 import org.magic.common.util.JsonUtility;
 import org.mockito.junit.jupiter.MockitoExtension;
 

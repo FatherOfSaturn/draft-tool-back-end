@@ -12,7 +12,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.magic.common.api.scryfall.BulkDataEntry;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.FindIterable;

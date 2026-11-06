@@ -12,9 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Cube;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 

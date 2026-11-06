@@ -17,7 +17,7 @@ import org.bson.Document;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.magic.common.api.scryfall.BulkDataEntry;
 import org.magic.common.api.scryfall.ScryfallCard;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;

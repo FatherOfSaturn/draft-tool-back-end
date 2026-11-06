@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.magic.accountService.api.Account;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

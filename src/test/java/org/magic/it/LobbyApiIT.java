@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.magic.pyramidDraft.app.CubeDownloader;
+import org.magic.common.cube.CubeDownloader;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

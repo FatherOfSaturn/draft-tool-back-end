@@ -20,11 +20,11 @@ import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
-import org.magic.pyramidDraft.api.GameStatusMessage;
+import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.card.Cube;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Card;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.smallrye.mutiny.Uni;

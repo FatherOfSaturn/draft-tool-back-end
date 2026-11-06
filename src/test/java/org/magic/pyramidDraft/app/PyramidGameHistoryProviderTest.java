@@ -14,7 +14,7 @@ import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.card.CardPack;
 import org.magic.pyramidDraft.app.GameCoordination.PyramidDraftDbHandler;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

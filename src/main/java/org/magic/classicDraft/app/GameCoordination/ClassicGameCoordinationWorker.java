@@ -18,10 +18,10 @@ import org.magic.classicDraft.api.DraftPlayerSnapshot;
 import org.magic.classicDraft.api.PlayerDraftCheck;
 import org.magic.classicDraft.api.PlayerDraftData;
 import org.magic.classicDraft.app.ClassicPackCreator;
-import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.app.CubeDownloader;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.game.GameStatusMessage;
+import org.magic.common.card.Card;
+import org.magic.common.cube.CubeDownloader;
+import org.magic.common.card.CardPack;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;

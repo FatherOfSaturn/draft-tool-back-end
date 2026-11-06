@@ -1,5 +1,7 @@
 package org.magic.pyramidDraft.app.GameCoordination;
 
+import org.magic.common.mongo.MongoService;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

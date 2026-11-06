@@ -3,7 +3,7 @@ package org.magic.it;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Cube;
 
 import java.io.IOException;
 import java.io.InputStream;

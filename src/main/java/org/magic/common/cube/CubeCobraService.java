@@ -1,9 +1,9 @@
-package org.magic.pyramidDraft.external;
+package org.magic.common.cube;
 
 import java.util.List;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Cube;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.GET;

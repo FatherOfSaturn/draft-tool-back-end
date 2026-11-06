@@ -1,4 +1,4 @@
-package org.magic.pyramidDraft.app;
+package org.magic.common.cube;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -10,8 +10,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.pyramidDraft.external.CubeCobraService;
+import org.magic.common.card.Cube;
+import org.magic.common.cube.CubeCobraService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 

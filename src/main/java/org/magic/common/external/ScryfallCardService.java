@@ -19,7 +19,7 @@ import org.magic.common.api.scryfall.ScryfallCollectionRequest;
 import org.magic.common.api.scryfall.ScryfallCollectionResponse;
 import org.magic.common.api.scryfall.ScryfallImageUris;
 import org.magic.common.api.scryfall.ScryfallListResponse;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.card.Card;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;

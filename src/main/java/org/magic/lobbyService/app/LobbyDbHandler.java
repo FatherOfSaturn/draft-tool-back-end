@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
 import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.LobbyStatus;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;

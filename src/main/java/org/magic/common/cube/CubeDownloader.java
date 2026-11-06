@@ -1,11 +1,11 @@
-package org.magic.pyramidDraft.app;
+package org.magic.common.cube;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.pyramidDraft.external.CubeCobraService;
+import org.magic.common.card.Cube;
+import org.magic.common.cube.CubeCobraService;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;

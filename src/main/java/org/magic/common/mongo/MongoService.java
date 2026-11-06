@@ -1,4 +1,4 @@
-package org.magic.pyramidDraft.app.GameCoordination;
+package org.magic.common.mongo;
 
 import org.bson.codecs.configuration.CodecProvider;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;

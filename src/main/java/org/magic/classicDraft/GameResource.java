@@ -10,8 +10,8 @@ import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.PlayerDraftCheck;
 import org.magic.classicDraft.api.PlayerDraftData;
 import org.magic.classicDraft.app.GameCoordination.ClassicGameCoordinationWorker;
-import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.game.GameStatusMessage;
+import org.magic.common.card.Card;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.validation.Valid;

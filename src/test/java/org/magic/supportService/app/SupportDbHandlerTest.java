@@ -11,7 +11,7 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 import org.magic.supportService.api.SupportPriority;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;

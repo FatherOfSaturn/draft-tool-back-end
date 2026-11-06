@@ -9,12 +9,12 @@ import org.apache.logging.log4j.Logger;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
-import org.magic.pyramidDraft.api.GameStatusMessage;
+import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.app.CubeDownloader;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
+import org.magic.common.cube.CubeDownloader;
 import org.magic.pyramidDraft.app.PackCreator;
 import org.magic.pyramidDraft.app.PackMerger;
 

@@ -9,7 +9,7 @@ import org.bson.conversions.Bson;
 import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.classicDraft.api.ClassicGameState;
 import org.magic.classicDraft.api.ClassicPlayer;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.mongo.MongoService;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;

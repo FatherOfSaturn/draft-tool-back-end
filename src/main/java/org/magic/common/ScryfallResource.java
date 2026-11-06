@@ -5,7 +5,7 @@ import java.util.List;
 import org.magic.common.api.scryfall.ScryfallCard;
 import org.magic.common.external.BatchResult;
 import org.magic.common.external.ScryfallCardService;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.card.Card;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
