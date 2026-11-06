@@ -1,4 +1,4 @@
-package org.magic.common;
+package org.magic.admin;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +15,7 @@ import org.magic.common.api.admin.AdminCheckResponse;
 import org.magic.common.api.admin.DonationStatsResponse;
 import org.magic.common.api.admin.ScryfallCacheStatusResponse;
 import org.magic.common.external.ScryfallBulkDataService;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 
 import io.smallrye.mutiny.Uni;

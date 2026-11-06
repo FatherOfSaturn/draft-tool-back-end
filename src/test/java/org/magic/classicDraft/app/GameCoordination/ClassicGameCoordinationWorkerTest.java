@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicGameCreationInfo;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
@@ -94,7 +94,7 @@ class ClassicGameCoordinationWorkerTest {
         assertNotNull(game);
         assertNotNull(game.getGameID());
         assertEquals("classic", game.getGameType());
-        assertEquals(ClassicGameState.GAME_STARTED, game.getGameState());
+        assertEquals(GameState.GAME_STARTED, game.getGameState());
         assertEquals(0, game.getCurrentPackIndex());
         assertEquals(DraftDirection.ASCENDING, game.getDraftDirection());
         assertEquals(4, game.getPlayers().size());
@@ -121,7 +121,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
         when(dbHandler.updateGame(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -148,7 +148,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
@@ -164,7 +164,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 2, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_COMPLETE, Instant.now(), 2, DraftDirection.ASCENDING);
+                players, GameState.GAME_COMPLETE, Instant.now(), 2, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
@@ -180,7 +180,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 2, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
@@ -200,7 +200,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
         when(dbHandler.updateGame(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -230,7 +230,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
         when(dbHandler.updateGame(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -243,7 +243,7 @@ class ClassicGameCoordinationWorkerTest {
         when(dbHandler.findGame("game-1")).thenReturn(game);
         worker.draftCard("tok-1", bobCard, "game-1");
 
-        assertEquals(ClassicGameState.GAME_COMPLETE, game.getGameState());
+        assertEquals(GameState.GAME_COMPLETE, game.getGameState());
     }
 
     @Test
@@ -257,7 +257,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
         when(dbHandler.updateGame(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -278,10 +278,10 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 1, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
-        when(dbHandler.updateGameState("game-1", ClassicGameState.GAME_COMPLETE)).thenReturn(ClassicGameState.GAME_COMPLETE);
+        when(dbHandler.updateGameState("game-1", GameState.GAME_COMPLETE)).thenReturn(GameState.GAME_COMPLETE);
 
         GameStatusMessage result = worker.endGame("game-1").await().indefinitely();
 
@@ -295,7 +295,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 1, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_COMPLETE, Instant.now(), 1, DraftDirection.ASCENDING);
+                players, GameState.GAME_COMPLETE, Instant.now(), 1, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
@@ -311,7 +311,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 2, 6));
 
         ClassicGameInfo expected = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_COMPLETE, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_COMPLETE, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(expected);
 
@@ -327,7 +327,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 2, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
@@ -356,7 +356,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_COMPLETE, Instant.now(), 2, DraftDirection.ASCENDING);
+                players, GameState.GAME_COMPLETE, Instant.now(), 2, DraftDirection.ASCENDING);
 
         when(dbHandler.findGamesByPlayerName("Alice")).thenReturn(List.of(game));
 
@@ -390,7 +390,7 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findDraftCheck("game-1", "tok-0"))
                 .thenReturn(new org.bson.Document("gameState", "GAME_STARTED").append("canDraft", true));
@@ -398,7 +398,7 @@ class ClassicGameCoordinationWorkerTest {
         PlayerDraftCheck result = worker.getDraftCheck("game-1", "tok-0").await().indefinitely();
 
         assertTrue(result.canDraft());
-        assertEquals(ClassicGameState.GAME_STARTED, result.gameState());
+        assertEquals(GameState.GAME_STARTED, result.gameState());
     }
 
     @Test
@@ -408,7 +408,7 @@ class ClassicGameCoordinationWorkerTest {
                 createPlayer("Bob", 1, 2, 6));
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findDraftCheck("game-1", "tok-0"))
                 .thenReturn(new org.bson.Document("gameState", "GAME_STARTED").append("canDraft", false));
@@ -416,7 +416,7 @@ class ClassicGameCoordinationWorkerTest {
         PlayerDraftCheck result = worker.getDraftCheck("game-1", "tok-0").await().indefinitely();
 
         assertFalse(result.canDraft());
-        assertEquals(ClassicGameState.GAME_STARTED, result.gameState());
+        assertEquals(GameState.GAME_STARTED, result.gameState());
     }
 
     @Test
@@ -430,14 +430,14 @@ class ClassicGameCoordinationWorkerTest {
         }
 
         ClassicGameInfo game = new ClassicGameInfo("game-1", "cube-1", "classic",
-                players, ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                players, GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(dbHandler.findGame("game-1")).thenReturn(game);
 
         PlayerDraftData result = worker.getDraftData("game-1", "tok-0").await().indefinitely();
 
         assertEquals("game-1", result.gameID());
-        assertEquals(ClassicGameState.GAME_STARTED, result.gameState());
+        assertEquals(GameState.GAME_STARTED, result.gameState());
         assertEquals(DraftDirection.ASCENDING, result.draftDirection());
         assertNotNull(result.player());
         assertEquals("Alice", result.player().playerName());

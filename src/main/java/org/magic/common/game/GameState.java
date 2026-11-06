@@ -1,4 +1,4 @@
-package org.magic.pyramidDraft.api;
+package org.magic.common.game;
 
 import org.magic.common.util.EnumParser;
 

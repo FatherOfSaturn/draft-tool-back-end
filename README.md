@@ -4,9 +4,12 @@ Quarkus backend for the Pyramid Draft MTG cube drafting application.
 
 ## Prerequisites
 
-- Java 17
-- Docker
+- Java 25 (Gradle 9.9 wrapper ships with the repo)
+- Docker (for the local MongoDB/JSON-server compose stack)
 - Node.js (for json-server)
+- A MongoDB on `localhost:27017` for the integration tests (or Docker:
+  `docker run -d -p 27017:27017 mongo:8`) — the test profile connects there
+  directly instead of using Dev Services
 
 ## Quick Start
 

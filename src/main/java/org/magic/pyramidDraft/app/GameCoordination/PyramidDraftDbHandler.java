@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.api.Player;
 
 import com.mongodb.client.MongoCollection;

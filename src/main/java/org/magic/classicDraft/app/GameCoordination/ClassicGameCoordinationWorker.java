@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.magic.classicDraft.api.ClassicGameCreationInfo;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.DraftDirection;
@@ -67,7 +67,7 @@ public class ClassicGameCoordinationWorker {
                         creationInfo.cubeID(),
                         "classic",
                         players,
-                        ClassicGameState.GAME_STARTED,
+                        GameState.GAME_STARTED,
                         Instant.now(),
                         0,
                         DraftDirection.ASCENDING))
@@ -80,7 +80,7 @@ public class ClassicGameCoordinationWorker {
         LOGGER.info("Fetching Classic Game with ID: {}", gameID);
         ClassicGameInfo gameInfo = dbHandler.findGame(gameID);
 
-        if (gameInfo.getGameState() != ClassicGameState.GAME_STARTED) {
+        if (gameInfo.getGameState() != GameState.GAME_STARTED) {
             throw new IllegalStateException("Game " + gameID + " is not in progress. Current state: " + gameInfo.getGameState());
         }
 
@@ -134,9 +134,9 @@ public class ClassicGameCoordinationWorker {
             int nextIndex = gameInfo.getCurrentPackIndex() + 1;
             if (nextIndex >= packsPerPlayer) {
                 LOGGER.info("All packs exhausted. Completing game: {}", gameInfo.getGameID());
-                gameInfo.setGameState(ClassicGameState.GAME_COMPLETE);
+                gameInfo.setGameState(GameState.GAME_COMPLETE);
                 gameInfo.setCurrentPackIndex(nextIndex);
-                dbHandler.updateGameState(gameInfo.getGameID(), ClassicGameState.GAME_COMPLETE);
+                dbHandler.updateGameState(gameInfo.getGameID(), GameState.GAME_COMPLETE);
                 return;
             }
 
@@ -171,7 +171,7 @@ public class ClassicGameCoordinationWorker {
 
     public Uni<ClassicGameInfo> getGameInfo(final String gameID) {
         ClassicGameInfo game = dbHandler.findGame(gameID);
-        if (game.getGameState() != ClassicGameState.GAME_COMPLETE) {
+        if (game.getGameState() != GameState.GAME_COMPLETE) {
             throw new WebApplicationException(Response.Status.CONFLICT);
         }
         return Uni.createFrom().item(game);
@@ -179,11 +179,11 @@ public class ClassicGameCoordinationWorker {
 
     public Uni<GameStatusMessage> endGame(final String gameID) {
         ClassicGameInfo gameInfo = dbHandler.findGame(gameID);
-        if (gameInfo.getGameState() != ClassicGameState.GAME_COMPLETE) {
-            dbHandler.updateGameState(gameID, ClassicGameState.GAME_COMPLETE);
+        if (gameInfo.getGameState() != GameState.GAME_COMPLETE) {
+            dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE);
         }
         return Uni.createFrom().item(new GameStatusMessage(gameID,
-                org.magic.pyramidDraft.api.GameState.GAME_COMPLETE));
+                GameState.GAME_COMPLETE));
     }
 
     public Uni<List<ClassicGameSummary>> getGameHistory(final String playerName) {
@@ -213,7 +213,7 @@ public class ClassicGameCoordinationWorker {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         String stateStr = doc.getString("gameState");
-        ClassicGameState state = ClassicGameState.valueOf(stateStr);
+        GameState state = GameState.valueOf(stateStr);
         boolean canDraft = doc.getBoolean("canDraft", false);
         return Uni.createFrom().item(new PlayerDraftCheck(canDraft, state));
     }

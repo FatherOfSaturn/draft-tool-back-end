@@ -12,7 +12,7 @@ import org.magic.accountService.api.DraftGameState;
 import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.DraftDirection;
 import org.magic.common.card.CardPack;
@@ -31,7 +31,7 @@ class ClassicGameHistoryProviderTest {
     void shouldMapStartedGameToInProgressWithCardProgress() {
         ClassicPlayer alice = classicPlayer("Alice", "acc-1", 0, 2, 1);
         ClassicPlayer bob = classicPlayer("Bob", "acc-2", 1, 2, 6);
-        ClassicGameInfo game = game(List.of(alice, bob), ClassicGameState.GAME_STARTED, 0);
+        ClassicGameInfo game = game(List.of(alice, bob), GameState.GAME_STARTED, 0);
 
         when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
 
@@ -62,7 +62,7 @@ class ClassicGameHistoryProviderTest {
     @Test
     void shouldMapCompleteGameToCompleteState() {
         ClassicPlayer alice = classicPlayer("Alice", "acc-1", 0, 2, 6);
-        ClassicGameInfo game = game(List.of(alice, classicPlayer("Bob", "acc-2", 1, 2, 6)), ClassicGameState.GAME_COMPLETE, 1);
+        ClassicGameInfo game = game(List.of(alice, classicPlayer("Bob", "acc-2", 1, 2, 6)), GameState.GAME_COMPLETE, 1);
 
         when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
 
@@ -84,7 +84,7 @@ class ClassicGameHistoryProviderTest {
         return new ClassicPlayer(name, accountID, draftOrderNumber, dealtPacks, List.of(), cardsDrafted);
     }
 
-    private ClassicGameInfo game(final List<ClassicPlayer> players, final ClassicGameState state, final int currentPackIndex) {
+    private ClassicGameInfo game(final List<ClassicPlayer> players, final GameState state, final int currentPackIndex) {
         return new ClassicGameInfo("gid", "cid", "classic", players, state, Instant.now(), currentPackIndex,
                 DraftDirection.ASCENDING);
     }

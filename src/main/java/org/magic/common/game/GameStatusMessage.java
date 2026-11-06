@@ -2,7 +2,6 @@ package org.magic.common.game;
 
 import java.util.Objects;
 
-import org.magic.pyramidDraft.api.GameState;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

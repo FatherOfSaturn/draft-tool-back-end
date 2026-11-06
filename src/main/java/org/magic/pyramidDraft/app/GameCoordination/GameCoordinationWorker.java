@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;

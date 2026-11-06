@@ -1,5 +1,7 @@
 package org.magic.pyramidDraft.api;
 
+import org.magic.common.game.GameState;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;

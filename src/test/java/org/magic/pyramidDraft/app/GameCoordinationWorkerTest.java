@@ -19,7 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.common.card.Cube;

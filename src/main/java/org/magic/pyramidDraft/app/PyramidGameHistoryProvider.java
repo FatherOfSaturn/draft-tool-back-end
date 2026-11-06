@@ -7,7 +7,7 @@ import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.accountService.app.AbstractGameHistoryProvider;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.app.GameCoordination.PyramidDraftDbHandler;
 

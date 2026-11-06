@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.common.card.Card;
 import org.magic.common.card.CardDetails;

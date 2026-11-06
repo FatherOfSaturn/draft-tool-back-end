@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
 
 import com.mongodb.client.MongoCollection;
@@ -125,7 +125,7 @@ public class ClassicDraftDbHandler implements PanacheMongoRepository<ClassicGame
         }
     }
 
-    public ClassicGameState updateGameState(final String gameID, final ClassicGameState gameState) {
+    public GameState updateGameState(final String gameID, final GameState gameState) {
         Bson filter = Filters.eq("gameID", gameID);
 
         Bson update = Updates.combine(
@@ -142,7 +142,7 @@ public class ClassicDraftDbHandler implements PanacheMongoRepository<ClassicGame
         }
     }
 
-    public int clearGamesWithStatus(final ClassicGameState gameState) {
+    public int clearGamesWithStatus(final GameState gameState) {
         Bson filter = Filters.eq("gameState", gameState);
         DeleteResult result = getCollection().deleteMany(filter);
         return (int) result.getDeletedCount();

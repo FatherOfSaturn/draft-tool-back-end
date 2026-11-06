@@ -7,7 +7,7 @@ import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.accountService.app.AbstractGameHistoryProvider;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.app.GameCoordination.ClassicDraftDbHandler;
 
@@ -54,7 +54,7 @@ public class ClassicGameHistoryProvider extends AbstractGameHistoryProvider<Clas
                 game.getGameID(),
                 game.getCubeID(),
                 "classic",
-                game.getGameState() == ClassicGameState.GAME_COMPLETE
+                game.getGameState() == GameState.GAME_COMPLETE
                         ? DraftGameState.GAME_COMPLETE
                         : DraftGameState.GAME_IN_PROGRESS,
                 players,
