@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
-import org.magic.common.mongo.MongoService;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
 
@@ -19,6 +18,7 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -27,16 +27,11 @@ import jakarta.inject.Inject;
  * for {@link SupportRequest} documents, including status updates and hard/soft deletion.
  */
 @ApplicationScoped
-public class SupportDbHandler {
+public class SupportDbHandler implements PanacheMongoRepository<SupportRequest> {
     private static final Logger LOGGER = LogManager.getLogger(SupportDbHandler.class);
-    private static final String COLLECTION_NAME = "SupportRequests";
 
-    @Inject
-    MongoService mongoService;
-
-    private MongoCollection<SupportRequest> getCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection(COLLECTION_NAME, SupportRequest.class);
+    MongoCollection<SupportRequest> getCollection() {
+        return mongoCollection();
     }
 
     /**
@@ -72,7 +67,7 @@ public class SupportDbHandler {
      *
      * @return the list of all support requests
      */
-    public List<SupportRequest> findAll() {
+    public List<SupportRequest> findAllRequests() {
         return getCollection()
                 .find()
                 .sort(Sorts.descending("createdOnDate"))

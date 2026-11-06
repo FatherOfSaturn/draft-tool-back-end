@@ -11,7 +11,6 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.mongo.MongoService;
 import org.magic.supportService.api.SupportPriority;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
@@ -21,17 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 @ExtendWith(MockitoExtension.class)
 class SupportDbHandlerTest {
 
-    @Mock
-    MongoService mongoService;
-    @Mock
-    MongoDatabase database;
     @Mock
     MongoCollection<SupportRequest> collection;
     @Mock
@@ -47,10 +41,8 @@ class SupportDbHandlerTest {
 
     @BeforeEach
     void setup() {
-        when(mongoService.getDatabase()).thenReturn(database);
-        when(database.getCollection("SupportRequests", SupportRequest.class)).thenReturn(collection);
-        handler = new SupportDbHandler();
-        handler.mongoService = mongoService;
+        handler = spy(new SupportDbHandler());
+        doReturn(collection).when(handler).getCollection();
     }
 
     private SupportRequest createRequest(String id) {
@@ -93,7 +85,7 @@ class SupportDbHandlerTest {
         when(findIterable.sort(any())).thenReturn(findIterable);
         when(findIterable.into(any())).thenReturn(requests);
 
-        List<SupportRequest> result = handler.findAll();
+        List<SupportRequest> result = handler.findAllRequests();
 
         assertEquals(2, result.size());
     }

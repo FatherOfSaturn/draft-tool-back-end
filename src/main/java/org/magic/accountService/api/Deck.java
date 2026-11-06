@@ -3,10 +3,13 @@ package org.magic.accountService.api;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import io.quarkus.mongodb.panache.common.MongoEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,9 +23,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonPropertyOrder({ "deckID", "accountID", "name", "description", "cardIds", "createdAt", "updatedAt" })
+@MongoEntity(collection = "Decks")
 public class Deck {
 
-    @BsonProperty("_id")
+    @BsonId
     @JsonProperty("deckID")
     private String deckID;
 

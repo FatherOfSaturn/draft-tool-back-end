@@ -15,10 +15,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import io.quarkus.mongodb.panache.common.MongoEntity;
+
 @Getter
 @Setter
 @EqualsAndHashCode
 @JsonPropertyOrder({ "gameID", "cubeID", "gameType", "players", "gameState", "createdAt", "currentPackIndex", "draftDirection" })
+@MongoEntity(collection = "ClassicGames")
 public class ClassicGameInfo {
     private final String gameID;
     private final String cubeID;

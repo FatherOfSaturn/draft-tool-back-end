@@ -12,7 +12,6 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.magic.common.api.scryfall.BulkDataEntry;
-import org.magic.common.mongo.MongoService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.FindIterable;
@@ -22,7 +21,7 @@ import com.mongodb.client.MongoDatabase;
 class ScryfallBulkDataServiceTest {
 
     ScryfallCardCache cardCache;
-    MongoService mongoService;
+    com.mongodb.client.MongoClient mongoClient;
     ObjectMapper objectMapper = new ObjectMapper();
     ManagedExecutor executor;
     ScryfallBulkDataService service;
@@ -31,15 +30,15 @@ class ScryfallBulkDataServiceTest {
     @SuppressWarnings("unchecked")
     void setup() {
         cardCache = mock(ScryfallCardCache.class);
-        mongoService = mock(MongoService.class);
+        mongoClient = mock(com.mongodb.client.MongoClient.class);
         executor = mock(ManagedExecutor.class);
         MongoDatabase db = mock(MongoDatabase.class);
         MongoCollection<Document> metaCollection = mock(MongoCollection.class);
         FindIterable<Document> findIterable = mock(FindIterable.class);
-        when(mongoService.getDatabase()).thenReturn(db);
+        when(mongoClient.getDatabase("MTGames")).thenReturn(db);
         when(db.getCollection("ScryfallCacheMeta")).thenReturn(metaCollection);
         when(metaCollection.find(any(Bson.class))).thenReturn(findIterable);
-        service = new ScryfallBulkDataService(true, "default_cards", cardCache, mongoService, objectMapper, executor);
+        service = new ScryfallBulkDataService(true, "default_cards", cardCache, mongoClient, "MTGames", objectMapper, executor);
     }
 
     @Test
@@ -92,14 +91,14 @@ class ScryfallBulkDataServiceTest {
 
     @Test
     void shouldReturnDisabledStatus() {
-        var disabled = new ScryfallBulkDataService(false, "oracle_cards", cardCache, mongoService, objectMapper, executor);
+        var disabled = new ScryfallBulkDataService(false, "oracle_cards", cardCache, mongoClient, "MTGames", objectMapper, executor);
         assertFalse(disabled.isEnabled());
         assertEquals("oracle_cards", disabled.getBulkDataType());
     }
 
     @Test
     void shouldThrowWhenTriggeredWithCacheDisabled() {
-        var disabled = new ScryfallBulkDataService(false, "oracle_cards", cardCache, mongoService, objectMapper, executor);
+        var disabled = new ScryfallBulkDataService(false, "oracle_cards", cardCache, mongoClient, "MTGames", objectMapper, executor);
         assertThrows(IllegalStateException.class, disabled::triggerRefresh);
     }
 }

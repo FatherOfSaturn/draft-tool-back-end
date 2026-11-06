@@ -1,6 +1,5 @@
 package org.magic.pyramidDraft.app.GameCoordination;
 
-import org.magic.common.mongo.MongoService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -23,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -31,10 +29,6 @@ import com.mongodb.client.result.UpdateResult;
 @ExtendWith(MockitoExtension.class)
 class PyramidDraftDbHandlerTest {
 
-    @Mock
-    MongoService mongoService;
-    @Mock
-    MongoDatabase database;
     @Mock
     MongoCollection<GameInfo> collection;
     @Mock
@@ -50,10 +44,8 @@ class PyramidDraftDbHandlerTest {
 
     @BeforeEach
     void setup() {
-        when(mongoService.getDatabase()).thenReturn(database);
-        when(database.getCollection("Games", GameInfo.class)).thenReturn(collection);
-        handler = new PyramidDraftDbHandler();
-        handler.mongoService = mongoService;
+        handler = spy(new PyramidDraftDbHandler());
+        doReturn(collection).when(handler).getCollection();
     }
 
     private GameInfo createGame(String id, GameState state) {

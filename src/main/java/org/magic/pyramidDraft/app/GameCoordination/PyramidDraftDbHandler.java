@@ -3,36 +3,30 @@ package org.magic.pyramidDraft.app.GameCoordination;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
-import org.magic.common.mongo.MongoService;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.Player;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
  * MongoDB data access handler for pyramid draft games. Provides CRUD operations
  * for {@link GameInfo} documents, including player updates and bulk deletion by game state.
  */
 @ApplicationScoped
-public class PyramidDraftDbHandler {
+public class PyramidDraftDbHandler implements PanacheMongoRepository<GameInfo> {
     private static final Logger LOGGER = LogManager.getLogger(PyramidDraftDbHandler.class);
 
-    @Inject
-    MongoService mongoService;
-
     public MongoCollection<GameInfo> getCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection("Games", GameInfo.class);
+        return mongoCollection();
     }
 
     /**

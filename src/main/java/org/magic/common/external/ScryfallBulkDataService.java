@@ -17,13 +17,13 @@ import org.bson.Document;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.magic.common.api.scryfall.BulkDataEntry;
 import org.magic.common.api.scryfall.ScryfallCard;
-import org.magic.common.mongo.MongoService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
@@ -44,7 +44,8 @@ public class ScryfallBulkDataService {
     private final boolean enabled;
     private final String bulkDataType;
     private final ScryfallCardCache cardCache;
-    private final MongoService mongoService;
+    private final MongoClient mongoClient;
+    private final String databaseName;
     private final ObjectMapper objectMapper;
     private final ManagedExecutor managedExecutor;
 
@@ -53,13 +54,15 @@ public class ScryfallBulkDataService {
             @ConfigProperty(name = "scryfall.cache.enabled", defaultValue = "true") final boolean enabled,
             @ConfigProperty(name = "scryfall.cache.bulk-data-type", defaultValue = "default_cards") final String bulkDataType,
             final ScryfallCardCache cardCache,
-            final MongoService mongoService,
+            final MongoClient mongoClient,
+            @ConfigProperty(name = "quarkus.mongodb.database") final String databaseName,
             final ObjectMapper objectMapper,
             final ManagedExecutor managedExecutor) {
         this.enabled = enabled;
         this.bulkDataType = bulkDataType;
         this.cardCache = cardCache;
-        this.mongoService = mongoService;
+        this.mongoClient = mongoClient;
+        this.databaseName = databaseName;
         this.objectMapper = objectMapper;
         this.managedExecutor = managedExecutor;
     }
@@ -216,7 +219,7 @@ public class ScryfallBulkDataService {
     }
 
     private MongoCollection<Document> getMetaCollection() {
-        return mongoService.getDatabase().getCollection(META_COLLECTION);
+        return mongoClient.getDatabase(databaseName).getCollection(META_COLLECTION);
     }
 
     String getLastImportedUpdatedAt() {

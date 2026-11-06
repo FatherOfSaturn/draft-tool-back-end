@@ -77,7 +77,7 @@ public class SupportWorker {
      * @return the list of all support requests
      */
     public Uni<List<SupportRequest>> getAllRequests() {
-        return Uni.createFrom().item(() -> dbHandler.findAll());
+        return Uni.createFrom().item(() -> dbHandler.findAllRequests());
     }
 
     /**

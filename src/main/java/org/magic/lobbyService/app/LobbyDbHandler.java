@@ -8,30 +8,23 @@ import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
 import org.magic.lobbyService.api.Lobby;
 import org.magic.lobbyService.api.LobbyStatus;
-import org.magic.common.mongo.MongoService;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
  * MongoDB data access handler for lobbies. Provides CRUD operations
  * for {@link Lobby} documents.
  */
 @ApplicationScoped
-public class LobbyDbHandler {
+public class LobbyDbHandler implements PanacheMongoRepository<Lobby> {
     private static final Logger LOGGER = LogManager.getLogger(LobbyDbHandler.class);
-    private static final String COLLECTION_NAME = "Lobbies";
 
-    @Inject
-    MongoService mongoService;
-
-    private MongoCollection<Lobby> getCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection(COLLECTION_NAME, Lobby.class);
+    private MongoCollection<Lobby> collection() {
+        return mongoCollection();
     }
 
     /**
@@ -40,7 +33,7 @@ public class LobbyDbHandler {
      * @param lobby the lobby to insert
      */
     public void insertLobby(final Lobby lobby) {
-        getCollection().insertOne(lobby);
+        collection().insertOne(lobby);
         LOGGER.info("Created lobby: {}", lobby.getLobbyCode());
     }
 
@@ -53,7 +46,7 @@ public class LobbyDbHandler {
      */
     public Lobby findByCode(final String lobbyCode) {
         Bson filter = Filters.eq("_id", lobbyCode);
-        Lobby lobby = getCollection().find(filter).first();
+        Lobby lobby = collection().find(filter).first();
 
         if (lobby == null) {
             LOGGER.warn("Unable to find lobby with code: {}", lobbyCode);
@@ -70,7 +63,7 @@ public class LobbyDbHandler {
      */
     public boolean lobbyExists(final String lobbyCode) {
         Bson filter = Filters.eq("_id", lobbyCode);
-        return getCollection().find(filter).first() != null;
+        return collection().find(filter).first() != null;
     }
 
     /**
@@ -81,7 +74,7 @@ public class LobbyDbHandler {
      */
     public void updateLobby(final Lobby lobby) {
         Bson filter = Filters.eq("_id", lobby.getLobbyCode());
-        var result = getCollection().replaceOne(filter, lobby);
+        var result = collection().replaceOne(filter, lobby);
 
         if (result.getModifiedCount() == 0 && result.getUpsertedId() == null) {
             LOGGER.error("Unable to update lobby: {}", lobby.getLobbyCode());
@@ -96,7 +89,7 @@ public class LobbyDbHandler {
      */
     public void deleteLobby(final String lobbyCode) {
         Bson filter = Filters.eq("_id", lobbyCode);
-        getCollection().deleteOne(filter);
+        collection().deleteOne(filter);
         LOGGER.info("Deleted lobby: {}", lobbyCode);
     }
 
@@ -108,6 +101,6 @@ public class LobbyDbHandler {
      */
     public List<Lobby> findLobbiesByStatus(final LobbyStatus status) {
         Bson filter = Filters.eq("status", status);
-        return getCollection().find(filter).into(new ArrayList<>());
+        return collection().find(filter).into(new ArrayList<>());
     }
 }

@@ -80,7 +80,7 @@ class SupportWorkerTest {
                         SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now)
         );
 
-        when(supportDbHandler.findAll()).thenReturn(expected);
+        when(supportDbHandler.findAllRequests()).thenReturn(expected);
 
         List<SupportRequest> result = supportWorker.getAllRequests().await().indefinitely();
 

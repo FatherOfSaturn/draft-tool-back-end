@@ -13,21 +13,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.accountService.api.Deck;
-import org.magic.common.mongo.MongoService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 
 @ExtendWith(MockitoExtension.class)
 class DeckDbHandlerTest {
 
-    @Mock
-    MongoService mongoService;
-    @Mock
-    MongoDatabase database;
     @Mock
     MongoCollection<Deck> collection;
     @Mock
@@ -37,9 +31,8 @@ class DeckDbHandlerTest {
 
     @BeforeEach
     void setup() {
-        when(mongoService.getDatabase()).thenReturn(database);
-        when(database.getCollection("Decks", Deck.class)).thenReturn(collection);
-        handler = new DeckDbHandler(mongoService);
+        handler = spy(new DeckDbHandler());
+        doReturn(collection).when(handler).getCollection();
     }
 
     @Test

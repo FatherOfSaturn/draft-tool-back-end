@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import io.quarkus.mongodb.panache.common.MongoEntity;
 
 /**
  * A format-agnostic lobby session that stores game configuration as opaque
@@ -23,9 +26,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonPropertyOrder({ "lobbyCode", "draftType", "config", "hostAccountID", "players",
                      "minPlayers", "maxPlayers", "gameID", "status", "createdAt" })
+@MongoEntity(collection = "Lobbies")
 public class Lobby {
 
-    @BsonProperty("_id")
+    @BsonId
     @JsonProperty("lobbyCode")
     private String lobbyCode;
 

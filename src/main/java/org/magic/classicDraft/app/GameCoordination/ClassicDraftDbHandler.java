@@ -9,7 +9,6 @@ import org.bson.conversions.Bson;
 import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.classicDraft.api.ClassicGameState;
 import org.magic.classicDraft.api.ClassicPlayer;
-import org.magic.common.mongo.MongoService;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -21,24 +20,20 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class ClassicDraftDbHandler {
+public class ClassicDraftDbHandler implements PanacheMongoRepository<ClassicGameInfo> {
     private static final Logger LOGGER = LogManager.getLogger(ClassicDraftDbHandler.class);
 
-    @Inject
-    MongoService mongoService;
-
     public MongoCollection<ClassicGameInfo> getCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection("ClassicGames", ClassicGameInfo.class);
+        return mongoCollection();
     }
 
     public MongoCollection<Document> getRawCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection("ClassicGames");
+        return mongoDatabase().getCollection("ClassicGames");
     }
 
     public String addGame(ClassicGameInfo gameInfo) {

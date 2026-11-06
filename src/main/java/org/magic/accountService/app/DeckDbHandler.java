@@ -5,9 +5,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
+import com.mongodb.client.MongoCollection;
 import org.magic.accountService.api.Deck;
-import org.magic.common.mongo.MongoService;
 
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -16,24 +17,21 @@ import jakarta.inject.Inject;
  * deck documents tied to user accounts.
  */
 @ApplicationScoped
-public class DeckDbHandler {
+public class DeckDbHandler implements PanacheMongoRepository<Deck> {
 
-    private static final String COLLECTION_NAME = "Decks";
-
-    private final MongoService mongoService;
-
-    @Inject
-    public DeckDbHandler(final MongoService mongoService) {
-        this.mongoService = mongoService;
+    MongoCollection<Deck> getCollection() {
+        return mongoCollection();
     }
 
+
+
     public List<Deck> findByAccountID(final String accountID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Deck.class);
+        var collection = getCollection();
         return collection.find(new org.bson.Document("accountID", accountID)).into(new java.util.ArrayList<>());
     }
 
     public Optional<Deck> findById(final String deckID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Deck.class);
+        var collection = getCollection();
         var doc = collection.find(new org.bson.Document("_id", deckID)).first();
         return Optional.ofNullable(doc);
     }
@@ -48,13 +46,13 @@ public class DeckDbHandler {
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
 
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Deck.class);
+        var collection = getCollection();
         collection.insertOne(deck);
         return deck.getDeckID();
     }
 
     public void updateDeck(final String deckID, final String name, final String description, final List<String> cardIds) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Deck.class);
+        var collection = getCollection();
         collection.updateOne(
                 new org.bson.Document("_id", deckID),
                 new org.bson.Document("$set", new org.bson.Document("name", name)
@@ -64,7 +62,7 @@ public class DeckDbHandler {
     }
 
     public void deleteDeck(final String deckID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Deck.class);
+        var collection = getCollection();
         collection.deleteOne(new org.bson.Document("_id", deckID));
     }
 }

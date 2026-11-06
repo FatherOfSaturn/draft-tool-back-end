@@ -55,6 +55,7 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.25.5'
 
     implementation 'io.quarkus:quarkus-mongodb-client'
+    implementation 'io.quarkus:quarkus-mongodb-panache'
     implementation 'org.mongodb:mongodb-driver-sync:5.14.0'
     implementation 'org.mongodb:mongodb-driver-core:5.14.0'
     implementation 'org.mongodb:bson:5.14.0'
