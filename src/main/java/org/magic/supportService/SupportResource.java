@@ -31,6 +31,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for managing feature and support requests.
@@ -40,6 +41,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Support", description = "Feature and support request management. Creation and public views are " +
         "anonymous; mutation and admin list endpoints require the admin role.")
+@Blocking
 public class SupportResource {
 
     private final SupportWorker supportWorker;

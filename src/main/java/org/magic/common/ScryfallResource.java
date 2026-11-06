@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource that exposes Scryfall API functionality through the backend.
@@ -35,6 +36,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Path("/scryfall")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Scryfall", description = "Card search and lookup proxied through the Scryfall API.")
+@Blocking
 public class ScryfallResource {
 
     private final ScryfallCardService scryfallCardService;

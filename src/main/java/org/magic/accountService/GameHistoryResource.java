@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.SecurityContext;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource exposing the authenticated user's cross-format game history.
@@ -24,6 +25,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed("user")
 @Tag(name = "Account", description = "User accounts, authentication, and saved decks.")
+@Blocking
 public class GameHistoryResource {
 
     private final GameHistoryService gameHistoryService;

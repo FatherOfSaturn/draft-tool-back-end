@@ -34,6 +34,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for admin dashboard endpoints. Provides draft statistics,
@@ -46,6 +47,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @RolesAllowed("admin")
 @Tag(name = "Admin", description = "Admin-only operations: stats, cross-account lookup, game cleanup, and Scryfall " +
         "cache management. All endpoints require the admin role.")
+@Blocking
 public class AdminResource {
     private static final Logger LOGGER = LogManager.getLogger(AdminResource.class);
 

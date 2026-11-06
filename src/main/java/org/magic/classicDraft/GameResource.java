@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for classic (8-player rotisserie-style) drafts.
@@ -35,6 +36,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
  */
 @Path("/classic-game")
 @Tag(name = "Classic Draft", description = "Classic rotisserie-style draft games.")
+@Blocking
 public class GameResource {
     private static final Logger LOGGER = LogManager.getLogger(GameResource.class);
 

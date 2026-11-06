@@ -32,6 +32,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for managing pyramid draft games.
@@ -40,6 +41,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
  */
 @Path("/game")
 @Tag(name = "Pyramid Draft", description = "Two-player pyramid draft games.")
+@Blocking
 public class GameResource {
     private static final Logger LOGGER = LogManager.getLogger(GameResource.class);
 
