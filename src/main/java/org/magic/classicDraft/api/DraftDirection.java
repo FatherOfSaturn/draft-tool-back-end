@@ -1,6 +1,8 @@
 package org.magic.classicDraft.api;
 
-public enum DraftDirection {
+import org.magic.common.util.EnumParser;
+
+public enum DraftDirection implements EnumParser.Described {
     ASCENDING("ascending"),
     DESCENDING("descending");
 
@@ -14,12 +16,7 @@ public enum DraftDirection {
         return description;
     }
 
-    public static DraftDirection fromString(String description) {
-        for (DraftDirection dir : DraftDirection.values()) {
-            if (dir.description.equalsIgnoreCase(description)) {
-                return dir;
-            }
-        }
-        throw new IllegalArgumentException("No enum constant with description " + description);
+    public static DraftDirection fromString(final String description) {
+        return EnumParser.parse(DraftDirection.class, description);
     }
 }

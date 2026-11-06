@@ -53,7 +53,7 @@ public class CubeDownloader {
                                        .onFailure().retry().atMost(3);
             }
             case "gapped" -> {
-                LOGGER.info("gapped Sowner: {}", cubeOwner);
+                LOGGER.info("gapped cube owner: {}", cubeOwner);
                 return cubeCobraService.getCubeDataAsJsonByOwner(cubeOwner)
                                        .map(list -> list.iterator().next());
             }

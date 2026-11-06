@@ -1,6 +1,8 @@
 package org.magic.classicDraft.api;
 
-public enum ClassicGameState {
+import org.magic.common.util.EnumParser;
+
+public enum ClassicGameState implements EnumParser.Described {
     GAME_STARTED("game_started"),
     GAME_COMPLETE("game_complete");
 
@@ -14,12 +16,7 @@ public enum ClassicGameState {
         return description;
     }
 
-    public static ClassicGameState fromString(String description) {
-        for (ClassicGameState state : ClassicGameState.values()) {
-            if (state.description.equalsIgnoreCase(description)) {
-                return state;
-            }
-        }
-        throw new IllegalArgumentException("No enum constant with description " + description);
+    public static ClassicGameState fromString(final String description) {
+        return EnumParser.parse(ClassicGameState.class, description);
     }
 }

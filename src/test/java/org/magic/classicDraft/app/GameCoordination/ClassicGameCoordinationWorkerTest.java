@@ -30,7 +30,7 @@ import org.magic.common.card.CardDetails;
 import org.magic.common.card.CardPack;
 import org.magic.common.card.Cube;
 import org.magic.common.cube.CubeDownloader;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -457,6 +457,6 @@ class ClassicGameCoordinationWorkerTest {
     protected Cube createCubeFromJson(final String fileName) throws IOException {
         InputStream cubeIS = getClass().getClassLoader().getResourceAsStream(fileName);
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
-        return JsonUtility.getInstance().fromJson(cubeString, Cube.class);
+        return TestJson.fromJson(cubeString, Cube.class);
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
@@ -63,7 +63,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+        GameCreationInfo info = TestJson.fromJson(gameString, GameCreationInfo.class);
 
         packCreator = new PackCreator(cube);
 

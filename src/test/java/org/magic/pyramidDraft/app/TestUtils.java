@@ -10,7 +10,7 @@ import java.time.Duration;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.magic.common.cube.CubeDownloader;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
@@ -44,7 +44,7 @@ public abstract class TestUtils {
         InputStream cubeIS = getClass().getClassLoader().getResourceAsStream(fileName);
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
 
-        Cube cube = JsonUtility.getInstance().fromJson(cubeString, Cube.class);
+        Cube cube = TestJson.fromJson(cubeString, Cube.class);
 
         return cube;
     }
@@ -54,7 +54,7 @@ public abstract class TestUtils {
         InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+        GameCreationInfo info = TestJson.fromJson(gameString, GameCreationInfo.class);
 
         return info;
     }

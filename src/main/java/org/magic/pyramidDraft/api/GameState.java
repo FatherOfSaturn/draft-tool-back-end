@@ -1,10 +1,12 @@
 package org.magic.pyramidDraft.api;
 
+import org.magic.common.util.EnumParser;
+
 /**
  * Enumerates the lifecycle states of a pyramid draft game:
  * {@link #GAME_STARTED} → {@link #GAME_MERGED} → {@link #GAME_COMPLETE}.
  */
-public enum GameState {
+public enum GameState implements EnumParser.Described {
     GAME_STARTED("game_started"),
     GAME_MERGED("game_merged"),
     GAME_COMPLETE("game_complete");
@@ -19,12 +21,7 @@ public enum GameState {
         return description;
     }
 
-    public static GameState fromString(String description) {
-        for (GameState state : GameState.values()) {
-            if (state.description.equalsIgnoreCase(description)) {
-                return state;
-            }
-        }
-        throw new IllegalArgumentException("No enum constant with description " + description);
+    public static GameState fromString(final String description) {
+        return EnumParser.parse(GameState.class, description);
     }
 }

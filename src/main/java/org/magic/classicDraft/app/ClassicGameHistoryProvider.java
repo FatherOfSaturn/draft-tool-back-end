@@ -5,7 +5,7 @@ import java.util.List;
 import org.magic.accountService.api.DraftGameState;
 import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
-import org.magic.accountService.app.GameHistoryProvider;
+import org.magic.accountService.app.AbstractGameHistoryProvider;
 import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.classicDraft.api.ClassicGameState;
 import org.magic.classicDraft.api.ClassicPlayer;
@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
  * progress as the 1-based pack index, and per-player cards remaining to draft.
  */
 @ApplicationScoped
-public class ClassicGameHistoryProvider implements GameHistoryProvider {
+public class ClassicGameHistoryProvider extends AbstractGameHistoryProvider<ClassicGameInfo> {
 
     private final ClassicDraftDbHandler dbHandler;
 
@@ -29,13 +29,12 @@ public class ClassicGameHistoryProvider implements GameHistoryProvider {
     }
 
     @Override
-    public List<GameHistoryEntry> findGamesByAccountID(final String accountID) {
-        return dbHandler.findGamesByAccountID(accountID).stream()
-                .map(this::toEntry)
-                .toList();
+    protected List<ClassicGameInfo> findGamesByAccount(final String accountID) {
+        return dbHandler.findGamesByAccountID(accountID);
     }
 
-    private GameHistoryEntry toEntry(final ClassicGameInfo game) {
+    @Override
+    protected GameHistoryEntry toEntry(final ClassicGameInfo game) {
         List<GameHistoryPlayer> players = game.getPlayers().stream()
                 .map(player -> {
                     int cardsLeftToDraft = cardsLeftToDraft(player);

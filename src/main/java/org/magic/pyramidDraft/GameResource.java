@@ -3,12 +3,14 @@ package org.magic.pyramidDraft;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.magic.common.util.JsonUtility;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.common.game.GameStatusMessage;
 import org.magic.common.card.Card;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
@@ -42,9 +44,20 @@ public class GameResource {
     private static final Logger LOGGER = LogManager.getLogger(GameResource.class);
 
     final GameCoordinationWorker gameWorker;
+    private final ObjectMapper objectMapper;
 
-    public GameResource(final GameCoordinationWorker gameWorker) {
+    public GameResource(final GameCoordinationWorker gameWorker, final ObjectMapper objectMapper) {
         this.gameWorker = gameWorker;
+        this.objectMapper = objectMapper;
+    }
+
+    private String toJson(final Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Failed to serialize value for logging", e);
+            return "";
+        }
     }
     
     /**
@@ -125,7 +138,7 @@ public class GameResource {
     public Uni<GameStatusMessage> triggerPackMergeAndSwap(@PathParam("gameID") @Size(max = 64) final String gameID) {
         LOGGER.info("Call to merge Game: {}", gameID);
         return gameWorker.mergeAndSwapPacks(gameID)
-                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
+                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", toJson(status)));
     }
 
     /**
@@ -143,7 +156,7 @@ public class GameResource {
     public Uni<GameStatusMessage> endGame(@PathParam("gameID") @Size(max = 64) final String gameID) {
         LOGGER.info("Call to End Game: {}", gameID);
         return gameWorker.endGame(gameID)
-                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", JsonUtility.getInstance().toJson(status)));
+                         .invoke(status -> LOGGER.info("Replying with Game Status Message: {}", toJson(status)));
     }
 
     /**

@@ -37,7 +37,7 @@ class GameResourceTest {
 
     @BeforeEach
     void setup() {
-        resource = new GameResource(gameWorker);
+        resource = new GameResource(gameWorker, org.magic.TestJson.mapper());
     }
 
     @Test

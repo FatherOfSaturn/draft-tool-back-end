@@ -5,7 +5,7 @@ import java.util.List;
 import org.magic.accountService.api.DraftGameState;
 import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
-import org.magic.accountService.app.GameHistoryProvider;
+import org.magic.accountService.app.AbstractGameHistoryProvider;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
 import org.magic.pyramidDraft.api.Player;
@@ -20,7 +20,7 @@ import jakarta.inject.Inject;
  * totals, since phase-1 pack counts are not recoverable after the merge.
  */
 @ApplicationScoped
-public class PyramidGameHistoryProvider implements GameHistoryProvider {
+public class PyramidGameHistoryProvider extends AbstractGameHistoryProvider<GameInfo> {
 
     private final PyramidDraftDbHandler dbHandler;
 
@@ -30,13 +30,12 @@ public class PyramidGameHistoryProvider implements GameHistoryProvider {
     }
 
     @Override
-    public List<GameHistoryEntry> findGamesByAccountID(final String accountID) {
-        return dbHandler.findGamesByAccountID(accountID).stream()
-                .map(this::toEntry)
-                .toList();
+    protected List<GameInfo> findGamesByAccount(final String accountID) {
+        return dbHandler.findGamesByAccountID(accountID);
     }
 
-    private GameHistoryEntry toEntry(final GameInfo game) {
+    @Override
+    protected GameHistoryEntry toEntry(final GameInfo game) {
         boolean mergedPhase = game.getGameState() == GameState.GAME_MERGED
                 || game.getGameState() == GameState.GAME_COMPLETE;
 

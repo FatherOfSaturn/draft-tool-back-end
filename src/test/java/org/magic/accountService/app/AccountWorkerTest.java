@@ -19,10 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.accountService.api.Account;
-import org.magic.accountService.api.CreateDeckRequest;
+import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.Deck;
 import org.magic.accountService.api.LoginResponse;
-import org.magic.accountService.api.UpdateDeckRequest;
 import org.magic.accountService.api.UpdateDisplayNameRequest;
 import org.magic.accountService.external.GoogleTokenVerifier;
 import org.magic.accountService.external.GoogleTokenVerifier.GoogleUser;
@@ -196,7 +195,7 @@ class AccountWorkerTest {
     @Test
     void shouldCreateDeck() {
         String deckID = "507f1f77bcf86cd799439012";
-        CreateDeckRequest request = new CreateDeckRequest("My Deck", "Description", List.of("card1"));
+        DeckPayload request = new DeckPayload("My Deck", "Description", List.of("card1"));
         Account account = new Account();
         account.setAccountID(testAccountID);
 
@@ -214,7 +213,7 @@ class AccountWorkerTest {
     void shouldNotCreateDeckForMissingAccount() {
         when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
 
-        Optional<String> result = accountService.createDeck(googleSub, new CreateDeckRequest("Deck", "", List.of())).await().indefinitely();
+        Optional<String> result = accountService.createDeck(googleSub, new DeckPayload("Deck", "", List.of())).await().indefinitely();
 
         assertTrue(result.isEmpty());
     }
@@ -280,7 +279,7 @@ class AccountWorkerTest {
     @Test
     void shouldUpdateDeck() {
         String deckID = "507f1f77bcf86cd799439012";
-        UpdateDeckRequest request = new UpdateDeckRequest("New Name", "New Desc", List.of("card1", "card2"));
+        DeckPayload request = new DeckPayload("New Name", "New Desc", List.of("card1", "card2"));
         Account account = new Account();
         account.setAccountID(testAccountID);
         Deck deck = new Deck();
@@ -298,7 +297,7 @@ class AccountWorkerTest {
     @Test
     void shouldNotUpdateDeckOwnedByAnotherUser() {
         String deckID = "507f1f77bcf86cd799439012";
-        UpdateDeckRequest request = new UpdateDeckRequest("New Name", "New Desc", List.of("card1"));
+        DeckPayload request = new DeckPayload("New Name", "New Desc", List.of("card1"));
         Account account = new Account();
         account.setAccountID(testAccountID);
         Deck deck = new Deck();
@@ -322,7 +321,7 @@ class AccountWorkerTest {
         when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
         when(deckDbHandler.findById(missingID)).thenReturn(Optional.empty());
 
-        boolean result = accountService.updateDeck(googleSub, missingID, new UpdateDeckRequest("", "", List.of())).await().indefinitely();
+        boolean result = accountService.updateDeck(googleSub, missingID, new DeckPayload("", "", List.of())).await().indefinitely();
 
         assertFalse(result);
     }

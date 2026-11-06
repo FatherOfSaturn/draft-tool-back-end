@@ -1,13 +1,10 @@
 package org.magic.lobbyService.app;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +13,7 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.magic.common.util.GuestIdentity;
 import org.magic.lobbyService.api.CreateLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyRequest;
 import org.magic.lobbyService.api.JoinLobbyResponse;
@@ -386,7 +384,7 @@ public class LobbyService {
                 lobby.getPlayers().sort((a, b) -> Integer.compare(a.getSlotIndex(), b.getSlotIndex()));
                 LobbyPlayer newHost = lobby.getPlayers().get(0);
                 lobby.setHostAccountID(newHost.getAccountID() != null
-                        ? newHost.getAccountID() : guestHostId(newHost.getPlayerToken()));
+                        ? newHost.getAccountID() : GuestIdentity.id(newHost.getPlayerToken()));
                 lobby.setHostAloneSince(null);
                 LOGGER.info("Heartbeat: reassigned host of lobby {} to slot {}",
                         lobby.getLobbyCode(), newHost.getSlotIndex());
@@ -471,7 +469,7 @@ public class LobbyService {
         if (hostID.equals(player.getAccountID())) {
             return true;
         }
-        return player.getPlayerToken() != null && hostID.equals(guestHostId(player.getPlayerToken()));
+        return player.getPlayerToken() != null && hostID.equals(GuestIdentity.id(player.getPlayerToken()));
     }
 
     /**
@@ -497,20 +495,6 @@ public class LobbyService {
         return findHostPlayer(lobby)
                 .map(host -> callerToken.equals(host.getPlayerToken()))
                 .orElse(false);
-    }
-
-    /**
-     * Produces a non-reversible host marker for a guest-host lobby so the player's
-     * bearer token is never stored or serialized in plain text.
-     */
-    private static String guestHostId(final String playerToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(playerToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return "guest-" + HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available", e);
-        }
     }
 
     private static boolean onlyHostRemains(final Lobby lobby) {

@@ -1,11 +1,12 @@
 package org.magic.supportService.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.magic.common.util.EnumParser;
 
 /**
  * Enumerates the types of support requests that can be submitted.
  */
-public enum SupportType {
+public enum SupportType implements EnumParser.Described {
     NEW_FEATURE("new_feature"),
     BUG_FIX("bug_fix"),
     MISC_SUPPORT("misc_support");
@@ -29,11 +30,6 @@ public enum SupportType {
      */
     @JsonCreator
     public static SupportType fromString(final String description) {
-        for (SupportType type : SupportType.values()) {
-            if (type.description.equalsIgnoreCase(description)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException("No SupportType with description: " + description);
+        return EnumParser.parse(SupportType.class, description);
     }
 }

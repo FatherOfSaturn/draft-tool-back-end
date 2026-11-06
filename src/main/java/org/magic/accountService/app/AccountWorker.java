@@ -6,10 +6,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.magic.accountService.api.Account;
-import org.magic.accountService.api.CreateDeckRequest;
+import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.Deck;
 import org.magic.accountService.api.LoginResponse;
-import org.magic.accountService.api.UpdateDeckRequest;
 import org.magic.accountService.api.UpdateDisplayNameRequest;
 import org.magic.accountService.external.GoogleTokenVerifier;
 import org.magic.accountService.external.GoogleTokenVerifier.GoogleUser;
@@ -104,7 +103,7 @@ public class AccountWorker {
      * @param request   the deck creation payload
      * @return an Optional containing the new deck ID, or empty if the account wasn't found
      */
-    public Uni<Optional<String>> createDeck(final String googleSub, final CreateDeckRequest request) {
+    public Uni<Optional<String>> createDeck(final String googleSub, final DeckPayload request) {
         return Uni.createFrom().item(() -> {
             Optional<String> accountID = resolveAccountID(googleSub);
             if (accountID.isEmpty()) return Optional.empty();
@@ -132,7 +131,7 @@ public class AccountWorker {
      * Updates a deck belonging to the authenticated user. Decks owned by other
      * accounts are treated as not found.
      */
-    public Uni<Boolean> updateDeck(final String googleSub, final String deckID, final UpdateDeckRequest request) {
+    public Uni<Boolean> updateDeck(final String googleSub, final String deckID, final DeckPayload request) {
         return Uni.createFrom().item(() -> {
             Optional<Deck> deck = findOwnedDeck(googleSub, deckID);
             if (deck.isEmpty()) return false;

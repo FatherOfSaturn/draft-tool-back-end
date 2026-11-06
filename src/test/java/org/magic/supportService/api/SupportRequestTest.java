@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 
 /**
  * Tests for {@link SupportRequest}, {@link SupportStatus}, and {@link SupportType} data classes.
@@ -22,7 +22,7 @@ class SupportRequestTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("SupportRequest.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        SupportRequest request = JsonUtility.getInstance().fromJson(json, SupportRequest.class);
+        SupportRequest request = TestJson.fromJson(json, SupportRequest.class);
 
         assertEquals("507f1f77bcf86cd799439011", request.getId());
         assertEquals("Add dark mode support", request.getTitle());

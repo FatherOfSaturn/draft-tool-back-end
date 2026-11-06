@@ -45,8 +45,8 @@ public class CardPack {
                     @JsonProperty("cardsInPack") @BsonProperty("cardsInPack") final Collection<Card> cardsInPack,
                     @JsonProperty("originalCardsInPack") @BsonProperty("originalCardsInPack") final int originalCardsInPack,
                     @JsonProperty("doubleDraftedFlag") @BsonProperty("doubleDraftedFlag") final boolean doubleDraftedFlag) {
-        this.packNumber = Objects.requireNonNull(packNumber, "pack number Required for card Pack");
-        this.cardsInPack = cardsInPack.stream()
+        this.packNumber = packNumber;
+        this.cardsInPack = Objects.requireNonNull(cardsInPack, "cards Required for card Pack").stream()
                                       .collect(Collectors.toMap(Card::getCardID, item -> item));
         this.originalCardsInPack = originalCardsInPack;
         this.doubleDraftedFlag = doubleDraftedFlag;

@@ -3,11 +3,10 @@ package org.magic.accountService;
 import java.net.URI;
 
 import org.magic.accountService.api.Account;
-import org.magic.accountService.api.CreateDeckRequest;
+import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.Deck;
 import org.magic.accountService.api.LoginRequest;
 import org.magic.accountService.api.LoginResponse;
-import org.magic.accountService.api.UpdateDeckRequest;
 import org.magic.accountService.api.UpdateDisplayNameRequest;
 import org.magic.accountService.app.AccountWorker;
 import org.magic.common.TokenRevocationService;
@@ -166,7 +165,7 @@ public class AccountResource {
             description = "Creates a new deck for the authenticated caller. " +
                     "Deck names are limited to 100 characters, descriptions to 2000, " +
                     "and a deck may contain at most 500 cards.")
-    public Uni<Response> createDeck(@Valid final CreateDeckRequest request,
+    public Uni<Response> createDeck(@Valid final DeckPayload request,
                                     @Context final SecurityContext securityContext) {
         return accountService.createDeck(callerSubject(securityContext), request)
                 .map(opt -> opt.map(deckID -> Response.created(URI.create("/account/decks/" + deckID)).build())
@@ -204,7 +203,7 @@ public class AccountResource {
     @Operation(summary = "Update a deck",
             description = "Replaces the name, description, and card list of one of the authenticated caller's decks.")
     public Uni<Response> updateDeck(@PathParam("deckID") @Size(max = 64) final String deckID,
-                                    @Valid final UpdateDeckRequest request,
+                                    @Valid final DeckPayload request,
                                     @Context final SecurityContext securityContext) {
         return accountService.updateDeck(callerSubject(securityContext), deckID, request)
                 .map(updated -> updated ? Response.ok().build()

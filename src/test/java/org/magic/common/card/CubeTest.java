@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.GameState;
@@ -25,7 +25,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("CardDetails.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        CardDetails details = JsonUtility.getInstance().fromJson(json, CardDetails.class);
+        CardDetails details = TestJson.fromJson(json, CardDetails.class);
 
         assertEquals("isd", details.getSet());
         assertEquals("Innistrad", details.getSet_name());
@@ -44,7 +44,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Card.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Card card = JsonUtility.getInstance().fromJson(json, Card.class);
+        Card card = TestJson.fromJson(json, Card.class);
 
         assertEquals("11bf83bb-c95b-4b4f-9a56-ce7a1816307a", card.getCardID());
         assertEquals("Delver of Secrets", card.getName());
@@ -59,7 +59,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("CardsInCube.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        CardsInCube cardsInCube = JsonUtility.getInstance().fromJson(json, CardsInCube.class);
+        CardsInCube cardsInCube = TestJson.fromJson(json, CardsInCube.class);
 
         assertNotNull(cardsInCube.getMainboard());
         assertEquals(3, cardsInCube.getMainboard().size());
@@ -72,7 +72,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("JoshCube.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Cube cube = JsonUtility.getInstance().fromJson(json, Cube.class);
+        Cube cube = TestJson.fromJson(json, Cube.class);
 
         assertEquals("Clone of Innistrad Theme", cube.getName());
         assertNotNull(cube.getCards());
@@ -84,7 +84,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("AdamCube.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Cube cube = JsonUtility.getInstance().fromJson(json, Cube.class);
+        Cube cube = TestJson.fromJson(json, Cube.class);
 
         assertEquals("legacy-schmegacy", cube.getName());
         assertNotNull(cube.getCards());
@@ -96,7 +96,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        GameCreationInfo info = JsonUtility.getInstance().fromJson(json, GameCreationInfo.class);
+        GameCreationInfo info = TestJson.fromJson(json, GameCreationInfo.class);
 
         assertEquals("gameID", info.gameID());
         assertEquals("f7314414-c2d2-48ed-af2c-764cf0207c62", info.cubeID());
@@ -114,7 +114,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Game.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        GameInfo gameInfo = JsonUtility.getInstance().fromJson(json, GameInfo.class);
+        GameInfo gameInfo = TestJson.fromJson(json, GameInfo.class);
 
         assertEquals("gameID", gameInfo.getGameID());
         assertEquals(GameState.GAME_STARTED, gameInfo.getGameState());
@@ -127,7 +127,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Player1.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Player player = JsonUtility.getInstance().fromJson(json, Player.class);
+        Player player = TestJson.fromJson(json, Player.class);
 
         assertEquals("Josh", player.getPlayerName());
         assertEquals("1", player.getAccountID());
@@ -140,7 +140,7 @@ public class CubeTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Player2.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Player player = JsonUtility.getInstance().fromJson(json, Player.class);
+        Player player = TestJson.fromJson(json, Player.class);
 
         assertEquals("Zach", player.getPlayerName());
         assertEquals("2", player.getAccountID());
