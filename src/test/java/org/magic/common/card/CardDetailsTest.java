@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class CardDetailsTest {
 
+    private static final ScryfallCardMapper CARD_MAPPER = new ScryfallCardMapperImpl();
+
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -34,7 +36,7 @@ class CardDetailsTest {
     @Test
     void testNormalCard() throws IOException {
         ScryfallCard card = loadCard("ScryfallLightningBolt.json");
-        CardDetails details = CardDetails.fromScryfallCard(card);
+        CardDetails details = CARD_MAPPER.toDetails(card);
 
         assertEquals("7673784e-db4b-43a1-8d55-1bb9fc1e284f", details.getScryfall_id());
         assertEquals("Lightning Bolt", details.getName());
@@ -51,7 +53,7 @@ class CardDetailsTest {
     @Test
     void testTransformCard() throws IOException {
         ScryfallCard card = loadCard("ScryfallArlinnKord.json");
-        CardDetails details = CardDetails.fromScryfallCard(card);
+        CardDetails details = CARD_MAPPER.toDetails(card);
 
         assertEquals("e72d7c11-2165-4c72-80f3-3c1a7b4b5572", details.getScryfall_id());
         assertEquals("Arlinn Kord // Arlinn, Embraced by the Moon", details.getName());
@@ -68,7 +70,7 @@ class CardDetailsTest {
     @Test
     void testTransformBattle() throws IOException {
         ScryfallCard card = loadCard("ScryfallInvasionOfAlara.json");
-        CardDetails details = CardDetails.fromScryfallCard(card);
+        CardDetails details = CARD_MAPPER.toDetails(card);
 
         assertEquals("318c363b-61cc-4e2f-8f86-a4287539ea07", details.getScryfall_id());
         assertEquals("Invasion of Alara // Awaken the Maelstrom", details.getName());
@@ -85,7 +87,7 @@ class CardDetailsTest {
     @Test
     void testTransformSaga() throws IOException {
         ScryfallCard card = loadCard("ScryfallAzusasManyJourneys.json");
-        CardDetails details = CardDetails.fromScryfallCard(card);
+        CardDetails details = CARD_MAPPER.toDetails(card);
 
         assertEquals("e8a51d2a-1582-4bad-995c-e7fe9f810149", details.getScryfall_id());
         assertEquals("Azusa's Many Journeys // Likeness of the Seeker", details.getName());
@@ -102,7 +104,7 @@ class CardDetailsTest {
     @Test
     void testMeldCardWithoutBackImage() throws IOException {
         ScryfallCard card = loadCard("ScryfallGisela.json");
-        CardDetails details = CardDetails.fromScryfallCard(card);
+        CardDetails details = CARD_MAPPER.toDetails(card);
 
         assertEquals("04506bad-3856-4184-8dda-941ded60f41a", details.getScryfall_id());
         assertEquals("Gisela, the Broken Blade", details.getName());
@@ -120,7 +122,7 @@ class CardDetailsTest {
     void testMeldCardWithBackImage() throws IOException {
         ScryfallCard card = loadCard("ScryfallGisela.json");
         ScryfallCard brisela = loadCard("ScryfallBrisela.json");
-        CardDetails details = CardDetails.fromScryfallCard(card, brisela.imageUris());
+        CardDetails details = CARD_MAPPER.toDetails(card, brisela.imageUris());
 
         assertEquals("04506bad-3856-4184-8dda-941ded60f41a", details.getScryfall_id());
         assertEquals("Gisela, the Broken Blade", details.getName());

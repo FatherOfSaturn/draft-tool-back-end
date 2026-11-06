@@ -2,7 +2,6 @@ package org.magic.common.external;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +19,7 @@ import org.magic.common.api.scryfall.ScryfallCollectionResponse;
 import org.magic.common.api.scryfall.ScryfallImageUris;
 import org.magic.common.api.scryfall.ScryfallListResponse;
 import org.magic.common.card.Card;
+import org.magic.common.card.ScryfallCardMapper;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -30,6 +30,11 @@ import jakarta.inject.Inject;
  * (automatically following up to {@code scryfall.max-search-pages} pages) with
  * retry and fallback logic, single-card lookup by ID, and batch lookup by name
  * via Scryfall's collection endpoint.
+ *
+ * <p>All Scryfall -> {@link Card} conversion goes through
+ * {@link ScryfallCardMapper}; this service is only responsible for resolving
+ * meld back-images (which live on a separate card) and applying them to the
+ * mapper input.</p>
  */
 @ApplicationScoped
 public class ScryfallCardService {
@@ -37,23 +42,33 @@ public class ScryfallCardService {
     private static final Logger LOGGER = LogManager.getLogger(ScryfallCardService.class);
     private static final Pattern PAGE_PATTERN = Pattern.compile("[?&]page=(\\d+)");
     private static final int COLLECTION_BATCH_SIZE = 75;
+    private static final String MELD_LAYOUT = "meld";
+    private static final String MELD_RESULT_COMPONENT = "meld_result";
 
     private final ScryfallService scryfallService;
     private final ScryfallCardCache cardCache;
+    private final ScryfallCardMapper mapper;
     private final int maxPages;
 
     @Inject
     public ScryfallCardService(@RestClient final ScryfallService scryfallService,
                                @ConfigProperty(name = "scryfall.max-search-pages", defaultValue = "5")
                                final int maxPages,
-                               final ScryfallCardCache cardCache) {
+                               final ScryfallCardCache cardCache,
+                               final ScryfallCardMapper mapper) {
         this.scryfallService = scryfallService;
         this.cardCache = cardCache;
+        this.mapper = mapper;
         this.maxPages = maxPages;
     }
 
     ScryfallCardService(final ScryfallService scryfallService, final int maxPages) {
-        this(scryfallService, maxPages, null);
+        this(scryfallService, maxPages, null, new org.magic.common.card.ScryfallCardMapperImpl());
+    }
+
+    ScryfallCardService(final ScryfallService scryfallService, final int maxPages,
+                        final ScryfallCardCache cardCache) {
+        this(scryfallService, maxPages, cardCache, new org.magic.common.card.ScryfallCardMapperImpl());
     }
 
     public Uni<List<ScryfallCard>> searchAllCards(final String query) {
@@ -118,24 +133,19 @@ public class ScryfallCardService {
      * For meld cards, fetches the meld result card to obtain the flip image.
      */
     public Uni<Card> toCubeCobraCard(final ScryfallCard card) {
-        if (!"meld".equals(card.layout()) || card.allParts() == null) {
-            return Uni.createFrom().item(Card.fromScryfallCard(card));
+        String meldResultId = meldResultId(card);
+        if (meldResultId == null) {
+            return Uni.createFrom().item(mapper.toCard(card));
         }
-        return card.allParts().stream()
-                .filter(p -> "meld_result".equals(p.component()))
-                .findFirst()
-                .map(meldResult -> {
-                    ScryfallImageUris meldImage = resolveMeldImageFromCache(meldResult.id());
-                    if (meldImage != null) {
-                        return Uni.createFrom().item(Card.fromScryfallCard(card, meldImage));
-                    }
-                    return scryfallService.getCardById(meldResult.id())
-                            .map(meldCard -> Card.fromScryfallCard(card, meldCard != null ? meldCard.imageUris() : null))
-                            .onFailure().invoke(e -> LOGGER.warn("Failed to fetch meld result {} for {}: {}",
-                                    meldResult.id(), card.name(), e.getMessage()))
-                            .onFailure().recoverWithItem(Card.fromScryfallCard(card));
-                })
-                .orElseGet(() -> Uni.createFrom().item(Card.fromScryfallCard(card)));
+        ScryfallImageUris cachedMeldImage = resolveMeldImageFromCache(meldResultId);
+        if (cachedMeldImage != null) {
+            return Uni.createFrom().item(mapper.toCard(card, cachedMeldImage));
+        }
+        return scryfallService.getCardById(meldResultId)
+                .map(meldCard -> mapper.toCard(card, meldCard != null ? meldCard.imageUris() : null))
+                .onFailure().invoke(e -> LOGGER.warn("Failed to fetch meld result {} for {}: {}",
+                        meldResultId, card.name(), e.getMessage()))
+                .onFailure().recoverWithItem(mapper.toCard(card));
     }
 
     private ScryfallImageUris resolveMeldImageFromCache(final String meldResultId) {
@@ -184,45 +194,32 @@ public class ScryfallCardService {
         if (!missing.isEmpty()) {
             LOGGER.debug("{} card(s) not found in cache, falling back to Scryfall API", missing.size());
             return batchFromScryfall(missing).flatMap(scryfallResult -> {
-                List<Card> allCards = new ArrayList<>();
-                allCards.addAll(convertCachedToCards(cached));
+                List<Card> allCards = new ArrayList<>(convertAll(cached, cachedMeldImages(cached)));
                 allCards.addAll(scryfallResult.cards());
                 List<String> allNotFound = new ArrayList<>(scryfallResult.notFound());
                 return Uni.createFrom().item(new BatchResult(allCards, allNotFound));
             });
         }
 
-        return convertCachedToCardsUni(cached)
-                .map(cards -> new BatchResult(cards, List.of()));
+        return Uni.createFrom().item(new BatchResult(convertAll(cached, cachedMeldImages(cached)), List.of()));
     }
 
-    private List<Card> convertCachedToCards(final List<ScryfallCard> cards) {
+    /** Resolves meld back-images for cached cards from the cache itself. */
+    private Map<String, ScryfallImageUris> cachedMeldImages(final List<ScryfallCard> cards) {
         Map<String, ScryfallImageUris> meldImages = new HashMap<>();
-        if (cardCache != null && cardCache.isAvailable()) {
-            for (ScryfallCard card : cards) {
-                if ("meld".equals(card.layout()) && card.allParts() != null) {
-                    card.allParts().stream()
-                            .filter(p -> "meld_result".equals(p.component()))
-                            .findFirst()
-                            .ifPresent(part -> {
-                                ScryfallCard meldResult = cardCache.findById(part.id());
-                                if (meldResult != null && meldResult.imageUris() != null) {
-                                    meldImages.put(card.id(), meldResult.imageUris());
-                                }
-                            });
+        if (cardCache == null || !cardCache.isAvailable()) {
+            return meldImages;
+        }
+        for (ScryfallCard card : cards) {
+            String meldResultId = meldResultId(card);
+            if (meldResultId != null) {
+                ScryfallCard meldResult = cardCache.findById(meldResultId);
+                if (meldResult != null && meldResult.imageUris() != null) {
+                    meldImages.put(card.id(), meldResult.imageUris());
                 }
             }
         }
-        return cards.stream()
-                .map(card -> {
-                    ScryfallImageUris meldImage = meldImages.get(card.id());
-                    return meldImage != null ? Card.fromScryfallCard(card, meldImage) : Card.fromScryfallCard(card);
-                })
-                .collect(Collectors.toList());
-    }
-
-    private Uni<List<Card>> convertCachedToCardsUni(final List<ScryfallCard> cards) {
-        return Uni.createFrom().item(convertCachedToCards(cards));
+        return meldImages;
     }
 
     private Uni<BatchResult> batchFromScryfall(final List<String> names) {
@@ -269,19 +266,17 @@ public class ScryfallCardService {
 
     private Uni<BatchResult> resolveMeldImages(final List<ScryfallCard> cards, final List<String> notFound) {
         List<String> meldResultIds = cards.stream()
-                .filter(c -> "meld".equals(c.layout()) && c.allParts() != null)
-                .flatMap(c -> c.allParts().stream())
-                .filter(p -> "meld_result".equals(p.component()))
-                .map(p -> p.id())
+                .map(ScryfallCardService::meldResultId)
+                .filter(id -> id != null)
                 .distinct()
                 .collect(Collectors.toList());
 
         if (meldResultIds.isEmpty()) {
-            return convertCards(cards, notFound);
+            return Uni.createFrom().item(new BatchResult(convertAll(cards, Map.of()), notFound));
         }
 
         List<ScryfallCollectionRequest.ScryfallIdentifier> identifiers = meldResultIds.stream()
-                .map(id -> new ScryfallCollectionRequest.ScryfallIdentifier(id))
+                .map(ScryfallCollectionRequest.ScryfallIdentifier::new)
                 .collect(Collectors.toList());
 
         return scryfallService.lookupByCollection(new ScryfallCollectionRequest(identifiers))
@@ -294,35 +289,33 @@ public class ScryfallCardService {
                             meldImages.put(meldCard.id(), meldCard.imageUris());
                         }
                     }
-                    return convertCardsWithMeldImages(cards, notFound, meldImages);
+                    return Uni.createFrom().item(new BatchResult(convertAll(cards, meldImages), notFound));
                 });
     }
 
-    private Uni<BatchResult> convertCardsWithMeldImages(final List<ScryfallCard> cards,
-                                                         final List<String> notFound,
-                                                         final Map<String, ScryfallImageUris> meldImages) {
-        List<Card> converted = cards.stream()
-                .map(card -> {
-                    if ("meld".equals(card.layout()) && card.allParts() != null) {
-                        String meldResultId = card.allParts().stream()
-                                .filter(p -> "meld_result".equals(p.component()))
-                                .map(p -> p.id())
-                                .findFirst()
-                                .orElse(null);
-                        if (meldResultId != null && meldImages.containsKey(meldResultId)) {
-                            return Card.fromScryfallCard(card, meldImages.get(meldResultId));
-                        }
-                    }
-                    return Card.fromScryfallCard(card);
-                })
+    /**
+     * Single conversion path for every batch: maps each card with its resolved
+     * meld back-image (if any).
+     */
+    private List<Card> convertAll(final List<ScryfallCard> cards,
+                                  final Map<String, ScryfallImageUris> meldImagesByCardId) {
+        return cards.stream()
+                .map(card -> mapper.toCard(card, meldImagesByCardId.get(card.id())))
                 .collect(Collectors.toList());
-        return Uni.createFrom().item(new BatchResult(converted, notFound));
     }
 
-    private Uni<BatchResult> convertCards(final List<ScryfallCard> cards, final List<String> notFound) {
-        List<Card> converted = cards.stream()
-                .map(Card::fromScryfallCard)
-                .collect(Collectors.toList());
-        return Uni.createFrom().item(new BatchResult(converted, notFound));
+    /**
+     * Returns the meld result card ID for a meld card, or {@code null} for all
+     * other cards.
+     */
+    private static String meldResultId(final ScryfallCard card) {
+        if (!MELD_LAYOUT.equals(card.layout()) || card.allParts() == null) {
+            return null;
+        }
+        return card.allParts().stream()
+                .filter(part -> MELD_RESULT_COMPONENT.equals(part.component()))
+                .map(part -> part.id())
+                .findFirst()
+                .orElse(null);
     }
 }

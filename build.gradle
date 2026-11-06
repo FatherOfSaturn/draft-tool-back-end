@@ -66,6 +66,11 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.42'
     annotationProcessor 'org.projectlombok:lombok:1.18.42'
 
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    // Order matters: Lombok, then the Lombok/MapStruct binding, then MapStruct.
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
     testImplementation 'org.mockito:mockito-core:5.20.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.20.0'
     testImplementation 'commons-io:commons-io:2.22.0'

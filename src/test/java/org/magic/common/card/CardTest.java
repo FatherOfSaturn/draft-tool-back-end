@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class CardTest {
 
+    private static final ScryfallCardMapper CARD_MAPPER = new ScryfallCardMapperImpl();
+
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -25,7 +27,7 @@ class CardTest {
     @Test
     void testFromScryfallCardNormal() throws IOException {
         ScryfallCard card = loadCard("ScryfallLightningBolt.json");
-        Card result = Card.fromScryfallCard(card);
+        Card result = CARD_MAPPER.toCard(card);
 
         assertEquals("7673784e-db4b-43a1-8d55-1bb9fc1e284f", result.getCardID());
         assertEquals("Lightning Bolt", result.getName());
@@ -39,7 +41,7 @@ class CardTest {
     @Test
     void testFromScryfallCardTransform() throws IOException {
         ScryfallCard card = loadCard("ScryfallArlinnKord.json");
-        Card result = Card.fromScryfallCard(card);
+        Card result = CARD_MAPPER.toCard(card);
 
         assertEquals("e72d7c11-2165-4c72-80f3-3c1a7b4b5572", result.getCardID());
         assertEquals("Arlinn Kord // Arlinn, Embraced by the Moon", result.getName());
@@ -51,7 +53,7 @@ class CardTest {
     @Test
     void testFromScryfallCardMeldWithoutBackImage() throws IOException {
         ScryfallCard card = loadCard("ScryfallGisela.json");
-        Card result = Card.fromScryfallCard(card);
+        Card result = CARD_MAPPER.toCard(card);
 
         assertEquals("04506bad-3856-4184-8dda-941ded60f41a", result.getCardID());
         assertEquals("Gisela, the Broken Blade", result.getName());
@@ -64,7 +66,7 @@ class CardTest {
     void testFromScryfallCardMeldWithBackImage() throws IOException {
         ScryfallCard card = loadCard("ScryfallGisela.json");
         ScryfallCard brisela = loadCard("ScryfallBrisela.json");
-        Card result = Card.fromScryfallCard(card, brisela.imageUris());
+        Card result = CARD_MAPPER.toCard(card, brisela.imageUris());
 
         assertEquals("04506bad-3856-4184-8dda-941ded60f41a", result.getCardID());
         assertEquals("Gisela, the Broken Blade", result.getName());
