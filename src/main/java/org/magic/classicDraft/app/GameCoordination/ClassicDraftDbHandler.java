@@ -1,5 +1,7 @@
 package org.magic.classicDraft.app.GameCoordination;
 
+import org.magic.common.game.DraftDirection;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;

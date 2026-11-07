@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicGameCreationInfo;
 import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.common.game.GameState;
-import org.magic.classicDraft.api.DraftDirection;
+import org.magic.common.game.DraftDirection;
 import org.magic.classicDraft.app.GameCoordination.ClassicGameCoordinationWorker;
 import org.magic.lobbyService.api.LobbyPlayer;
 import org.mockito.ArgumentCaptor;

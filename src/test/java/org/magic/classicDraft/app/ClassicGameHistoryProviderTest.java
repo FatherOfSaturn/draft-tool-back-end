@@ -14,7 +14,7 @@ import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
-import org.magic.classicDraft.api.DraftDirection;
+import org.magic.common.game.DraftDirection;
 import org.magic.common.card.CardPack;
 import org.magic.common.card.Card;
 import org.magic.classicDraft.app.GameCoordination.ClassicDraftDbHandler;

@@ -2,6 +2,34 @@
 
 Quarkus backend for the Pyramid Draft MTG cube drafting application.
 
+## Draft formats
+
+All formats are launched from a lobby (`POST /lobby`, `draftType` = `pyramid`,
+`classic` or `burn`) or directly through their REST API:
+
+- **pyramid** — `/game`, two-player pyramid draft.
+- **classic** — `/classic-game`, rotisserie draft (one card per pass).
+- **burn** — `/burn-game`, rotisserie draft where each turn drafts N cards and
+  burns M cards from the pack before passing it on.
+
+Burn draft lobby config keys, with defaults:
+
+| key | default | meaning |
+|---|---|---|
+| `cubeID` | (required) | CubeCobra cube to draft |
+| `packsPerPlayer` | 3 | packs dealt to each player |
+| `cardsPerPack` | 15 | cards in each pack |
+| `cardsDraftedPerPack` | 1 | cards a player drafts per turn |
+| `cardsBurnedPerPack` | 1 | cards a player burns per turn |
+| `remainderPolicy` | `burn_extras` | partial-pass handling: `burn_extras` or `draft_extras` |
+
+A turn is submitted as `POST /burn-game/{gameID}/draft` with
+`{ "draftCardIds": [...], "burnCardIds": [...] }` and the `X-Player-Token`
+header. When a pack holds fewer cards than the draft+burn quota, the turn drafts
+as much of the draft quota as possible and the leftovers are burned
+(`burn_extras`) or drafted too (`draft_extras`). Game creation is rejected when
+`players × packsPerPlayer × cardsPerPack` exceeds the cube's card count.
+
 ## Reactive architecture
 
 The request path is fully reactive (Mutiny end-to-end):

@@ -1,5 +1,7 @@
 package org.magic.classicDraft.api;
 
+import org.magic.common.game.DraftDirection;
+
 import org.magic.common.game.GameState;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

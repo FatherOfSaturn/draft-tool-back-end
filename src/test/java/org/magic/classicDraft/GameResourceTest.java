@@ -16,7 +16,7 @@ import org.magic.classicDraft.api.ClassicGameInfo;
 import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
-import org.magic.classicDraft.api.DraftDirection;
+import org.magic.common.game.DraftDirection;
 import org.magic.classicDraft.api.DraftPlayerSnapshot;
 import org.magic.classicDraft.api.PlayerDraftCheck;
 import org.magic.classicDraft.api.PlayerDraftData;

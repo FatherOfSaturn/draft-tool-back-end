@@ -51,7 +51,8 @@ class ArchitectureTest {
                         "org.magic.lobbyService..",
                         "org.magic.accountService..",
                         "org.magic.supportService..",
-                        "org.magic.admin..")
+                        "org.magic.admin..",
+                        "org.magic.burnDraft..")
                 .because("org.magic.common is the shared core and must not know about features")
                 .check(CLASSES);
     }
@@ -71,7 +72,8 @@ class ArchitectureTest {
                 .that().resideInAPackage("org.magic.lobbyService..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "org.magic.pyramidDraft..",
-                        "org.magic.classicDraft..")
+                        "org.magic.classicDraft..",
+                        "org.magic.burnDraft..")
                 .because("lobby dispatch must go through the DraftTypeHandler SPI")
                 .check(CLASSES);
     }
@@ -86,6 +88,18 @@ class ArchitectureTest {
         noClasses()
                 .that().resideInAPackage("org.magic.classicDraft..")
                 .should().dependOnClassesThat().resideInAPackage("org.magic.pyramidDraft..")
+                .because("draft formats are independent modules sharing only org.magic.common")
+                .check(CLASSES);
+        noClasses()
+                .that().resideInAPackage("org.magic.burnDraft..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "org.magic.pyramidDraft..",
+                        "org.magic.classicDraft..")
+                .because("draft formats are independent modules sharing only org.magic.common")
+                .check(CLASSES);
+        noClasses()
+                .that().resideInAnyPackage("org.magic.pyramidDraft..", "org.magic.classicDraft..")
+                .should().dependOnClassesThat().resideInAPackage("org.magic.burnDraft..")
                 .because("draft formats are independent modules sharing only org.magic.common")
                 .check(CLASSES);
     }
