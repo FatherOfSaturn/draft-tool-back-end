@@ -81,7 +81,7 @@ class AdminResourceTest {
         account.setAccountID("acc-1");
         account.setDisplayName("Alice");
 
-        when(accountDbHandler.findById("acc-1")).thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(accountDbHandler.findByIdOptional("acc-1")).thenReturn(Uni.createFrom().item(Optional.of(account)));
 
         Account result = resource.getAccountByID("acc-1").await().indefinitely();
 
@@ -91,7 +91,7 @@ class AdminResourceTest {
 
     @Test
     void shouldReturn404ForMissingAccountLookup() {
-        when(accountDbHandler.findById("missing")).thenReturn(Uni.createFrom().item(Optional.empty()));
+        when(accountDbHandler.findByIdOptional("missing")).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         assertThrows(WebApplicationException.class,
                 () -> resource.getAccountByID("missing").await().indefinitely());
@@ -127,7 +127,7 @@ class AdminResourceTest {
         deck.setDeckID("deck-1");
         deck.setAccountID("acc-1");
 
-        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
         lenient().when(deckDbHandler.deleteDeck("deck-1")).thenReturn(Uni.createFrom().voidItem());
         lenient().when(accountDbHandler.removeDeckFromAccount("acc-1", "deck-1"))
                 .thenReturn(Uni.createFrom().voidItem());
@@ -141,7 +141,7 @@ class AdminResourceTest {
 
     @Test
     void shouldReturn404WhenDeletingMissingDeck() {
-        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.empty()));
+        when(deckDbHandler.findByIdOptional("deck-1")).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         Response response = resource.deleteDeckByID("acc-1", "deck-1").await().indefinitely();
 
@@ -155,7 +155,7 @@ class AdminResourceTest {
         deck.setDeckID("deck-1");
         deck.setAccountID("acc-other");
 
-        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
         lenient().when(deckDbHandler.deleteDeck("deck-1")).thenReturn(Uni.createFrom().voidItem());
         lenient().when(accountDbHandler.removeDeckFromAccount("acc-1", "deck-1"))
                 .thenReturn(Uni.createFrom().voidItem());

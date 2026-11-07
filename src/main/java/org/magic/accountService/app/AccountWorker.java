@@ -174,7 +174,7 @@ public class AccountWorker {
                     if (accountID.isEmpty()) {
                         return Uni.createFrom().item(Optional.empty());
                     }
-                    return deckDbHandler.findById(deckID)
+                    return deckDbHandler.findByIdOptional(deckID)
                             .map(deck -> deck.filter(found -> accountID.get().equals(found.getAccountID())));
                 });
     }

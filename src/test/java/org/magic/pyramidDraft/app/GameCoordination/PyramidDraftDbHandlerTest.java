@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +47,7 @@ class PyramidDraftDbHandlerTest {
     @BeforeEach
     void setup() {
         handler = spy(new PyramidDraftDbHandler());
-        doReturn(collection).when(handler).mongoCollection();
+        lenient().doReturn(collection).when(handler).mongoCollection();
     }
 
     private static GameInfo createGame(String id, GameState state) {
@@ -71,7 +72,9 @@ class PyramidDraftDbHandlerTest {
     @Test
     void shouldFindGame() {
         var gameInfo = createGame("gid", GameState.GAME_STARTED);
-        when(collection.find(any(Bson.class))).thenReturn(Multi.createFrom().item(gameInfo));
+        var query = org.mockito.Mockito.mock(io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery.class);
+        doReturn(query).when(handler).find("gameID = ?1", "gid");
+        when(query.firstResult()).thenReturn(Uni.createFrom().item(gameInfo));
 
         GameInfo result = handler.findGame("gid").await().indefinitely();
 
@@ -81,7 +84,9 @@ class PyramidDraftDbHandlerTest {
 
     @Test
     void shouldThrowWhenGameNotFound() {
-        when(collection.find(any(Bson.class))).thenReturn(Multi.createFrom().empty());
+        var query = org.mockito.Mockito.mock(io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery.class);
+        doReturn(query).when(handler).find("gameID = ?1", "missing");
+        when(query.firstResult()).thenReturn(Uni.createFrom().nullItem());
 
         assertThrows(IllegalStateException.class, () -> handler.findGame("missing").await().indefinitely());
     }
@@ -149,8 +154,7 @@ class PyramidDraftDbHandlerTest {
 
     @Test
     void shouldClearGamesWithStatus() {
-        when(collection.deleteMany(any(Bson.class)))
-                .thenReturn(Uni.createFrom().item(DeleteResult.acknowledged(3)));
+        doReturn(Uni.createFrom().item(3L)).when(handler).delete("gameState = ?1", GameState.GAME_COMPLETE);
 
         int result = handler.clearGamesWithStatus(GameState.GAME_COMPLETE).await().indefinitely();
 
@@ -176,8 +180,10 @@ class PyramidDraftDbHandlerTest {
     @Test
     void shouldFindGamesByAccountID() {
         var games = List.of(createGame("g1", GameState.GAME_COMPLETE));
-        when(collection.find(any(Bson.class), any(FindOptions.class)))
-                .thenReturn(Multi.createFrom().iterable(games));
+        doReturn(Uni.createFrom().item(games))
+                .when(handler).list(org.mockito.ArgumentMatchers.eq("players.accountID = ?1"),
+                        org.mockito.ArgumentMatchers.any(io.quarkus.panache.common.Sort.class),
+                        org.mockito.ArgumentMatchers.eq("pid"));
 
         List<GameInfo> result = handler.findGamesByAccountID("pid").await().indefinitely();
 

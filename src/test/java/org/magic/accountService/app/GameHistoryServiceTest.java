@@ -61,8 +61,8 @@ class GameHistoryServiceTest {
         when(pyramidProvider.findGamesByAccountID(accountID))
                 .thenReturn(Uni.createFrom().item(List.of(entry("game-1", "pyramid",
                         Instant.parse("2024-01-01T00:00:00Z"), player("Alice", accountID), player("Bob", "acc-2")))));
-        when(accountDbHandler.findById(accountID)).thenReturn(Uni.createFrom().item(Optional.of(aliceAccount)));
-        when(accountDbHandler.findById("acc-2")).thenReturn(Uni.createFrom().item(Optional.empty()));
+        when(accountDbHandler.findByIdOptional(accountID)).thenReturn(Uni.createFrom().item(Optional.of(aliceAccount)));
+        when(accountDbHandler.findByIdOptional("acc-2")).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         GameHistoryService service = new GameHistoryService(instanceOf(pyramidProvider), accountDbHandler);
 

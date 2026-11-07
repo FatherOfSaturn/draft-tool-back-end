@@ -1,12 +1,11 @@
 package org.magic.accountService.app;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,9 +13,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 
-import org.bson.BsonObjectId;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,12 +21,9 @@ import org.magic.accountService.api.Deck;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,17 +37,13 @@ class DeckDbHandlerTest {
     @BeforeEach
     void setup() {
         handler = spy(new DeckDbHandler());
-        doReturn(collection).when(handler).mongoCollection();
-    }
-
-    private static Uni<InsertOneResult> inserted() {
-        return Uni.createFrom().item(InsertOneResult.acknowledged(new BsonObjectId(new ObjectId())));
+        lenient().doReturn(collection).when(handler).mongoCollection();
     }
 
     @Test
     void shouldFindByAccountID() {
-        when(collection.find(any(Document.class)))
-                .thenReturn(Multi.createFrom().items(new Deck(), new Deck()));
+        doReturn(Uni.createFrom().item(List.of(new Deck(), new Deck())))
+                .when(handler).list("accountID = ?1", "acc-1");
 
         List<Deck> result = handler.findByAccountID("acc-1").await().indefinitely();
 
@@ -64,10 +54,10 @@ class DeckDbHandlerTest {
     void shouldFindById() {
         var deck = new Deck();
         deck.setDeckID("deck-1");
+        doReturn(Uni.createFrom().item(Optional.of(deck)))
+                .when(handler).findByIdOptional("deck-1");
 
-        when(collection.find(any(Document.class))).thenReturn(Multi.createFrom().item(deck));
-
-        Optional<Deck> result = handler.findById("deck-1").await().indefinitely();
+        Optional<Deck> result = handler.findByIdOptional("deck-1").await().indefinitely();
 
         assertTrue(result.isPresent());
         assertEquals("deck-1", result.get().getDeckID());
@@ -75,25 +65,25 @@ class DeckDbHandlerTest {
 
     @Test
     void shouldReturnEmptyForUnknownId() {
-        when(collection.find(any(Document.class))).thenReturn(Multi.createFrom().empty());
+        doReturn(Uni.createFrom().item(Optional.empty()))
+                .when(handler).findByIdOptional("unknown");
 
-        assertTrue(handler.findById("unknown").await().indefinitely().isEmpty());
+        assertTrue(handler.findByIdOptional("unknown").await().indefinitely().isEmpty());
     }
 
     @Test
     void shouldCreateDeck() {
-        when(collection.insertOne(any(Deck.class))).thenReturn(inserted());
+        doReturn(Uni.createFrom().item((Deck) null)).when(handler).persist(any(Deck.class));
 
         String result = handler.createDeck("acc-1", "My Deck", "A description",
                 List.of("card-1", "card-2")).await().indefinitely();
 
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        verify(collection).insertOne(argThat(deck ->
-                "acc-1".equals(deck.getAccountID()) &&
-                "My Deck".equals(deck.getName()) &&
-                "A description".equals(deck.getDescription()) &&
-                deck.getCardIds().size() == 2));
+        assertEquals(24, result.length(), "ObjectId hex string");
+        verify(handler).persist((Deck) argThat(deck ->
+                "acc-1".equals(((Deck) deck).getAccountID()) &&
+                "My Deck".equals(((Deck) deck).getName()) &&
+                "A description".equals(((Deck) deck).getDescription()) &&
+                ((Deck) deck).getCardIds().size() == 2));
     }
 
     @Test
@@ -108,11 +98,10 @@ class DeckDbHandlerTest {
 
     @Test
     void shouldDeleteDeck() {
-        when(collection.deleteOne(any(Document.class)))
-                .thenReturn(Uni.createFrom().item(DeleteResult.acknowledged(1)));
+        doReturn(Uni.createFrom().item(true)).when(handler).deleteById("deck-1");
 
         handler.deleteDeck("deck-1").await().indefinitely();
 
-        verify(collection).deleteOne(any(Document.class));
+        verify(handler).deleteById("deck-1");
     }
 }

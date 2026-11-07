@@ -67,7 +67,7 @@ public class SupportWorker {
      * @throws IllegalStateException if no request is found
      */
     public Uni<SupportRequest> getRequest(final String id) {
-        return dbHandler.findById(id);
+        return dbHandler.findRequestById(id);
     }
 
     /**
@@ -89,7 +89,7 @@ public class SupportWorker {
      * @throws IllegalStateException if the request is not found
      */
     public Uni<SupportRequest> updateRequest(final String id, final UpdateSupportRequest request) {
-        return dbHandler.findById(id)
+        return dbHandler.findRequestById(id)
                 .chain(existing -> {
                     if (request.title() != null) {
                         existing.setTitle(request.title());

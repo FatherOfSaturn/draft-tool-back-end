@@ -125,7 +125,7 @@ public class AdminResource {
             description = "Looks up an account by its account ID. PII fields (email, googleSub) are omitted from " +
                     "the response. Returns 404 if not found.")
     public Uni<Account> getAccountByID(@PathParam("accountID") @Size(max = 100) final String accountID) {
-        return accountDbHandler.findById(accountID)
+        return accountDbHandler.findByIdOptional(accountID)
                 .map(account -> account.orElseThrow(
                         () -> new WebApplicationException(Response.Status.NOT_FOUND)));
     }
@@ -176,7 +176,7 @@ public class AdminResource {
                     "account's deck list. Returns 204 if deleted, 404 if the deck is missing or owned by another account.")
     public Uni<Response> deleteDeckByID(@PathParam("accountID") @Size(max = 100) final String accountID,
                                         @PathParam("deckID") @Size(max = 64) final String deckID) {
-        return deckDbHandler.findById(deckID)
+        return deckDbHandler.findByIdOptional(deckID)
                 .chain(deck -> {
                     if (deck.isEmpty() || !accountID.equals(deck.get().getAccountID())) {
                         return Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());

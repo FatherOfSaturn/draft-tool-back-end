@@ -288,7 +288,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         Optional<Deck> result = accountService.getDeck(googleSub, deckID).await().indefinitely();
 
@@ -307,7 +307,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         Optional<Deck> result = accountService.getDeck(googleSub, deckID).await().indefinitely();
 
@@ -325,7 +325,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
         when(deckDbHandler.updateDeck(deckID, "New Name", "New Desc", List.of("card1", "card2")))
                 .thenReturn(voidUni());
 
@@ -346,7 +346,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         boolean result = accountService.updateDeck(googleSub, deckID, request).await().indefinitely();
 
@@ -362,7 +362,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
+        when(deckDbHandler.findByIdOptional(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         boolean result = accountService.updateDeck(googleSub, missingID,
                 new DeckPayload("", "", List.of())).await().indefinitely();
@@ -381,7 +381,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
         when(deckDbHandler.deleteDeck(deckID)).thenReturn(voidUni());
         when(accountDbHandler.removeDeckFromAccount(testAccountID, deckID)).thenReturn(voidUni());
 
@@ -403,7 +403,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.findByIdOptional(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         boolean result = accountService.deleteDeck(googleSub, deckID).await().indefinitely();
 
@@ -419,7 +419,7 @@ class AccountWorkerTest {
 
         when(accountDbHandler.findByGoogleSub(googleSub))
                 .thenReturn(Uni.createFrom().item(Optional.of(account)));
-        when(deckDbHandler.findById(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
+        when(deckDbHandler.findByIdOptional(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         boolean result = accountService.deleteDeck(googleSub, missingID).await().indefinitely();
 

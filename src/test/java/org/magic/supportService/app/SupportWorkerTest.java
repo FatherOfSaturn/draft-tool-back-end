@@ -65,7 +65,7 @@ class SupportWorkerTest {
                 testId, "Title", "Desc", "e@e.com", SupportPriority.HIGH, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(Uni.createFrom().item(expected));
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(expected));
 
         SupportRequest result = supportWorker.getRequest(testId).await().indefinitely();
 
@@ -100,7 +100,7 @@ class SupportWorkerTest {
                 testId, "Old Title", "Old Desc", "old@e.com", SupportPriority.LOW, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
         when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         UpdateSupportRequest update = new UpdateSupportRequest("New Title", "New Desc", null, null, SupportType.NEW_FEATURE);
@@ -118,7 +118,7 @@ class SupportWorkerTest {
                 testId, "Original Title", "Original Desc", "orig@e.com", SupportPriority.MEDIUM, "acct-1",
                 SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
         when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         ArgumentCaptor<SupportRequest> captor = ArgumentCaptor.forClass(SupportRequest.class);

@@ -98,7 +98,7 @@ public class GameHistoryService {
         }
 
         return Uni.combine().all().unis(accountIDs.stream()
-                        .map(id -> accountDbHandler.findById(id)
+                        .map(id -> accountDbHandler.findByIdOptional(id)
                                 .map(account -> account.map(Account::getDisplayName)
                                         .filter(name -> name != null)
                                         .map(name -> Map.of(id, name))

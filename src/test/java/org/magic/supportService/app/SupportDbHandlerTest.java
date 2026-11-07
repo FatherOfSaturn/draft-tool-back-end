@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,9 +15,7 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 
-import org.bson.BsonObjectId;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
 import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
@@ -48,7 +46,7 @@ class SupportDbHandlerTest {
     @BeforeEach
     void setup() {
         handler = spy(new SupportDbHandler());
-        doReturn(collection).when(handler).mongoCollection();
+        lenient().doReturn(collection).when(handler).mongoCollection();
     }
 
     private SupportRequest createRequest(String id) {
@@ -59,21 +57,20 @@ class SupportDbHandlerTest {
     @Test
     void shouldAddRequest() {
         var request = createRequest("id-1");
-        when(collection.insertOne(any(SupportRequest.class)))
-                .thenReturn(Uni.createFrom().item(
-                        InsertOneResult.acknowledged(new BsonObjectId(new ObjectId()))));
+        doReturn(Uni.createFrom().item(request)).when(handler).persist(request);
 
         handler.addRequest(request).await().indefinitely();
 
-        verify(collection).insertOne(request);
+        verify(handler).persist(request);
     }
 
     @Test
     void shouldFindById() {
         var request = createRequest("id-1");
-        when(collection.find(any(Bson.class))).thenReturn(Multi.createFrom().item(request));
+        doReturn(Uni.createFrom().item(java.util.Optional.of(request)))
+                .when(handler).findByIdOptional("id-1");
 
-        SupportRequest result = handler.findById("id-1").await().indefinitely();
+        SupportRequest result = handler.findRequestById("id-1").await().indefinitely();
 
         assertNotNull(result);
         assertEquals("id-1", result.getId());
@@ -81,10 +78,11 @@ class SupportDbHandlerTest {
 
     @Test
     void shouldThrowWhenFindByIdNotFound() {
-        when(collection.find(any(Bson.class))).thenReturn(Multi.createFrom().empty());
+        doReturn(Uni.createFrom().item(java.util.Optional.empty()))
+                .when(handler).findByIdOptional("missing");
 
         assertThrows(IllegalStateException.class,
-                () -> handler.findById("missing").await().indefinitely());
+                () -> handler.findRequestById("missing").await().indefinitely());
     }
 
     @Test
@@ -123,7 +121,8 @@ class SupportDbHandlerTest {
         var request = createRequest("id-1");
         when(collection.updateOne(any(Bson.class), any(Bson.class)))
                 .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 1L, null)));
-        when(collection.find(any(Bson.class))).thenReturn(Multi.createFrom().item(request));
+        doReturn(Uni.createFrom().item(java.util.Optional.of(request)))
+                .when(handler).findByIdOptional("id-1");
 
         SupportRequest result = handler.updateStatus("id-1", SupportStatus.COMPLETED, now)
                 .await().indefinitely();
