@@ -1,5 +1,7 @@
 package org.magic.classicDraft.api;
 
+import org.magic.common.game.GameState;
+
 import java.time.Instant;
 import java.util.Objects;
 
@@ -11,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public record ClassicGameSummary(
     @JsonProperty("gameID") String gameID,
     @JsonProperty("cubeID") String cubeID,
-    @JsonProperty("gameState") ClassicGameState gameState,
+    @JsonProperty("gameState") GameState gameState,
     @JsonProperty("playerName") String playerName,
     @JsonProperty("draftOrderNumber") int draftOrderNumber,
     @JsonProperty("cardsDraftedCount") int cardsDraftedCount,

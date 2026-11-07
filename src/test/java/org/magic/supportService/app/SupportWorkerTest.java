@@ -22,6 +22,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.smallrye.mutiny.Uni;
+
 @ExtendWith(MockitoExtension.class)
 class SupportWorkerTest {
 
@@ -42,6 +44,8 @@ class SupportWorkerTest {
         CreateSupportRequest request = new CreateSupportRequest(
                 "Add dark mode", "Support dark mode theme", "user@example.com",
                 SupportPriority.HIGH, "acct-123", SupportType.NEW_FEATURE);
+        when(supportDbHandler.addRequest(any(SupportRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
 
         SupportRequest result = supportWorker.createRequest(request).await().indefinitely();
 
@@ -61,7 +65,7 @@ class SupportWorkerTest {
                 testId, "Title", "Desc", "e@e.com", SupportPriority.HIGH, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(expected);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(expected));
 
         SupportRequest result = supportWorker.getRequest(testId).await().indefinitely();
 
@@ -80,7 +84,7 @@ class SupportWorkerTest {
                         SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now)
         );
 
-        when(supportDbHandler.findAll()).thenReturn(expected);
+        when(supportDbHandler.findAllRequests()).thenReturn(Uni.createFrom().item(expected));
 
         List<SupportRequest> result = supportWorker.getAllRequests().await().indefinitely();
 
@@ -96,8 +100,8 @@ class SupportWorkerTest {
                 testId, "Old Title", "Old Desc", "old@e.com", SupportPriority.LOW, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(existing);
-        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(existing);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         UpdateSupportRequest update = new UpdateSupportRequest("New Title", "New Desc", null, null, SupportType.NEW_FEATURE);
 
@@ -114,8 +118,8 @@ class SupportWorkerTest {
                 testId, "Original Title", "Original Desc", "orig@e.com", SupportPriority.MEDIUM, "acct-1",
                 SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(existing);
-        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(existing);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         ArgumentCaptor<SupportRequest> captor = ArgumentCaptor.forClass(SupportRequest.class);
 
@@ -140,7 +144,7 @@ class SupportWorkerTest {
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
         when(supportDbHandler.updateStatus(eq(testId), eq(SupportStatus.IN_PROGRESS), any(Instant.class)))
-                .thenReturn(existing);
+                .thenReturn(Uni.createFrom().item(existing));
 
         SupportRequest result = supportWorker.updateStatus(testId, SupportStatus.IN_PROGRESS).await().indefinitely();
 
@@ -156,7 +160,7 @@ class SupportWorkerTest {
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
         when(supportDbHandler.updateStatus(eq(testId), eq(SupportStatus.DELETED), any(Instant.class)))
-                .thenReturn(existing);
+                .thenReturn(Uni.createFrom().item(existing));
 
         SupportRequest result = supportWorker.softDeleteRequest(testId).await().indefinitely();
 
@@ -166,7 +170,7 @@ class SupportWorkerTest {
 
     @Test
     void shouldHardDeleteRequest() {
-        when(supportDbHandler.hardDeleteRequest(testId)).thenReturn(true);
+        when(supportDbHandler.hardDeleteRequest(testId)).thenReturn(Uni.createFrom().item(true));
 
         Boolean result = supportWorker.deleteRequest(testId).await().indefinitely();
 
@@ -177,7 +181,7 @@ class SupportWorkerTest {
     @Test
     void shouldReturnFalseForHardDeleteOnMissing() {
         String missingId = "507f1f77bcf86cd799439099";
-        when(supportDbHandler.hardDeleteRequest(missingId)).thenReturn(false);
+        when(supportDbHandler.hardDeleteRequest(missingId)).thenReturn(Uni.createFrom().item(false));
 
         Boolean result = supportWorker.deleteRequest(missingId).await().indefinitely();
 

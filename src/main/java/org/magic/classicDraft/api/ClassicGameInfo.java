@@ -1,5 +1,7 @@
 package org.magic.classicDraft.api;
 
+import org.magic.common.game.GameState;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -15,16 +17,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import io.quarkus.mongodb.panache.common.MongoEntity;
+
 @Getter
 @Setter
 @EqualsAndHashCode
 @JsonPropertyOrder({ "gameID", "cubeID", "gameType", "players", "gameState", "createdAt", "currentPackIndex", "draftDirection" })
+@MongoEntity(collection = "ClassicGames")
 public class ClassicGameInfo {
     private final String gameID;
     private final String cubeID;
     private final String gameType;
     private List<ClassicPlayer> players;
-    private ClassicGameState gameState;
+    private GameState gameState;
     private final Instant createdAt;
     private int currentPackIndex;
     private DraftDirection draftDirection;
@@ -36,7 +41,7 @@ public class ClassicGameInfo {
             @JsonProperty("cubeID") @BsonProperty("cubeID") final String cubeID,
             @JsonProperty("gameType") @BsonProperty("gameType") final String gameType,
             @JsonProperty("players") @BsonProperty("players") final List<ClassicPlayer> players,
-            @JsonProperty("gameState") @BsonProperty("gameState") final ClassicGameState gameState,
+            @JsonProperty("gameState") @BsonProperty("gameState") final GameState gameState,
             @JsonProperty("createdAt") @BsonProperty("createdAt") final Instant createdAt,
             @JsonProperty("currentPackIndex") @BsonProperty("currentPackIndex") final int currentPackIndex,
             @JsonProperty("draftDirection") @BsonProperty("draftDirection") final DraftDirection draftDirection) {

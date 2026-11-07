@@ -1,173 +1,136 @@
 package org.magic.classicDraft.app.GameCoordination;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
 import org.magic.classicDraft.api.ClassicPlayer;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
+import org.magic.common.game.GameState;
+import org.magic.common.mongo.ReactiveMongo;
 
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheMongoRepository;
+import io.quarkus.panache.common.Sort;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
+/**
+ * Reactive repository for classic (rotisserie) draft games.
+ *
+ * <p>Like pyramid games, documents are keyed by the business {@code gameID};
+ * the driver-owned {@code _id} is not mapped. Mutations use targeted updates
+ * ({@code players.$}) so concurrent drafts are not lost, and the draft-check
+ * projection runs as a Mongo aggregation on the raw document collection.</p>
+ */
 @ApplicationScoped
-public class ClassicDraftDbHandler {
+public class ClassicDraftDbHandler implements ReactivePanacheMongoRepository<ClassicGameInfo> {
     private static final Logger LOGGER = LogManager.getLogger(ClassicDraftDbHandler.class);
+    private static final String COLLECTION = "ClassicGames";
 
-    @Inject
-    MongoService mongoService;
-
-    public MongoCollection<ClassicGameInfo> getCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection("ClassicGames", ClassicGameInfo.class);
+    public Uni<String> addGame(final ClassicGameInfo gameInfo) {
+        return mongoCollection().insertOne(gameInfo)
+                .map(result -> result.getInsertedId().asObjectId().getValue().toHexString());
     }
 
-    public MongoCollection<Document> getRawCollection() {
-        MongoDatabase database = mongoService.getDatabase();
-        return database.getCollection("ClassicGames");
+    public Uni<ClassicGameInfo> findGame(final String gameID) {
+        return ReactiveMongo.required(
+                find("gameID = ?1", gameID).firstResult(),
+                () -> {
+                    LOGGER.error("Unable to find Classic Game with ID: {}", gameID);
+                    return new jakarta.ws.rs.NotFoundException("Unable to find Classic Game with ID: " + gameID);
+                });
     }
 
-    public String addGame(ClassicGameInfo gameInfo) {
-        return getCollection().insertOne(gameInfo).getInsertedId().asObjectId().getValue().toHexString();
-    }
-
-    public ClassicGameInfo findGame(String gameID) {
-        Bson filter = Filters.eq("gameID", gameID);
-        ClassicGameInfo gameDocument = getCollection().find(filter).first();
-
-        if (gameDocument == null) {
-            LOGGER.error("Unable to find Classic Game with ID: {}", gameID);
-            throw new jakarta.ws.rs.NotFoundException("Unable to find Classic Game with ID: " + gameID);
-        }
-        LOGGER.info("Found Classic Game Info for game: {}", gameDocument.getGameID());
-        return gameDocument;
-    }
-
-    public Document findDraftCheck(String gameID, String playerToken) {
-        Bson filter = Filters.eq("gameID", gameID);
-
+    /**
+     * Runs the draft-check aggregation: reports the game state and whether the
+     * player identified by {@code playerToken} has an active pack with cards.
+     */
+    public Uni<Document> findDraftCheck(final String gameID, final String playerToken) {
         Document playerVar = new Document("player", new Document(
-            "$arrayElemAt", java.util.List.of(
-                new Document("$filter", new Document()
-                    .append("input", "$players")
-                    .append("as", "p")
-                    .append("cond", new Document("$eq", java.util.List.of("$$p.playerToken", playerToken)))
-                ), 0
-            )
+                "$arrayElemAt", List.of(
+                        new Document("$filter", new Document()
+                                .append("input", "$players")
+                                .append("as", "p")
+                                .append("cond", new Document("$eq", List.of("$$p.playerToken", playerToken)))
+                        ), 0
+                )
         ));
 
-        Document inExpr = new Document("$ifNull", java.util.List.of("$$player.activeCardPacks", java.util.List.of()));
+        Document inExpr = new Document("$ifNull", List.of("$$player.activeCardPacks", List.of()));
 
         Bson projectStage = Aggregates.project(Projections.fields(
-            Projections.excludeId(),
-            Projections.include("gameState"),
-            Projections.computed("canDraft", new Document("$gt", java.util.List.of(
-                new Document("$size", new Document("$let", new Document()
-                    .append("vars", playerVar)
-                    .append("in", inExpr)
-                )),
-                0
-            )))
+                Projections.excludeId(),
+                Projections.include("gameState"),
+                Projections.computed("canDraft", new Document("$gt", List.of(
+                        new Document("$size", new Document("$let", new Document()
+                                .append("vars", playerVar)
+                                .append("in", inExpr)
+                        )),
+                        0
+                )))
         ));
 
-        return getRawCollection().aggregate(java.util.List.of(
-            Aggregates.match(filter),
-            projectStage
-        )).first();
+        return mongoDatabase().getCollection(COLLECTION, Document.class)
+                .aggregate(List.of(Aggregates.match(Filters.eq("gameID", gameID)), projectStage))
+                .collect().first();
     }
 
-    public ClassicPlayer updatePlayer(final ClassicGameInfo gameInfo, final ClassicPlayer player) {
+    public Uni<ClassicPlayer> updatePlayer(final ClassicGameInfo gameInfo, final ClassicPlayer player) {
         Bson filter = Filters.and(
                 Filters.eq("gameID", gameInfo.getGameID()),
-                Filters.eq("players.draftOrderNumber", player.getDraftOrderNumber())
-        );
-
-        Bson updateOperation = Updates.set("players.$", player);
-
-        UpdateResult result = getCollection().updateOne(filter, updateOperation);
-
-        if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated Player: {} in Game: {}", player.getPlayerName(), gameInfo.getGameID());
-            return player;
-        } else {
-            LOGGER.error("Unable to update Game {}, with Player {}.", gameInfo.getGameID(), player.getPlayerName());
-            throw new IllegalStateException("Unable to update Classic Game with player's new info.");
-        }
+                Filters.eq("players.draftOrderNumber", player.getDraftOrderNumber()));
+        return ReactiveMongo.modified(
+                mongoCollection().updateOne(filter, Updates.set("players.$", player)),
+                () -> player,
+                () -> {
+                    LOGGER.error("Unable to update Game {}, with Player {}.",
+                            gameInfo.getGameID(), player.getPlayerName());
+                    return new IllegalStateException("Unable to update Classic Game with player's new info.");
+                });
     }
 
-    public ClassicGameInfo updateGame(final ClassicGameInfo gameInfo) {
-        Bson filter = Filters.eq("gameID", gameInfo.getGameID());
-
+    public Uni<ClassicGameInfo> updateGame(final ClassicGameInfo gameInfo) {
         Bson update = Updates.combine(
-            Updates.set("players", gameInfo.getPlayers()),
-            Updates.set("gameState", gameInfo.getGameState()),
-            Updates.set("currentPackIndex", gameInfo.getCurrentPackIndex()),
-            Updates.set("draftDirection", gameInfo.getDraftDirection())
-        );
-
-        UpdateResult result = getCollection().updateOne(filter, update);
-
-        if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated Classic Game: {}", gameInfo.getGameID());
-            return gameInfo;
-        } else {
-            LOGGER.error("Unable to update Classic Game {}.", gameInfo.getGameID());
-            throw new IllegalStateException("Unable to update Classic Game with new info.");
-        }
+                Updates.set("players", gameInfo.getPlayers()),
+                Updates.set("gameState", gameInfo.getGameState()),
+                Updates.set("currentPackIndex", gameInfo.getCurrentPackIndex()),
+                Updates.set("draftDirection", gameInfo.getDraftDirection()));
+        return ReactiveMongo.modified(
+                mongoCollection().updateOne(Filters.eq("gameID", gameInfo.getGameID()), update),
+                () -> gameInfo,
+                () -> {
+                    LOGGER.error("Unable to update Classic Game {}.", gameInfo.getGameID());
+                    return new IllegalStateException("Unable to update Classic Game with new info.");
+                });
     }
 
-    public ClassicGameState updateGameState(final String gameID, final ClassicGameState gameState) {
-        Bson filter = Filters.eq("gameID", gameID);
-
-        Bson update = Updates.combine(
-            Updates.set("gameState", gameState));
-
-        UpdateResult result = getCollection().updateOne(filter, update);
-
-        if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated Classic Game state: {} -> {}", gameID, gameState);
-            return gameState;
-        } else {
-            LOGGER.error("Unable to update Classic Game {} state.", gameID);
-            throw new IllegalStateException("Unable to update Classic Game state.");
-        }
+    public Uni<GameState> updateGameState(final String gameID, final GameState gameState) {
+        return ReactiveMongo.modified(
+                mongoCollection().updateOne(Filters.eq("gameID", gameID),
+                        Updates.set("gameState", gameState)),
+                () -> gameState,
+                () -> {
+                    LOGGER.error("Unable to update Classic Game {} state.", gameID);
+                    return new IllegalStateException("Unable to update Classic Game state.");
+                });
     }
 
-    public int clearGamesWithStatus(final ClassicGameState gameState) {
-        Bson filter = Filters.eq("gameState", gameState);
-        DeleteResult result = getCollection().deleteMany(filter);
-        return (int) result.getDeletedCount();
+    public Uni<Integer> clearGamesWithStatus(final GameState gameState) {
+        return delete("gameState = ?1", gameState).map(Long::intValue);
     }
 
-    public java.util.List<ClassicGameInfo> findGamesByPlayerName(final String playerName) {
-        Bson filter = Filters.eq("players.playerName", playerName);
-
-        return getCollection()
-                .find(filter)
-                .sort(Sorts.descending("createdAt"))
-                .into(new ArrayList<>());
+    public Uni<List<ClassicGameInfo>> findGamesByPlayerName(final String playerName) {
+        return list("players.playerName = ?1", Sort.descending("createdAt"), playerName);
     }
 
-    public java.util.List<ClassicGameInfo> findGamesByAccountID(final String accountID) {
-        Bson filter = Filters.eq("players.accountID", accountID);
-
-        return getCollection()
-                .find(filter)
-                .sort(Sorts.descending("createdAt"))
-                .into(new ArrayList<>());
+    public Uni<List<ClassicGameInfo>> findGamesByAccountID(final String accountID) {
+        return list("players.accountID = ?1", Sort.descending("createdAt"), accountID);
     }
 }

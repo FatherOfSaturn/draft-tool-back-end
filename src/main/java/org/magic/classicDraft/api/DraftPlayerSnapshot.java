@@ -2,8 +2,8 @@ package org.magic.classicDraft.api;
 
 import java.util.List;
 
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.common.util.JsonUtility;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Cube;
+import org.magic.TestJson;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -132,6 +132,6 @@ class ClassicPackCreatorTest {
     protected Cube createCubeFromJson(final String fileName) throws IOException {
         InputStream cubeIS = getClass().getClassLoader().getResourceAsStream(fileName);
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
-        return JsonUtility.getInstance().fromJson(cubeString, Cube.class);
+        return TestJson.fromJson(cubeString, Cube.class);
     }
 }

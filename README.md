@@ -2,11 +2,70 @@
 
 Quarkus backend for the Pyramid Draft MTG cube drafting application.
 
+## Reactive architecture
+
+The request path is fully reactive (Mutiny end-to-end):
+
+- REST resources return `Uni` and run on the event loop (Quarkus REST).
+- Persistence uses reactive MongoDB Panache repositories
+  (`ReactivePanacheMongoRepository`); workers and services chain `Uni`
+  instead of wrapping blocking calls.
+- The Scryfall cache is a reactive Panache repository; the bulk-data
+  import (gzip download + line parsing) and Google ID-token verification
+  are the only blocking operations left. They are explicitly dispatched
+  to worker threads (`ManagedExecutor` / `runSubscriptionOn`).
+
+Nothing on an HTTP request path may block an event-loop thread; if you
+add a blocking client, offload it with `runSubscriptionOn` or convert it
+to a reactive API.
+
+## Running the tests
+
+```bash
+./gradlew build             # unit + architecture tests + coverage (no database needed)
+./gradlew integrationTest   # MongoDB-backed end-to-end suites
+```
+
+The end-to-end suites are tagged `mongo` and excluded from `build`, so a CI
+runner without a database still builds. Run `integrationTest` where MongoDB is
+available; the address defaults to `mongodb://127.0.0.1:27017` and can be
+overridden with `MONGO_TEST_CONNECTION_STRING` (e.g. a container service alias
+such as `mongodb://mongodb:27017` in GitLab CI). GitHub Actions runs both
+steps on an `ubuntu-24.04` runner with a `mongo:7.0.45` service container —
+MongoDB 8.x refuses to start on Linux kernels 6.19–7.0.13 (SERVER-121912) and
+the runner kernels are in that range, whereas 7.0 is supported on all kernels.
+
+## Test coverage
+
+The automated suites verify, against a real MongoDB:
+
+- every REST endpoint and its exact JSON wire shape (field names/order) —
+  these wire-format tests were captured against the pre-refactor code and
+  have stayed green through the Quarkus 3.40/reactive migration;
+- the Scryfall and CubeCobra integrations over **real HTTP**: the reactive
+  REST clients are pointed at an in-process stub (`StubExternalApis`) that
+  serves canned API responses, so config-key URL resolution, request
+  building, JSON decoding, `Uni` completion and non-2xx failure handling
+  are exercised end-to-end (including a full `POST /game` that downloads
+  the cube over HTTP);
+- the Scryfall card cache against real MongoDB: document shape, searchable
+  `id`/`name` fields, full DTO round-trip, and cache-served reads with an
+  unreachable API URL (proving no fallback call happens);
+- local JWT issue/verify (HS256) and token revocation via the login flows.
+
+Only these need manual verification after deployment: a real Google OAuth
+login (the JWKS/RS256 path; tests use dev-mode tokens), live Scryfall
+rate-limit behaviour (429/Retry-After), and the Scryfall bulk-data import
+job (downloads hundreds of MB and is disabled in tests).
+
 ## Prerequisites
 
-- Java 17
-- Docker
+- Java 25 (Gradle 9.9 wrapper ships with the repo)
+- Docker (for the local MongoDB/JSON-server compose stack)
 - Node.js (for json-server)
+- A MongoDB on `localhost:27017` for the integration tests (or Docker:
+  `docker run -d -p 27017:27017 mongo:8`) — the test profile connects there
+  directly instead of using Dev Services
 
 ## Quick Start
 

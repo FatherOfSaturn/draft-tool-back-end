@@ -16,8 +16,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service layer for support requests. Handles creation, retrieval, updates,
- * status changes, and deletion of {@link SupportRequest} documents.
+ * Reactive service layer for support requests. Handles creation, retrieval,
+ * updates, status changes, and deletion of {@link SupportRequest} documents.
  * Delegates persistence to {@link SupportDbHandler}.
  */
 @ApplicationScoped
@@ -35,49 +35,48 @@ public class SupportWorker {
      * Creates a new support request with {@link SupportStatus#NEW} and current timestamps.
      *
      * @param request the creation payload
-     * @return the persisted {@link SupportRequest} with generated ID
+     * @return a {@link Uni} emitting the persisted {@link SupportRequest} with generated ID
      */
     public Uni<SupportRequest> createRequest(final CreateSupportRequest request) {
-        return Uni.createFrom().item(() -> {
-            Instant now = Instant.now();
-            SupportRequest supportRequest = new SupportRequest(
-                    null,
-                    request.title(),
-                    request.description(),
-                    request.contactEmail(),
-                    request.priority(),
-                    request.accountID(),
-                    SupportStatus.NEW,
-                    request.type(),
-                    now,
-                    now
-            );
+        Instant now = Instant.now();
+        SupportRequest supportRequest = new SupportRequest(
+                null,
+                request.title(),
+                request.description(),
+                request.contactEmail(),
+                request.priority(),
+                request.accountID(),
+                SupportStatus.NEW,
+                request.type(),
+                now,
+                now
+        );
+        supportRequest.setId(new ObjectId().toHexString());
 
-            supportRequest.setId(new ObjectId().toHexString());
-            dbHandler.addRequest(supportRequest);
-            LOGGER.info("Created SupportRequest: {} - {}", supportRequest.getId(), request.title());
-            return supportRequest;
-        });
+        return dbHandler.addRequest(supportRequest)
+                .invoke(ignored -> LOGGER.info("Created SupportRequest: {} - {}",
+                        supportRequest.getId(), request.title()))
+                .replaceWith(supportRequest);
     }
 
     /**
      * Retrieves a support request by its ID.
      *
      * @param id the request ID
-     * @return the {@link SupportRequest}
+     * @return a {@link Uni} emitting the {@link SupportRequest}
      * @throws IllegalStateException if no request is found
      */
     public Uni<SupportRequest> getRequest(final String id) {
-        return Uni.createFrom().item(() -> dbHandler.findById(id));
+        return dbHandler.findRequestById(id);
     }
 
     /**
      * Returns all support requests, sorted by creation date descending.
      *
-     * @return the list of all support requests
+     * @return a {@link Uni} emitting the list of all support requests
      */
     public Uni<List<SupportRequest>> getAllRequests() {
-        return Uni.createFrom().item(() -> dbHandler.findAll());
+        return dbHandler.findAllRequests();
     }
 
     /**
@@ -86,31 +85,29 @@ public class SupportWorker {
      *
      * @param id      the request ID
      * @param request the fields to update
-     * @return the updated {@link SupportRequest}
+     * @return a {@link Uni} emitting the updated {@link SupportRequest}
      * @throws IllegalStateException if the request is not found
      */
     public Uni<SupportRequest> updateRequest(final String id, final UpdateSupportRequest request) {
-        return Uni.createFrom().item(() -> {
-            SupportRequest existing = dbHandler.findById(id);
-
-            if (request.title() != null) {
-                existing.setTitle(request.title());
-            }
-            if (request.description() != null) {
-                existing.setDescription(request.description());
-            }
-            if (request.contactEmail() != null) {
-                existing.setContactEmail(request.contactEmail());
-            }
-            if (request.priority() != null) {
-                existing.setPriority(request.priority());
-            }
-            if (request.type() != null) {
-                existing.setType(request.type());
-            }
-
-            return dbHandler.updateRequest(existing);
-        });
+        return dbHandler.findRequestById(id)
+                .chain(existing -> {
+                    if (request.title() != null) {
+                        existing.setTitle(request.title());
+                    }
+                    if (request.description() != null) {
+                        existing.setDescription(request.description());
+                    }
+                    if (request.contactEmail() != null) {
+                        existing.setContactEmail(request.contactEmail());
+                    }
+                    if (request.priority() != null) {
+                        existing.setPriority(request.priority());
+                    }
+                    if (request.type() != null) {
+                        existing.setType(request.type());
+                    }
+                    return dbHandler.updateRequest(existing);
+                });
     }
 
     /**
@@ -119,11 +116,11 @@ public class SupportWorker {
      *
      * @param id     the request ID
      * @param status the new status
-     * @return the updated {@link SupportRequest}
+     * @return a {@link Uni} emitting the updated {@link SupportRequest}
      * @throws IllegalStateException if the request is not found
      */
     public Uni<SupportRequest> updateStatus(final String id, final SupportStatus status) {
-        return Uni.createFrom().item(() -> dbHandler.updateStatus(id, status, Instant.now()));
+        return dbHandler.updateStatus(id, status, Instant.now());
     }
 
     /**
@@ -131,7 +128,7 @@ public class SupportWorker {
      * The record is preserved in the database.
      *
      * @param id the request ID
-     * @return the updated {@link SupportRequest}
+     * @return a {@link Uni} emitting the updated {@link SupportRequest}
      * @throws IllegalStateException if the request is not found
      */
     public Uni<SupportRequest> softDeleteRequest(final String id) {
@@ -143,9 +140,9 @@ public class SupportWorker {
      * For admin/developer cleanup only.
      *
      * @param id the request ID
-     * @return {@code true} if deleted, {@code false} if not found
+     * @return a {@link Uni} emitting {@code true} if deleted, {@code false} if not found
      */
     public Uni<Boolean> deleteRequest(final String id) {
-        return Uni.createFrom().item(() -> dbHandler.hardDeleteRequest(id));
+        return dbHandler.hardDeleteRequest(id);
     }
 }

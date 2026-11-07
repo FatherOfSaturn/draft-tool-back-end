@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
