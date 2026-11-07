@@ -19,6 +19,20 @@ Nothing on an HTTP request path may block an event-loop thread; if you
 add a blocking client, offload it with `runSubscriptionOn` or convert it
 to a reactive API.
 
+## Running the tests
+
+```bash
+./gradlew build             # unit + architecture tests + coverage (no database needed)
+./gradlew integrationTest   # MongoDB-backed end-to-end suites
+```
+
+The end-to-end suites are tagged `mongo` and excluded from `build`, so a CI
+runner without a database still builds. Run `integrationTest` where MongoDB is
+available; the address defaults to `mongodb://127.0.0.1:27017` and can be
+overridden with `MONGO_TEST_CONNECTION_STRING` (e.g. a container service alias
+such as `mongodb://mongodb:27017` in GitLab CI). GitHub Actions runs both
+steps with a `mongo:8` service container.
+
 ## Test coverage
 
 The automated suites verify, against a real MongoDB:

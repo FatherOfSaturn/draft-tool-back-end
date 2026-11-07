@@ -101,7 +101,24 @@ java {
 
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    useJUnitPlatform {
+        // MongoDB-backed end-to-end tests run in the dedicated integrationTest
+        // task, so `build` works on machines/CI runners without a database.
+        excludeTags 'mongo'
+    }
     finalizedBy jacocoTestReport
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs the MongoDB-backed end-to-end tests (requires MongoDB on localhost:27017)'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    useJUnitPlatform {
+        includeTags 'mongo'
+    }
+    shouldRunAfter test
 }
 compileJava {
     options.encoding = 'UTF-8'

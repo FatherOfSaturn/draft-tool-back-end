@@ -38,6 +38,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Integration tests (MongoDB-backed end-to-end)
+        run: ./gradlew integrationTest
+
       - name: Determine tags, build, and publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

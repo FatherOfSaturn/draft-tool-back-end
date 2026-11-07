@@ -13,6 +13,7 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.magic.TestJson;
 import org.magic.common.api.scryfall.ScryfallCard;
@@ -36,6 +37,7 @@ import jakarta.inject.Inject;
  * reads from the cache without calling the Scryfall API.
  */
 @QuarkusTest
+@Tag("mongo")
 @TestProfile(ScryfallCacheIT.CacheProfile.class)
 class ScryfallCacheIT {
 

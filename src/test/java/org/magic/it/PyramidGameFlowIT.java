@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.magic.common.cube.CubeDownloader;
 
@@ -26,6 +27,7 @@ import io.smallrye.mutiny.Uni;
  * cannot silently change the wire format.
  */
 @QuarkusTest
+@Tag("mongo")
 class PyramidGameFlowIT {
 
     @InjectMock

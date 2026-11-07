@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.magic.common.api.scryfall.ScryfallCard;
 import org.magic.common.api.scryfall.ScryfallCollectionRequest;
@@ -41,6 +42,7 @@ import jakarta.ws.rs.WebApplicationException;
  * Uni completion semantics, and the error path for non-2xx responses.</p>
  */
 @QuarkusTest
+@Tag("mongo")
 @TestProfile(ExternalClientsIT.StubProfile.class)
 class ExternalClientsIT {
 

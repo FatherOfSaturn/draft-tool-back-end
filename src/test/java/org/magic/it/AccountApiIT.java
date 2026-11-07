@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ import io.quarkus.test.junit.QuarkusTest;
  * JSON wire shapes, the JWT auth flow, and deck CRUD.
  */
 @QuarkusTest
+@Tag("mongo")
 class AccountApiIT {
 
     private record Login(String jwt, JsonNode account, String sub) {}

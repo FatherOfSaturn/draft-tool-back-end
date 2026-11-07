@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.magic.common.cube.CubeDownloader;
 
@@ -27,6 +28,7 @@ import io.smallrye.mutiny.Uni;
  * starting a real pyramid draft game from the lobby.
  */
 @QuarkusTest
+@Tag("mongo")
 class LobbyApiIT {
 
     @InjectMock
