@@ -31,7 +31,9 @@ runner without a database still builds. Run `integrationTest` where MongoDB is
 available; the address defaults to `mongodb://127.0.0.1:27017` and can be
 overridden with `MONGO_TEST_CONNECTION_STRING` (e.g. a container service alias
 such as `mongodb://mongodb:27017` in GitLab CI). GitHub Actions runs both
-steps with a `mongo:8` service container.
+steps on an `ubuntu-24.04` runner with a `mongo:8.0.34` service container —
+MongoDB 8.x refuses to start on Linux kernels 6.19–7.0.13 (SERVER-121912),
+which the `ubuntu-latest` image now uses.
 
 ## Test coverage
 
