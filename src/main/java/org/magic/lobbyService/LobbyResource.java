@@ -25,7 +25,6 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for managing draft-format-agnostic lobbies.
@@ -34,7 +33,6 @@ import io.smallrye.common.annotation.Blocking;
 @Path("/lobby")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Lobby", description = "Draft-format-agnostic lobbies: create, join, leave, poll, kick, and start.")
-@Blocking
 public class LobbyResource {
 
     private final LobbyService lobbyService;

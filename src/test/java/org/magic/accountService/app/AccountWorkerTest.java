@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,12 +16,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.accountService.api.Account;
-import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.Deck;
+import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.LoginResponse;
 import org.magic.accountService.api.UpdateDisplayNameRequest;
 import org.magic.accountService.external.GoogleTokenVerifier;
@@ -30,7 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 class AccountWorkerTest {
@@ -50,6 +52,9 @@ class AccountWorkerTest {
     @Mock
     AdminService adminService;
 
+    @Mock
+    ManagedExecutor blockingExecutor;
+
     AccountWorker accountService;
 
     String testAccountID = "507f1f77bcf86cd799439011";
@@ -57,7 +62,21 @@ class AccountWorkerTest {
 
     @BeforeEach
     void setup() {
-        accountService = new AccountWorker(tokenVerifier, accountDbHandler, deckDbHandler, jwtService, adminService);
+        accountService = new AccountWorker(tokenVerifier, accountDbHandler, deckDbHandler,
+                jwtService, adminService, blockingExecutor);
+        // runSubscriptionOn schedules on the (mocked) executor; run the task inline instead
+        lenient().doAnswer(invocation -> {
+            ((Runnable) invocation.getArgument(0)).run();
+            return null;
+        }).when(blockingExecutor).execute(any());
+        lenient().doAnswer(invocation -> {
+            ((Runnable) invocation.getArgument(0)).run();
+            return null;
+        }).when(blockingExecutor).submit(any(Runnable.class));
+    }
+
+    private static Uni<Void> voidUni() {
+        return Uni.createFrom().voidItem();
     }
 
     @Test
@@ -66,7 +85,8 @@ class AccountWorkerTest {
         GoogleUser googleUser = new GoogleUser(googleSub, "test@example.com", "Test User");
 
         when(tokenVerifier.verify(idToken)).thenReturn(googleUser);
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.empty()));
 
         Account expectedAccount = new Account();
         expectedAccount.setAccountID(testAccountID);
@@ -75,7 +95,8 @@ class AccountWorkerTest {
         expectedAccount.setDisplayName("Test User");
         expectedAccount.setDeckIDs(List.of());
 
-        when(accountDbHandler.createAccount(googleSub, "test@example.com", "Test User")).thenReturn(expectedAccount);
+        when(accountDbHandler.createAccount(googleSub, "test@example.com", "Test User"))
+                .thenReturn(Uni.createFrom().item(expectedAccount));
         when(adminService.isAdmin("test@example.com")).thenReturn(false);
         when(jwtService.issueToken(any(), any(), any())).thenReturn("jwt-token");
         when(jwtService.getTokenTtlSeconds()).thenReturn(86400L);
@@ -102,7 +123,8 @@ class AccountWorkerTest {
         existing.setEmail("test@example.com");
         existing.setDisplayName("Test User");
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(existing));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(existing)));
         when(adminService.isAdmin("test@example.com")).thenReturn(false);
         when(jwtService.issueToken(any(), any(), any())).thenReturn("jwt-token");
         when(jwtService.getTokenTtlSeconds()).thenReturn(86400L);
@@ -135,7 +157,8 @@ class AccountWorkerTest {
         existing.setGoogleSub(googleSub);
         existing.setEmail("admin@example.com");
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(existing));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(existing)));
         when(adminService.isAdmin("admin@example.com")).thenReturn(true);
         when(jwtService.getTokenTtlSeconds()).thenReturn(86400L);
 
@@ -152,7 +175,8 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
 
         Optional<Account> result = accountService.getAccount(googleSub).await().indefinitely();
 
@@ -162,7 +186,8 @@ class AccountWorkerTest {
 
     @Test
     void shouldReturnEmptyForMissingAccount() {
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.empty()));
 
         Optional<Account> result = accountService.getAccount(googleSub).await().indefinitely();
 
@@ -175,7 +200,9 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(accountDbHandler.updateDisplayName(testAccountID, "New Name")).thenReturn(voidUni());
 
         boolean result = accountService.updateDisplayName(googleSub, request).await().indefinitely();
 
@@ -185,9 +212,11 @@ class AccountWorkerTest {
 
     @Test
     void shouldReturnFalseForUpdateDisplayNameOnMissingAccount() {
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.empty()));
 
-        boolean result = accountService.updateDisplayName(googleSub, new UpdateDisplayNameRequest("Name")).await().indefinitely();
+        boolean result = accountService.updateDisplayName(googleSub, new UpdateDisplayNameRequest("Name"))
+                .await().indefinitely();
 
         assertFalse(result);
     }
@@ -199,8 +228,11 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.createDeck(any(), any(), any(), any())).thenReturn(deckID);
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.createDeck(any(), any(), any(), any()))
+                .thenReturn(Uni.createFrom().item(deckID));
+        when(accountDbHandler.addDeckToAccount(testAccountID, deckID)).thenReturn(voidUni());
 
         Optional<String> result = accountService.createDeck(googleSub, request).await().indefinitely();
 
@@ -211,9 +243,11 @@ class AccountWorkerTest {
 
     @Test
     void shouldNotCreateDeckForMissingAccount() {
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.empty()));
 
-        Optional<String> result = accountService.createDeck(googleSub, new DeckPayload("Deck", "", List.of())).await().indefinitely();
+        Optional<String> result = accountService.createDeck(googleSub,
+                new DeckPayload("Deck", "", List.of())).await().indefinitely();
 
         assertTrue(result.isEmpty());
     }
@@ -224,8 +258,9 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findByAccountID(testAccountID)).thenReturn(decks);
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findByAccountID(testAccountID)).thenReturn(Uni.createFrom().item(decks));
 
         List<Deck> result = accountService.getDecks(googleSub).await().indefinitely();
 
@@ -234,7 +269,8 @@ class AccountWorkerTest {
 
     @Test
     void shouldGetEmptyDecksForMissingAccount() {
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.empty()));
 
         List<Deck> result = accountService.getDecks(googleSub).await().indefinitely();
 
@@ -250,8 +286,9 @@ class AccountWorkerTest {
         deck.setDeckID(deckID);
         deck.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         Optional<Deck> result = accountService.getDeck(googleSub, deckID).await().indefinitely();
 
@@ -268,8 +305,9 @@ class AccountWorkerTest {
         deck.setDeckID(deckID);
         deck.setAccountID("someone-else");
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         Optional<Deck> result = accountService.getDeck(googleSub, deckID).await().indefinitely();
 
@@ -285,8 +323,11 @@ class AccountWorkerTest {
         Deck deck = new Deck();
         deck.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.updateDeck(deckID, "New Name", "New Desc", List.of("card1", "card2")))
+                .thenReturn(voidUni());
 
         boolean result = accountService.updateDeck(googleSub, deckID, request).await().indefinitely();
 
@@ -303,8 +344,9 @@ class AccountWorkerTest {
         Deck deck = new Deck();
         deck.setAccountID("someone-else");
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         boolean result = accountService.updateDeck(googleSub, deckID, request).await().indefinitely();
 
@@ -318,10 +360,12 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(missingID)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
 
-        boolean result = accountService.updateDeck(googleSub, missingID, new DeckPayload("", "", List.of())).await().indefinitely();
+        boolean result = accountService.updateDeck(googleSub, missingID,
+                new DeckPayload("", "", List.of())).await().indefinitely();
 
         assertFalse(result);
     }
@@ -335,8 +379,11 @@ class AccountWorkerTest {
         deck.setDeckID(deckID);
         deck.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        when(deckDbHandler.deleteDeck(deckID)).thenReturn(voidUni());
+        when(accountDbHandler.removeDeckFromAccount(testAccountID, deckID)).thenReturn(voidUni());
 
         boolean result = accountService.deleteDeck(googleSub, deckID).await().indefinitely();
 
@@ -354,8 +401,9 @@ class AccountWorkerTest {
         deck.setDeckID(deckID);
         deck.setAccountID("someone-else");
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(deckID)).thenReturn(Optional.of(deck));
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(deckID)).thenReturn(Uni.createFrom().item(Optional.of(deck)));
 
         boolean result = accountService.deleteDeck(googleSub, deckID).await().indefinitely();
 
@@ -369,8 +417,9 @@ class AccountWorkerTest {
         Account account = new Account();
         account.setAccountID(testAccountID);
 
-        when(accountDbHandler.findByGoogleSub(googleSub)).thenReturn(Optional.of(account));
-        when(deckDbHandler.findById(missingID)).thenReturn(Optional.empty());
+        when(accountDbHandler.findByGoogleSub(googleSub))
+                .thenReturn(Uni.createFrom().item(Optional.of(account)));
+        when(deckDbHandler.findById(missingID)).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         boolean result = accountService.deleteDeck(googleSub, missingID).await().indefinitely();
 

@@ -2,6 +2,23 @@
 
 Quarkus backend for the Pyramid Draft MTG cube drafting application.
 
+## Reactive architecture
+
+The request path is fully reactive (Mutiny end-to-end):
+
+- REST resources return `Uni` and run on the event loop (Quarkus REST).
+- Persistence uses reactive MongoDB Panache repositories
+  (`ReactivePanacheMongoRepository`); workers and services chain `Uni`
+  instead of wrapping blocking calls.
+- The Scryfall cache is a reactive Panache repository; the bulk-data
+  import (gzip download + line parsing) and Google ID-token verification
+  are the only blocking operations left. They are explicitly dispatched
+  to worker threads (`ManagedExecutor` / `runSubscriptionOn`).
+
+Nothing on an HTTP request path may block an event-loop thread; if you
+add a blocking client, offload it with `runSubscriptionOn` or convert it
+to a reactive API.
+
 ## Prerequisites
 
 - Java 25 (Gradle 9.9 wrapper ships with the repo)

@@ -1,14 +1,22 @@
 package org.magic.accountService.app;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.BsonObjectId;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,37 +24,38 @@ import org.magic.accountService.api.Deck;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
+
+import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 class DeckDbHandlerTest {
 
     @Mock
-    MongoCollection<Deck> collection;
-    @Mock
-    FindIterable<Deck> findIterable;
+    ReactiveMongoCollection<Deck> collection;
 
     DeckDbHandler handler;
 
     @BeforeEach
     void setup() {
         handler = spy(new DeckDbHandler());
-        doReturn(collection).when(handler).getCollection();
+        doReturn(collection).when(handler).mongoCollection();
+    }
+
+    private static Uni<InsertOneResult> inserted() {
+        return Uni.createFrom().item(InsertOneResult.acknowledged(new BsonObjectId(new ObjectId())));
     }
 
     @Test
     void shouldFindByAccountID() {
-        var decks = List.of(new Deck(), new Deck());
+        when(collection.find(any(Document.class)))
+                .thenReturn(Multi.createFrom().items(new Deck(), new Deck()));
 
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.into(any())).thenAnswer(invocation -> {
-            ArrayList<Deck> list = invocation.getArgument(0);
-            list.addAll(decks);
-            return list;
-        });
-
-        List<Deck> result = handler.findByAccountID("acc-1");
+        List<Deck> result = handler.findByAccountID("acc-1").await().indefinitely();
 
         assertEquals(2, result.size());
     }
@@ -56,10 +65,9 @@ class DeckDbHandlerTest {
         var deck = new Deck();
         deck.setDeckID("deck-1");
 
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(deck);
+        when(collection.find(any(Document.class))).thenReturn(Multi.createFrom().item(deck));
 
-        Optional<Deck> result = handler.findById("deck-1");
+        Optional<Deck> result = handler.findById("deck-1").await().indefinitely();
 
         assertTrue(result.isPresent());
         assertEquals("deck-1", result.get().getDeckID());
@@ -67,17 +75,17 @@ class DeckDbHandlerTest {
 
     @Test
     void shouldReturnEmptyForUnknownId() {
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(null);
+        when(collection.find(any(Document.class))).thenReturn(Multi.createFrom().empty());
 
-        Optional<Deck> result = handler.findById("unknown");
-
-        assertTrue(result.isEmpty());
+        assertTrue(handler.findById("unknown").await().indefinitely().isEmpty());
     }
 
     @Test
     void shouldCreateDeck() {
-        String result = handler.createDeck("acc-1", "My Deck", "A description", List.of("card-1", "card-2"));
+        when(collection.insertOne(any(Deck.class))).thenReturn(inserted());
+
+        String result = handler.createDeck("acc-1", "My Deck", "A description",
+                List.of("card-1", "card-2")).await().indefinitely();
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -90,14 +98,20 @@ class DeckDbHandlerTest {
 
     @Test
     void shouldUpdateDeck() {
-        handler.updateDeck("deck-1", "New Name", "New Desc", List.of("card-1"));
+        when(collection.updateOne(any(Document.class), any(Document.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 1L, null)));
+
+        handler.updateDeck("deck-1", "New Name", "New Desc", List.of("card-1")).await().indefinitely();
 
         verify(collection).updateOne(any(Document.class), any(Document.class));
     }
 
     @Test
     void shouldDeleteDeck() {
-        handler.deleteDeck("deck-1");
+        when(collection.deleteOne(any(Document.class)))
+                .thenReturn(Uni.createFrom().item(DeleteResult.acknowledged(1)));
+
+        handler.deleteDeck("deck-1").await().indefinitely();
 
         verify(collection).deleteOne(any(Document.class));
     }

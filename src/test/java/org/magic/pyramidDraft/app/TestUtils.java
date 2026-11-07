@@ -65,7 +65,7 @@ public abstract class TestUtils {
         Cube adamCube = this.createCubeFromJson(cubeName);
 
         when(cubeDownloader.getCubeForCubeID(createGameInfo.cubeID())).thenReturn(Uni.createFrom().item(adamCube));
-        when(dbHandler.addGame(any())).thenReturn("GameInfo");
+        when(dbHandler.addGame(any())).thenReturn(Uni.createFrom().item("GameInfo"));
 
         return gameCoordinationWorker.startGame(createGameInfo).await().atMost(Duration.ofSeconds(3));
     }

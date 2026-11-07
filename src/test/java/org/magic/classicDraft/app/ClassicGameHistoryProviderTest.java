@@ -21,6 +21,8 @@ import org.magic.classicDraft.app.GameCoordination.ClassicDraftDbHandler;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.smallrye.mutiny.Uni;
+
 @ExtendWith(MockitoExtension.class)
 class ClassicGameHistoryProviderTest {
 
@@ -33,11 +35,11 @@ class ClassicGameHistoryProviderTest {
         ClassicPlayer bob = classicPlayer("Bob", "acc-2", 1, 2, 6);
         ClassicGameInfo game = game(List.of(alice, bob), GameState.GAME_STARTED, 0);
 
-        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
+        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(game)));
 
         ClassicGameHistoryProvider provider = new ClassicGameHistoryProvider(dbHandler);
 
-        List<GameHistoryEntry> result = provider.findGamesByAccountID("acc-1");
+        List<GameHistoryEntry> result = provider.findGamesByAccountID("acc-1").await().indefinitely();
 
         assertEquals(1, result.size());
         GameHistoryEntry entry = result.get(0);
@@ -64,11 +66,11 @@ class ClassicGameHistoryProviderTest {
         ClassicPlayer alice = classicPlayer("Alice", "acc-1", 0, 2, 6);
         ClassicGameInfo game = game(List.of(alice, classicPlayer("Bob", "acc-2", 1, 2, 6)), GameState.GAME_COMPLETE, 1);
 
-        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
+        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(game)));
 
         ClassicGameHistoryProvider provider = new ClassicGameHistoryProvider(dbHandler);
 
-        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").get(0);
+        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").await().indefinitely().get(0);
 
         assertEquals(DraftGameState.GAME_COMPLETE, entry.gameState());
         assertEquals(2, entry.players().get(0).currentPack());

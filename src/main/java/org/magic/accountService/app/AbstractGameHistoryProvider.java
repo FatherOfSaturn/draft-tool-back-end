@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.magic.accountService.api.GameHistoryEntry;
 
+import io.smallrye.mutiny.Uni;
+
 /**
  * Template for {@link GameHistoryProvider} implementations: resolves a
  * format-specific list of games for an account and maps each game into the
@@ -17,9 +19,9 @@ public abstract class AbstractGameHistoryProvider<INFO> implements GameHistoryPr
      * Loads all games of this format the account participated in.
      *
      * @param accountID the account to look up
-     * @return the format-specific games
+     * @return a {@link Uni} emitting the format-specific games
      */
-    protected abstract List<INFO> findGamesByAccount(String accountID);
+    protected abstract Uni<List<INFO>> findGamesByAccount(String accountID);
 
     /**
      * Maps one format-specific game into the unified history shape.
@@ -30,9 +32,10 @@ public abstract class AbstractGameHistoryProvider<INFO> implements GameHistoryPr
     protected abstract GameHistoryEntry toEntry(INFO game);
 
     @Override
-    public List<GameHistoryEntry> findGamesByAccountID(final String accountID) {
-        return findGamesByAccount(accountID).stream()
-                .map(this::toEntry)
-                .toList();
+    public Uni<List<GameHistoryEntry>> findGamesByAccountID(final String accountID) {
+        return findGamesByAccount(accountID)
+                .map(games -> games.stream()
+                        .map(this::toEntry)
+                        .toList());
     }
 }

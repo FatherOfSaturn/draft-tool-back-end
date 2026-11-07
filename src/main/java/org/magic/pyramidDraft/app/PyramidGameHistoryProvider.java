@@ -11,6 +11,7 @@ import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.app.GameCoordination.PyramidDraftDbHandler;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -30,7 +31,7 @@ public class PyramidGameHistoryProvider extends AbstractGameHistoryProvider<Game
     }
 
     @Override
-    protected List<GameInfo> findGamesByAccount(final String accountID) {
+    protected Uni<List<GameInfo>> findGamesByAccount(final String accountID) {
         return dbHandler.findGamesByAccountID(accountID);
     }
 

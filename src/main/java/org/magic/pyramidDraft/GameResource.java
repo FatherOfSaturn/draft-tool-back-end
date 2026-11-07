@@ -32,7 +32,6 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for managing pyramid draft games.
@@ -41,7 +40,6 @@ import io.smallrye.common.annotation.Blocking;
  */
 @Path("/game")
 @Tag(name = "Pyramid Draft", description = "Two-player pyramid draft games.")
-@Blocking
 public class GameResource {
     private static final Logger LOGGER = LogManager.getLogger(GameResource.class);
 
@@ -105,7 +103,7 @@ public class GameResource {
                                @HeaderParam("X-Player-Token") @Size(max = 64) final String playerToken,
                                @QueryParam("doublePick") final boolean isDoublePick) {
         LOGGER.info("Call to draft card: {}\n For game: {}\n", cardID, gameID);
-        return Uni.createFrom().item(gameWorker.draftCard(playerToken, packNumber, cardID, isDoublePick, gameID));
+        return gameWorker.draftCard(playerToken, packNumber, cardID, isDoublePick, gameID);
     }
 
     /**

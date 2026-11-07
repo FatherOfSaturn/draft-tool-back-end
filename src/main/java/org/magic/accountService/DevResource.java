@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * Development-only REST resource for generating mock JWT tokens.
@@ -26,7 +25,6 @@ import io.smallrye.common.annotation.Blocking;
 @Produces(MediaType.APPLICATION_JSON)
 @IfBuildProfile("dev")
 @Tag(name = "Dev", description = "Development-only helpers (available only in the dev profile).")
-@Blocking
 public class DevResource {
 
     /**

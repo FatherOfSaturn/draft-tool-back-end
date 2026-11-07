@@ -1,90 +1,72 @@
 package org.magic.common.external;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.conversions.Bson;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.magic.common.api.scryfall.ScryfallCard;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.InsertManyOptions;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheMongoRepository;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
+/**
+ * Reactive cache of Scryfall cards, backed by the {@code ScryfallCards}
+ * collection. Used by the bulk-data import and by the request path to avoid
+ * hitting the Scryfall API.
+ */
 @ApplicationScoped
-public class ScryfallCardCache {
+public class ScryfallCardCache implements ReactivePanacheMongoRepository<ScryfallCard> {
     private static final Logger LOGGER = LogManager.getLogger(ScryfallCardCache.class);
-    private static final String COLLECTION = "ScryfallCards";
+
+    public Uni<ScryfallCard> findByName(final String name) {
+        return mongoCollection().find(Filters.eq("name", name)).collect().first();
+    }
+
+    public Uni<List<ScryfallCard>> findByNames(final List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return Uni.createFrom().item(List.of());
+        }
+        Bson filter = Filters.in("name", names);
+        return mongoCollection().find(filter).collect().asList();
+    }
+
+    public Uni<ScryfallCard> findById(final String id) {
+        return mongoCollection().find(Filters.eq("id", id)).collect().first();
+    }
+
+    public Uni<Long> count() {
+        return mongoCollection().countDocuments();
+    }
 
     /**
-     * POJO codec registry, matching what the (now removed) MongoService
-     * configured: the default registry plus automatic POJO support.
+     * Returns whether the cache has been populated. Used to decide between the
+     * cache and the Scryfall API.
      */
-    private static final CodecRegistry POJO_REGISTRY = fromRegistries(
-            MongoClientSettings.getDefaultCodecRegistry(),
-            fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-    private final MongoCollection<ScryfallCard> collection;
-
-    @Inject
-    public ScryfallCardCache(final MongoClient mongoClient,
-                             @ConfigProperty(name = "quarkus.mongodb.database") final String databaseName) {
-        this.collection = mongoClient.getDatabase(databaseName)
-                .withCodecRegistry(POJO_REGISTRY)
-                .getCollection(COLLECTION, ScryfallCard.class);
+    public Uni<Boolean> isAvailable() {
+        return count().map(populated -> populated > 0);
     }
 
-    private MongoCollection<ScryfallCard> getCollection() {
-        return collection;
+    public Uni<Void> dropCollection() {
+        return mongoCollection().drop().replaceWithVoid();
     }
 
-    public ScryfallCard findByName(final String name) {
-        return getCollection().find(Filters.eq("name", name)).first();
+    public Uni<Void> bulkInsert(final List<ScryfallCard> cards) {
+        if (cards == null || cards.isEmpty()) {
+            return Uni.createFrom().voidItem();
+        }
+        return mongoCollection().insertMany(cards, new InsertManyOptions().ordered(false)).replaceWithVoid();
     }
 
-    public List<ScryfallCard> findByNames(final List<String> names) {
-        if (names == null || names.isEmpty()) return List.of();
-        return getCollection().find(Filters.in("name", names)).into(new ArrayList<>());
-    }
-
-    public ScryfallCard findById(final String id) {
-        return getCollection().find(Filters.eq("id", id)).first();
-    }
-
-    public long count() {
-        return getCollection().countDocuments();
-    }
-
-    public boolean isAvailable() {
-        return count() > 0;
-    }
-
-    public void dropCollection() {
-        getCollection().drop();
-    }
-
-    public void bulkInsert(final List<ScryfallCard> cards) {
-        if (cards == null || cards.isEmpty()) return;
-        getCollection().insertMany(cards, new InsertManyOptions().ordered(false));
-    }
-
-    public void createIndexes() {
-        MongoCollection<ScryfallCard> col = getCollection();
-        col.createIndex(Indexes.ascending("id"));
-        col.createIndex(Indexes.ascending("name"));
-        LOGGER.info("ScryfallCardCache indexes ensured");
+    public Uni<Void> createIndexes() {
+        return mongoCollection().createIndex(Indexes.ascending("id"))
+                .chain(ignored -> mongoCollection().createIndex(Indexes.ascending("name")))
+                .invoke(ignored -> LOGGER.info("ScryfallCardCache indexes ensured"))
+                .replaceWithVoid();
     }
 }

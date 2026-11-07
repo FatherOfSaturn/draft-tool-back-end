@@ -34,7 +34,6 @@ import jakarta.ws.rs.core.SecurityContext;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for user accounts and deck management. Provides endpoints
@@ -46,7 +45,6 @@ import io.smallrye.common.annotation.Blocking;
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed("user")
 @Tag(name = "Account", description = "User accounts, authentication, and saved decks.")
-@Blocking
 public class AccountResource {
 
     private final AccountWorker accountService;

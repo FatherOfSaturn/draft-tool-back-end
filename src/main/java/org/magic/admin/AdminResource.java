@@ -1,6 +1,5 @@
 package org.magic.admin;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +33,6 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * REST resource for admin dashboard endpoints. Provides draft statistics,
@@ -47,7 +45,6 @@ import io.smallrye.common.annotation.Blocking;
 @RolesAllowed("admin")
 @Tag(name = "Admin", description = "Admin-only operations: stats, cross-account lookup, game cleanup, and Scryfall " +
         "cache management. All endpoints require the admin role.")
-@Blocking
 public class AdminResource {
     private static final Logger LOGGER = LogManager.getLogger(AdminResource.class);
 
@@ -128,8 +125,9 @@ public class AdminResource {
             description = "Looks up an account by its account ID. PII fields (email, googleSub) are omitted from " +
                     "the response. Returns 404 if not found.")
     public Uni<Account> getAccountByID(@PathParam("accountID") @Size(max = 100) final String accountID) {
-        return Uni.createFrom().item(() -> accountDbHandler.findById(accountID)
-                .orElseThrow(() -> new WebApplicationException(Response.Status.NOT_FOUND)));
+        return accountDbHandler.findById(accountID)
+                .map(account -> account.orElseThrow(
+                        () -> new WebApplicationException(Response.Status.NOT_FOUND)));
     }
 
     /**
@@ -146,7 +144,7 @@ public class AdminResource {
                     "sorted newest first.")
     public Uni<List<GameHistoryEntry>> getGameHistoryByID(
             @PathParam("accountID") @Size(max = 100) final String accountID) {
-        return Uni.createFrom().item(() -> gameHistoryService.getGameHistoryByAccountID(accountID));
+        return gameHistoryService.getGameHistoryByAccountID(accountID);
     }
 
     /**
@@ -160,7 +158,7 @@ public class AdminResource {
     @Operation(summary = "Get an account's decks",
             description = "Returns all decks belonging to the given account.")
     public Uni<List<Deck>> getDecksByID(@PathParam("accountID") @Size(max = 100) final String accountID) {
-        return Uni.createFrom().item(() -> deckDbHandler.findByAccountID(accountID));
+        return deckDbHandler.findByAccountID(accountID);
     }
 
     /**
@@ -178,14 +176,15 @@ public class AdminResource {
                     "account's deck list. Returns 204 if deleted, 404 if the deck is missing or owned by another account.")
     public Uni<Response> deleteDeckByID(@PathParam("accountID") @Size(max = 100) final String accountID,
                                         @PathParam("deckID") @Size(max = 64) final String deckID) {
-        return Uni.createFrom().item(() -> deckDbHandler.findById(deckID)
-                .filter(deck -> accountID.equals(deck.getAccountID()))
-                .map(deck -> {
-                    deckDbHandler.deleteDeck(deckID);
-                    accountDbHandler.removeDeckFromAccount(accountID, deckID);
-                    return Response.noContent().build();
-                })
-                .orElse(Response.status(Response.Status.NOT_FOUND).build()));
+        return deckDbHandler.findById(deckID)
+                .chain(deck -> {
+                    if (deck.isEmpty() || !accountID.equals(deck.get().getAccountID())) {
+                        return Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());
+                    }
+                    return deckDbHandler.deleteDeck(deckID)
+                            .chain(ignored -> accountDbHandler.removeDeckFromAccount(accountID, deckID))
+                            .replaceWith(Response.noContent().build());
+                });
     }
 
     /**
@@ -222,17 +221,19 @@ public class AdminResource {
     @Operation(summary = "Refresh the Scryfall cache",
             description = "Triggers an immediate refresh of the Scryfall bulk data cache and returns the import " +
                     "result, or 500 if the refresh fails.")
-    public Response triggerCacheRefresh() {
-        try {
-            int count = bulkDataService.triggerRefresh();
-            LOGGER.info("Admin triggered Scryfall cache refresh: {} cards imported", count);
-            return Response.ok(new ScryfallCacheStatusResponse(
-                    true, count, bulkDataService.getStatus().lastImportedAt(),
-                    bulkDataService.getBulkDataType(), bulkDataService.isEnabled())).build();
-        } catch (IllegalStateException | IOException e) {
-            LOGGER.error("Admin-triggered cache refresh failed: {}", e.getMessage());
-            return Response.serverError().entity("Cache refresh failed: " + e.getMessage()).build();
-        }
+    public Uni<Response> triggerCacheRefresh() {
+        return bulkDataService.triggerRefresh()
+                .chain(count -> {
+                    LOGGER.info("Admin triggered Scryfall cache refresh: {} cards imported", count);
+                    return bulkDataService.getStatus()
+                            .map(status -> Response.ok(new ScryfallCacheStatusResponse(
+                                    true, count, status.lastImportedAt(),
+                                    bulkDataService.getBulkDataType(), bulkDataService.isEnabled())).build());
+                })
+                .onFailure().recoverWithItem(t -> {
+                    LOGGER.error("Admin-triggered cache refresh failed: {}", t.getMessage());
+                    return Response.serverError().entity("Cache refresh failed: " + t.getMessage()).build();
+                });
     }
 
     /**
@@ -246,10 +247,10 @@ public class AdminResource {
     @Operation(summary = "Get the Scryfall cache status",
             description = "Returns the current status of the Scryfall bulk data cache (availability, card count, " +
                     "last import time).")
-    public Response getCacheStatus() {
-        var status = bulkDataService.getStatus();
-        return Response.ok(new ScryfallCacheStatusResponse(
-                status.available(), status.cardCount(), status.lastImportedAt(),
-                status.bulkDataType(), bulkDataService.isEnabled())).build();
+    public Uni<Response> getCacheStatus() {
+        return bulkDataService.getStatus()
+                .map(status -> Response.ok(new ScryfallCacheStatusResponse(
+                        status.available(), status.cardCount(), status.lastImportedAt(),
+                        status.bulkDataType(), bulkDataService.isEnabled())).build());
     }
 }

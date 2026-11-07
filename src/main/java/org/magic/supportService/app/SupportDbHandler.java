@@ -1,7 +1,6 @@
 package org.magic.supportService.app;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,29 +9,23 @@ import org.bson.conversions.Bson;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
 
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 
-import io.quarkus.mongodb.panache.PanacheMongoRepository;
+import io.quarkus.mongodb.FindOptions;
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheMongoRepository;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
- * MongoDB data access handler for support requests. Provides CRUD operations
- * for {@link SupportRequest} documents, including status updates and hard/soft deletion.
+ * Reactive MongoDB data access handler for support requests. Provides CRUD
+ * operations for {@link SupportRequest} documents, including status updates and
+ * hard/soft deletion.
  */
 @ApplicationScoped
-public class SupportDbHandler implements PanacheMongoRepository<SupportRequest> {
+public class SupportDbHandler implements ReactivePanacheMongoRepository<SupportRequest> {
     private static final Logger LOGGER = LogManager.getLogger(SupportDbHandler.class);
-
-    MongoCollection<SupportRequest> getCollection() {
-        return mongoCollection();
-    }
 
     /**
      * Persists a new support request to the database.
@@ -40,38 +33,34 @@ public class SupportDbHandler implements PanacheMongoRepository<SupportRequest> 
      *
      * @param request the request to insert
      */
-    public void addRequest(final SupportRequest request) {
-        getCollection().insertOne(request);
+    public Uni<Void> addRequest(final SupportRequest request) {
+        return mongoCollection().insertOne(request).replaceWithVoid();
     }
 
     /**
      * Finds a support request by its ID.
      *
      * @param id the request ID to search for
-     * @return the {@link SupportRequest} document
+     * @return a {@link Uni} emitting the {@link SupportRequest} document
      * @throws IllegalStateException if no request is found with the given ID
      */
-    public SupportRequest findById(final String id) {
+    public Uni<SupportRequest> findById(final String id) {
         Bson filter = Filters.eq("_id", id);
-        SupportRequest request = getCollection().find(filter).first();
-
-        if (request == null) {
-            LOGGER.error("Unable to find SupportRequest with ID: {}", id);
-            throw new IllegalStateException("Unable to find SupportRequest with ID: " + id);
-        }
-        return request;
+        return mongoCollection().find(filter).collect().first()
+                .onItem().ifNull().failWith(() -> {
+                    LOGGER.error("Unable to find SupportRequest with ID: {}", id);
+                    return new IllegalStateException("Unable to find SupportRequest with ID: " + id);
+                });
     }
 
     /**
      * Returns all support requests, sorted by creation date descending (newest first).
      *
-     * @return the list of all support requests
+     * @return a {@link Uni} emitting the list of all support requests
      */
-    public List<SupportRequest> findAllRequests() {
-        return getCollection()
-                .find()
-                .sort(Sorts.descending("createdOnDate"))
-                .into(new ArrayList<>());
+    public Uni<List<SupportRequest>> findAllRequests() {
+        FindOptions options = new FindOptions().sort(Sorts.descending("createdOnDate"));
+        return mongoCollection().find(options).collect().asList();
     }
 
     /**
@@ -79,10 +68,10 @@ public class SupportDbHandler implements PanacheMongoRepository<SupportRequest> 
      * Does not modify id, accountID, status, or timestamps.
      *
      * @param request the request with updated fields
-     * @return the updated request
+     * @return a {@link Uni} emitting the updated request
      * @throws IllegalStateException if the update fails
      */
-    public SupportRequest updateRequest(final SupportRequest request) {
+    public Uni<SupportRequest> updateRequest(final SupportRequest request) {
         Bson filter = Filters.eq("_id", request.getId());
         Bson update = Updates.combine(
                 Updates.set("title", request.getTitle()),
@@ -92,60 +81,61 @@ public class SupportDbHandler implements PanacheMongoRepository<SupportRequest> 
                 Updates.set("type", request.getType())
         );
 
-        UpdateResult result = getCollection().updateOne(filter, update);
-
-        if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated SupportRequest: {}", request.getId());
-            return request;
-        } else {
-            LOGGER.error("Unable to update SupportRequest: {}", request.getId());
-            throw new IllegalStateException("Unable to update SupportRequest: " + request.getId());
-        }
+        return mongoCollection().updateOne(filter, update)
+                .map(result -> {
+                    if (result.getModifiedCount() > 0) {
+                        LOGGER.info("Successfully updated SupportRequest: {}", request.getId());
+                        return request;
+                    }
+                    LOGGER.error("Unable to update SupportRequest: {}", request.getId());
+                    throw new IllegalStateException("Unable to update SupportRequest: " + request.getId());
+                });
     }
 
     /**
      * Updates the status and lastStatusChangeDate for a support request.
      *
-     * @param id        the request ID
-     * @param status    the new status
+     * @param id         the request ID
+     * @param status     the new status
      * @param changeDate the timestamp of the status change
-     * @return the updated request
+     * @return a {@link Uni} emitting the updated request
      * @throws IllegalStateException if the update fails
      */
-    public SupportRequest updateStatus(final String id, final SupportStatus status, final Instant changeDate) {
+    public Uni<SupportRequest> updateStatus(final String id, final SupportStatus status, final Instant changeDate) {
         Bson filter = Filters.eq("_id", id);
         Bson update = Updates.combine(
                 Updates.set("status", status),
                 Updates.set("lastStatusChangeDate", changeDate)
         );
 
-        UpdateResult result = getCollection().updateOne(filter, update);
-
-        if (result.getModifiedCount() > 0) {
-            LOGGER.info("Successfully updated status for SupportRequest: {} → {}", id, status);
-            return findById(id);
-        } else {
-            LOGGER.error("Unable to update status for SupportRequest: {}", id);
-            throw new IllegalStateException("Unable to update status for SupportRequest: " + id);
-        }
+        return mongoCollection().updateOne(filter, update)
+                .onItem().transformToUni(result -> {
+                    if (result.getModifiedCount() > 0) {
+                        LOGGER.info("Successfully updated status for SupportRequest: {} → {}", id, status);
+                        return findById(id);
+                    }
+                    LOGGER.error("Unable to update status for SupportRequest: {}", id);
+                    return Uni.createFrom().failure(
+                            new IllegalStateException("Unable to update status for SupportRequest: " + id));
+                });
     }
 
     /**
      * Permanently removes a support request from the database.
-     * Use for admin/developer cleanup only — prefer status-based soft delete for normal operations.
      *
      * @param id the request ID to delete
-     * @return {@code true} if the request was deleted, {@code false} if not found
+     * @return a {@link Uni} emitting {@code true} if the request was deleted
      */
-    public boolean hardDeleteRequest(final String id) {
+    public Uni<Boolean> hardDeleteRequest(final String id) {
         Bson filter = Filters.eq("_id", id);
-        DeleteResult result = getCollection().deleteOne(filter);
-
-        if (result.getDeletedCount() > 0) {
-            LOGGER.info("Hard deleted SupportRequest: {}", id);
-            return true;
-        }
-        LOGGER.warn("SupportRequest not found for hard delete: {}", id);
-        return false;
+        return mongoCollection().deleteOne(filter)
+                .map(result -> {
+                    if (result.getDeletedCount() > 0) {
+                        LOGGER.info("Hard deleted SupportRequest: {}", id);
+                        return true;
+                    }
+                    LOGGER.warn("SupportRequest not found for hard delete: {}", id);
+                    return false;
+                });
     }
 }

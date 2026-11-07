@@ -11,6 +11,7 @@ import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.app.GameCoordination.ClassicDraftDbHandler;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -29,7 +30,7 @@ public class ClassicGameHistoryProvider extends AbstractGameHistoryProvider<Clas
     }
 
     @Override
-    protected List<ClassicGameInfo> findGamesByAccount(final String accountID) {
+    protected Uni<List<ClassicGameInfo>> findGamesByAccount(final String accountID) {
         return dbHandler.findGamesByAccountID(accountID);
     }
 

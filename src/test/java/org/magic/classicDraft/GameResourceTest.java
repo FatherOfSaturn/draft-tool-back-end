@@ -70,7 +70,7 @@ class GameResourceTest {
     void shouldDraftCard() {
         var card = new Card("Lightning Bolt", details, "card-789", 1, "Instant");
 
-        when(gameWorker.draftCard("tok-0", "card-789", "game-456")).thenReturn(card);
+        when(gameWorker.draftCard("tok-0", "card-789", "game-456")).thenReturn(Uni.createFrom().item(card));
 
         Card result = resource.draftCard("game-456", "card-789", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));

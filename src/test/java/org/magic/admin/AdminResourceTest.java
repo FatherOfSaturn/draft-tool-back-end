@@ -81,7 +81,7 @@ class AdminResourceTest {
         account.setAccountID("acc-1");
         account.setDisplayName("Alice");
 
-        when(accountDbHandler.findById("acc-1")).thenReturn(Optional.of(account));
+        when(accountDbHandler.findById("acc-1")).thenReturn(Uni.createFrom().item(Optional.of(account)));
 
         Account result = resource.getAccountByID("acc-1").await().indefinitely();
 
@@ -91,7 +91,7 @@ class AdminResourceTest {
 
     @Test
     void shouldReturn404ForMissingAccountLookup() {
-        when(accountDbHandler.findById("missing")).thenReturn(Optional.empty());
+        when(accountDbHandler.findById("missing")).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         assertThrows(WebApplicationException.class,
                 () -> resource.getAccountByID("missing").await().indefinitely());
@@ -99,7 +99,7 @@ class AdminResourceTest {
 
     @Test
     void shouldGetGameHistoryByID() {
-        when(gameHistoryService.getGameHistoryByAccountID("acc-1")).thenReturn(List.of());
+        when(gameHistoryService.getGameHistoryByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of()));
 
         List<org.magic.accountService.api.GameHistoryEntry> result =
                 resource.getGameHistoryByID("acc-1").await().indefinitely();
@@ -113,7 +113,7 @@ class AdminResourceTest {
         deck.setDeckID("deck-1");
         deck.setAccountID("acc-1");
 
-        when(deckDbHandler.findByAccountID("acc-1")).thenReturn(List.of(deck));
+        when(deckDbHandler.findByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(deck)));
 
         List<Deck> result = resource.getDecksByID("acc-1").await().indefinitely();
 
@@ -127,7 +127,10 @@ class AdminResourceTest {
         deck.setDeckID("deck-1");
         deck.setAccountID("acc-1");
 
-        when(deckDbHandler.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        lenient().when(deckDbHandler.deleteDeck("deck-1")).thenReturn(Uni.createFrom().voidItem());
+        lenient().when(accountDbHandler.removeDeckFromAccount("acc-1", "deck-1"))
+                .thenReturn(Uni.createFrom().voidItem());
 
         Response response = resource.deleteDeckByID("acc-1", "deck-1").await().indefinitely();
 
@@ -138,7 +141,7 @@ class AdminResourceTest {
 
     @Test
     void shouldReturn404WhenDeletingMissingDeck() {
-        when(deckDbHandler.findById("deck-1")).thenReturn(Optional.empty());
+        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.empty()));
 
         Response response = resource.deleteDeckByID("acc-1", "deck-1").await().indefinitely();
 
@@ -152,7 +155,10 @@ class AdminResourceTest {
         deck.setDeckID("deck-1");
         deck.setAccountID("acc-other");
 
-        when(deckDbHandler.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckDbHandler.findById("deck-1")).thenReturn(Uni.createFrom().item(Optional.of(deck)));
+        lenient().when(deckDbHandler.deleteDeck("deck-1")).thenReturn(Uni.createFrom().voidItem());
+        lenient().when(accountDbHandler.removeDeckFromAccount("acc-1", "deck-1"))
+                .thenReturn(Uni.createFrom().voidItem());
 
         Response response = resource.deleteDeckByID("acc-1", "deck-1").await().indefinitely();
 
@@ -179,11 +185,11 @@ class AdminResourceTest {
 
     @Test
     void shouldGetCacheStatus() {
-        when(bulkDataService.getStatus()).thenReturn(
-                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards"));
+        when(bulkDataService.getStatus()).thenReturn(Uni.createFrom().item(
+                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards")));
         when(bulkDataService.isEnabled()).thenReturn(true);
 
-        Response response = resource.getCacheStatus();
+        Response response = resource.getCacheStatus().await().indefinitely();
 
         assertEquals(200, response.getStatus());
         var status = (ScryfallCacheStatusResponse) response.getEntity();
@@ -193,12 +199,12 @@ class AdminResourceTest {
 
     @Test
     void shouldTriggerCacheRefresh() throws Exception {
-        when(bulkDataService.triggerRefresh()).thenReturn(50000);
-        when(bulkDataService.getStatus()).thenReturn(
-                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards"));
+        when(bulkDataService.triggerRefresh()).thenReturn(Uni.createFrom().item(50000));
+        when(bulkDataService.getStatus()).thenReturn(Uni.createFrom().item(
+                new ScryfallBulkDataService.CacheStatus(true, 50000, "2026-07-29T21:10:03.341+00:00", "default_cards")));
         when(bulkDataService.isEnabled()).thenReturn(true);
 
-        Response response = resource.triggerCacheRefresh();
+        Response response = resource.triggerCacheRefresh().await().indefinitely();
 
         assertEquals(200, response.getStatus());
         var status = (ScryfallCacheStatusResponse) response.getEntity();
@@ -207,9 +213,10 @@ class AdminResourceTest {
 
     @Test
     void shouldHandleCacheRefreshFailure() throws Exception {
-        when(bulkDataService.triggerRefresh()).thenThrow(new java.io.IOException("Network error"));
+        when(bulkDataService.triggerRefresh()).thenReturn(
+                Uni.createFrom().failure(new IllegalStateException("Network error")));
 
-        Response response = resource.triggerCacheRefresh();
+        Response response = resource.triggerCacheRefresh().await().indefinitely();
 
         assertEquals(500, response.getStatus());
     }
