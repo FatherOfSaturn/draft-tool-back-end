@@ -15,19 +15,18 @@ permissions:
 
 jobs:
   build-and-publish:
-    # Pinned to the Ubuntu 24.04 image: MongoDB 8.x refuses to start on Linux
-    # kernels 6.19 through 7.0.13 (SERVER-121912, TCMalloc/rseq). The
-    # ubuntu-latest image now ships such a kernel, which kills the service
-    # container before any step runs. Ubuntu 24.04 runners use kernel 6.x.
+    # Pinned runner image (avoid surprise moves of ubuntu-latest).
     runs-on: ubuntu-24.04
 
     # The Quarkus test profile connects to mongodb://127.0.0.1:27017.
-    # The service container publishes that port on the runner; the wait step
-    # below verifies it and starts a container directly if the service is not
-    # reachable (self-hosted or restricted runners), with diagnostics.
+    # MongoDB 7.0 is used because MongoDB 8.x deliberately refuses to start on
+    # Linux kernels 6.19 through 7.0.13 (SERVER-121912, TCMalloc/rseq) and the
+    # GitHub runner kernels are in that range; 7.0 is supported on all kernels.
+    # The wait step below verifies the port and starts a container directly if
+    # the service is not reachable (restricted/self-hosted runners).
     services:
       mongodb:
-        image: mongo:8.0.34
+        image: mongo:7.0.45
         ports:
           - "27017:27017"
         options: >-
@@ -67,7 +66,7 @@ jobs:
 
           echo "Service container not reachable; starting MongoDB directly"
           docker rm -f ci-mongodb >/dev/null 2>&1 || true
-          docker run -d --name ci-mongodb -p 27017:27017 mongo:8.0.34
+          docker run -d --name ci-mongodb -p 27017:27017 mongo:7.0.45
 
           for i in $(seq 1 30); do
             if mongo_up; then
