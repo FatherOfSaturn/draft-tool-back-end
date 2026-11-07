@@ -19,6 +19,29 @@ Nothing on an HTTP request path may block an event-loop thread; if you
 add a blocking client, offload it with `runSubscriptionOn` or convert it
 to a reactive API.
 
+## Test coverage
+
+The automated suites verify, against a real MongoDB:
+
+- every REST endpoint and its exact JSON wire shape (field names/order) —
+  these wire-format tests were captured against the pre-refactor code and
+  have stayed green through the Quarkus 3.40/reactive migration;
+- the Scryfall and CubeCobra integrations over **real HTTP**: the reactive
+  REST clients are pointed at an in-process stub (`StubExternalApis`) that
+  serves canned API responses, so config-key URL resolution, request
+  building, JSON decoding, `Uni` completion and non-2xx failure handling
+  are exercised end-to-end (including a full `POST /game` that downloads
+  the cube over HTTP);
+- the Scryfall card cache against real MongoDB: document shape, searchable
+  `id`/`name` fields, full DTO round-trip, and cache-served reads with an
+  unreachable API URL (proving no fallback call happens);
+- local JWT issue/verify (HS256) and token revocation via the login flows.
+
+Only these need manual verification after deployment: a real Google OAuth
+login (the JWKS/RS256 path; tests use dev-mode tokens), live Scryfall
+rate-limit behaviour (429/Retry-After), and the Scryfall bulk-data import
+job (downloads hundreds of MB and is disabled in tests).
+
 ## Prerequisites
 
 - Java 25 (Gradle 9.9 wrapper ships with the repo)
