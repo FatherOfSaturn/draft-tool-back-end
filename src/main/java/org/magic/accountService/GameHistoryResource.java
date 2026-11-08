@@ -45,7 +45,6 @@ public class GameHistoryResource {
             description = "Returns the authenticated caller's game history aggregated across all draft types, " +
                     "sorted newest first.")
     public Uni<List<GameHistoryEntry>> getGameHistory(@Context final SecurityContext securityContext) {
-        return Uni.createFrom().item(() ->
-                gameHistoryService.getGameHistory(securityContext.getUserPrincipal().getName()));
+        return gameHistoryService.getGameHistory(securityContext.getUserPrincipal().getName());
     }
 }

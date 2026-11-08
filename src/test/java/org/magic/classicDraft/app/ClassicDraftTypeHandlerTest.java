@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicGameCreationInfo;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
-import org.magic.classicDraft.api.DraftDirection;
+import org.magic.common.game.GameState;
+import org.magic.common.game.DraftDirection;
 import org.magic.classicDraft.app.GameCoordination.ClassicGameCoordinationWorker;
 import org.magic.lobbyService.api.LobbyPlayer;
 import org.mockito.ArgumentCaptor;
@@ -34,7 +34,7 @@ class ClassicDraftTypeHandlerTest {
         ClassicDraftTypeHandler handler = new ClassicDraftTypeHandler(gameWorker);
 
         ClassicGameInfo created = new ClassicGameInfo("generated-id", "cube-1", "classic",
-                List.of(), ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                List.of(), GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
         when(gameWorker.startGame(any())).thenReturn(Uni.createFrom().item(created));
 
         List<LobbyPlayer> players = List.of(
@@ -63,7 +63,7 @@ class ClassicDraftTypeHandlerTest {
         ClassicDraftTypeHandler handler = new ClassicDraftTypeHandler(gameWorker);
 
         ClassicGameInfo created = new ClassicGameInfo("generated-id", "cube-1", "classic",
-                List.of(), ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                List.of(), GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
         when(gameWorker.startGame(any())).thenReturn(Uni.createFrom().item(created));
 
         List<LobbyPlayer> players = List.of(

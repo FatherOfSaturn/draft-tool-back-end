@@ -15,7 +15,25 @@ permissions:
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
+    # Pinned runner image (avoid surprise moves of ubuntu-latest).
+    runs-on: ubuntu-24.04
+
+    # The Quarkus test profile connects to mongodb://127.0.0.1:27017.
+    # MongoDB 7.0 is used because MongoDB 8.x deliberately refuses to start on
+    # Linux kernels 6.19 through 7.0.13 (SERVER-121912, TCMalloc/rseq) and the
+    # GitHub runner kernels are in that range; 7.0 is supported on all kernels.
+    # The wait step below verifies the port and starts a container directly if
+    # the service is not reachable (restricted/self-hosted runners).
+    services:
+      mongodb:
+        image: mongo:7.0.45
+        ports:
+          - "27017:27017"
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Checkout code
@@ -24,11 +42,49 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v6
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Ensure MongoDB is reachable
+        run: |
+          set -uo pipefail
+          mongo_up() { timeout 2 bash -c '</dev/tcp/127.0.0.1/27017' 2>/dev/null; }
+
+          echo "Service containers:"
+          docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}' || true
+
+          for i in $(seq 1 15); do
+            if mongo_up; then
+              echo "MongoDB service container reachable on 127.0.0.1:27017"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Service container not reachable; starting MongoDB directly"
+          docker rm -f ci-mongodb >/dev/null 2>&1 || true
+          docker run -d --name ci-mongodb -p 27017:27017 mongo:7.0.45
+
+          for i in $(seq 1 30); do
+            if mongo_up; then
+              echo "MongoDB container ready on 127.0.0.1:27017"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "MongoDB did not become reachable; container state and logs:"
+          docker ps -a || true
+          docker logs ci-mongodb || true
+          exit 1
+
+      - name: Integration tests (MongoDB-backed end-to-end)
+        env:
+          MONGO_TEST_CONNECTION_STRING: mongodb://127.0.0.1:27017
+        run: ./gradlew integrationTest
 
       - name: Determine tags, build, and publish
         env:

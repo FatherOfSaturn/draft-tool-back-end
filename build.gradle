@@ -28,7 +28,7 @@ plugins {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = "0.8.14"
 }
 
 repositories {
@@ -39,7 +39,6 @@ repositories {
 dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-mutiny'
-    implementation 'io.quarkus:quarkus-resteasy-client-mutiny'
     implementation 'io.quarkus:quarkus-smallrye-health'
     implementation 'io.quarkus:quarkus-smallrye-openapi'
     implementation 'io.quarkus:quarkus-config-yaml'
@@ -49,12 +48,16 @@ dependencies {
     implementation 'io.quarkus:quarkus-smallrye-jwt-build'
     implementation 'io.quarkus:quarkus-hibernate-validator'
 
-    implementation 'io.quarkus:quarkus-resteasy-jackson'
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+    implementation 'io.quarkus:quarkus-rest-client'
+    implementation 'io.quarkus:quarkus-rest-client-jackson'
     implementation 'io.quarkus:quarkus-arc'
     runtimeOnly 'org.jboss.logmanager:log4j2-jboss-logmanager'
     implementation 'org.apache.logging.log4j:log4j-api:2.25.5'
 
     implementation 'io.quarkus:quarkus-mongodb-client'
+    implementation 'io.quarkus:quarkus-mongodb-panache'
     implementation 'org.mongodb:mongodb-driver-sync:5.14.0'
     implementation 'org.mongodb:mongodb-driver-core:5.14.0'
     implementation 'org.mongodb:bson:5.14.0'
@@ -63,62 +66,59 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
 
-    testImplementation 'org.mockito:mockito-core:5.14.2'
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    // Order matters: Lombok, then the Lombok/MapStruct binding, then MapStruct.
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+    testImplementation 'org.mockito:mockito-core:5.20.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.20.0'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
     testImplementation 'commons-io:commons-io:2.22.0'
     testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
     testImplementation 'io.rest-assured:rest-assured'
 }
 
 configurations.all {
-    resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'io.netty') {
-            details.useVersion '4.1.137.Final'
-            details.because 'CVE fixes: HTTP request smuggling (CVE-2026-33870, CVE-2026-42580, CVE-2026-42585), HTTP/2 CONTINUATION flood (CVE-2026-33871), decompression bomb (CVE-2026-42587), HTTP/2 reset (CVE-2026-50560), SNI allocation (CVE-2026-45416), IPv6 filter bypass (CVE-2026-44249), hostname verification (CVE-2026-50010), proxy header injection (CVE-2026-42578), HTTP/2 ByteBuf leak (CVE-2026-56819), CORS bypass (CVE-2026-56746)'
-        }
-        if (details.requested.group == 'io.vertx') {
-            details.useVersion '4.5.27'
-            details.because 'CVE fix: unbounded server-side SNI SslContext cache growth DoS (CVE-2026-6860)'
-        }
-        if (details.requested.group == 'com.fasterxml.jackson.core' &&
-                details.requested.name in ['jackson-databind', 'jackson-core']) {
-            details.useVersion '2.18.11'
-            details.because 'CVE fixes: @JsonIgnore/JsonIgnoreProperties/JsonView bypasses (CVE-2026-59888, CVE-2026-59889, CVE-2026-54515, GHSA-mhm7-754m-9p8w), polymorphic validator bypasses (CVE-2026-54512, CVE-2026-54513), InetSocketAddress DNS SSRF (CVE-2026-54514), async parser DoS (GHSA-r7wm-3cxj-wff9, CVE-2026-18401), forward-reference completion DoS (GHSA-cxp5-3px4-pw24), unknown raw type ID retention DoS (GHSA-wv8q-qhhj-9h54), _reportInvalidToken error-token DoS in jackson-core (GHSA-7hhh-6rmp-j9qf), NumberInput.PATTERN_FLOAT ReDoS in jackson-core (GHSA-p6pp-m3f8-5c89)'
-        }
-        if (details.requested.group == 'org.apache.logging.log4j' && details.requested.name == 'log4j-api') {
-            details.useVersion '2.25.5'
-            details.because 'CVE fix: improper encoding of non-finite floating-point values during MDC/RingBuffer SafeFormatter logging (GHSA-qv9r-c865-cp47). quarkus-bom 3.20.6.2 strictly constrains log4j-api to 2.24.3 (Forced), which silently overrides the Dependabot bump in the implementation block, so it must be pinned here.'
-        }
-        if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
-            details.useVersion '33.7.2-jre'
-            details.because 'CVE fix: CompactHashMap/CompactHashSet/MapMakerInternalMap deserialization DoS (GHSA-xxph-c9ww-hj94)'
-        }
-        if (details.requested.group == 'org.jsoup' && details.requested.name == 'jsoup') {
-            details.useVersion '1.23.2'
-            details.because 'CVE fix: XmlTreeBuilder memory exhaustion via deeply nested element names (GHSA-65r4-943x-97jj)'
-        }
-        if (details.requested.group == 'io.opentelemetry' &&
-                details.requested.name in ['opentelemetry-api', 'opentelemetry-context']) {
-            details.useVersion '1.67.0'
-            details.because 'CVE fixes: W3C tracestate quadratic CPU consumption (GHSA-ccrj-gw8r-854m), W3C Baggage Propagator unbounded memory allocation (GHSA-rcgg-9c38-7xpx)'
-        }
-    }
+    // Version pins (netty, vert.x, jackson, guava, jsoup, opentelemetry) were
+    // removed with the Quarkus 3.40 LTS upgrade: the platform BOM now ships
+    // patched versions carrying the original CVE fixes. Log4j is likewise
+    // BOM-managed and resolves to 2.26.0, which already contains the 2.25.5
+    // MDC/SafeFormatter vulnerability fix, so no explicit pin is needed.
 }
 
 group 'org.magic.draft'
 version '1.0.0-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    useJUnitPlatform {
+        // MongoDB-backed end-to-end tests run in the dedicated integrationTest
+        // task, so `build` works on machines/CI runners without a database.
+        excludeTags 'mongo'
+    }
     finalizedBy jacocoTestReport
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs the MongoDB-backed end-to-end tests (requires MongoDB on localhost:27017)'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    useJUnitPlatform {
+        includeTags 'mongo'
+    }
+    shouldRunAfter test
 }
 compileJava {
     options.encoding = 'UTF-8'

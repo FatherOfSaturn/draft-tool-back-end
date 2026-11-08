@@ -2,7 +2,7 @@ package org.magic.common.external;
 
 import java.util.List;
 
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.card.Card;
 
 /**
  * Result of a batch card lookup, containing successfully resolved cards

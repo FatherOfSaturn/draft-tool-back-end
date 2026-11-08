@@ -12,8 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.common.api.scryfall.ScryfallCard;
 import org.magic.common.external.BatchResult;
 import org.magic.common.external.ScryfallCardService;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardDetails;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardDetails;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
