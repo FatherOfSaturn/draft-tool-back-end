@@ -109,17 +109,19 @@ public class BurnGameCoordinationWorker {
         return dbHandler.findGame(gameID)
                 .chain(gameInfo -> {
                     if (gameInfo.getGameState() != GameState.GAME_STARTED) {
-                        throw new IllegalStateException("Game " + gameID + " is not in progress. Current state: "
-                                + gameInfo.getGameState());
+                        throw new WebApplicationException("Game " + gameID + " is not in progress. Current state: "
+                                + gameInfo.getGameState(), Response.Status.CONFLICT);
                     }
 
                     BurnPlayer player = gameInfo.getPlayers().stream()
                             .filter(p -> playerToken != null && playerToken.equals(p.getPlayerToken()))
                             .findFirst()
-                            .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                            .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(
+                                    "The player token does not belong to this game"));
 
                     if (player.getActiveCardPacks().isEmpty()) {
-                        throw new IllegalStateException("Player has no active pack to draft from");
+                        throw new WebApplicationException("Player has no active pack to draft from",
+                                Response.Status.CONFLICT);
                     }
 
                     CardPack currentPack = player.getActiveCardPacks().get(0);
@@ -320,6 +322,10 @@ public class BurnGameCoordinationWorker {
                     if (doc == null) {
                         throw new WebApplicationException(Response.Status.NOT_FOUND);
                     }
+                    if (!doc.getBoolean("playerFound", false)) {
+                        throw new jakarta.ws.rs.NotAuthorizedException(
+                                "The player token does not belong to this game");
+                    }
                     return Uni.createFrom().item(toDraftCheck(doc));
                 });
     }
@@ -337,7 +343,8 @@ public class BurnGameCoordinationWorker {
                     BurnPlayer player = game.getPlayers().stream()
                             .filter(p -> playerToken != null && playerToken.equals(p.getPlayerToken()))
                             .findFirst()
-                            .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                            .orElseThrow(() -> new jakarta.ws.rs.NotAuthorizedException(
+                                    "The player token does not belong to this game"));
 
                     List<CardPack> dealtCardPacks = player.getDealtCardPacks();
                     int cardsLeftToDraft = dealtCardPacks.size()

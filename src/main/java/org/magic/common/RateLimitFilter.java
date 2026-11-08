@@ -23,7 +23,7 @@ import jakarta.ws.rs.ext.Provider;
  *   <li>{@code /scryfall/...} — guards cost-amplifying proxied external API calls</li>
  *   <li>{@code /lobby} — guards lobby create/join/poll churn</li>
  *   <li>{@code POST /support} — guards support-request creation spam</li>
- *   <li>{@code /game}, {@code /classic-game} — guards draft actions, checks, and merges</li>
+ *   <li>{@code /game}, {@code /classic-game}, {@code /burn-game} — guards draft actions and checks</li>
  * </ul>
  * Configured via {@code rate-limit.*} properties. When a request is over the
  * limit a 429 with a {@code Retry-After} header is returned.
@@ -124,7 +124,7 @@ public class RateLimitFilter implements ContainerRequestFilter {
         if (path.startsWith("support") && "POST".equalsIgnoreCase(method)) {
             return new Limit(supportMax, supportWindow);
         }
-        if (path.startsWith("game") || path.startsWith("classic-game")) {
+        if (path.startsWith("game") || path.startsWith("classic-game") || path.startsWith("burn-game")) {
             return new Limit(gameMax, gameWindow);
         }
         return null;

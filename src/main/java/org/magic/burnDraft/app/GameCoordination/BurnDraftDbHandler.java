@@ -51,28 +51,31 @@ public class BurnDraftDbHandler implements ReactivePanacheMongoRepository<BurnGa
      * player identified by {@code playerToken} has an active pack with cards.
      */
     public Uni<Document> findDraftCheck(final String gameID, final String playerToken) {
-        Document playerVar = new Document("player", new Document(
-                "$arrayElemAt", List.of(
-                        new Document("$filter", new Document()
-                                .append("input", "$players")
-                                .append("as", "p")
-                                .append("cond", new Document("$eq", List.of("$$p.playerToken", playerToken)))
-                        ), 0
-                )
-        ));
+        Document matchingPlayers = new Document("$filter", new Document()
+                .append("input", "$players")
+                .append("as", "p")
+                .append("cond", new Document("$eq", List.of("$$p.playerToken", playerToken))));
+        Document playerExpression = new Document("$arrayElemAt", List.of(matchingPlayers, 0));
+        Document playerVar = new Document("player", playerExpression);
 
         Document inExpr = new Document("$ifNull", List.of("$$player.activeCardPacks", List.of()));
+
+        Document canDraftExpression = new Document("$gt", List.of(
+                new Document("$size", new Document("$let", new Document()
+                        .append("vars", playerVar)
+                        .append("in", inExpr)
+                )),
+                0));
+
+        Object playerFoundExpression = new Document("$gt", List.of(
+                new Document("$size", matchingPlayers),
+                0));
 
         Bson projectStage = Aggregates.project(Projections.fields(
                 Projections.excludeId(),
                 Projections.include("gameState"),
-                Projections.computed("canDraft", new Document("$gt", List.of(
-                        new Document("$size", new Document("$let", new Document()
-                                .append("vars", playerVar)
-                                .append("in", inExpr)
-                        )),
-                        0
-                )))
+                Projections.computed("canDraft", canDraftExpression),
+                Projections.computed("playerFound", playerFoundExpression)
         ));
 
         return mongoDatabase().getCollection(COLLECTION, Document.class)

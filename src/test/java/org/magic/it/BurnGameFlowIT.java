@@ -140,6 +140,18 @@ class BurnGameFlowIT {
         assertEquals(7, game.get("players").get(0).get("dealtCardPacks").get(0)
                 .get("cardsInPack").size());
 
+        // An unknown player token is rejected on every player-scoped endpoint.
+        given().header("X-Player-Token", "not-a-token")
+                .when().get("/burn-game/" + gameId + "/draftCheck")
+                .then().statusCode(401);
+        given().header("X-Player-Token", "not-a-token")
+                .when().get("/burn-game/" + gameId + "/draftData")
+                .then().statusCode(401);
+        given().contentType("application/json").header("X-Player-Token", "not-a-token")
+                .body(TestJson.toJson(Map.of("draftCardIds", List.of(), "burnCardIds", List.of())))
+                .when().post("/burn-game/" + gameId + "/draft")
+                .then().statusCode(401);
+
         // The first pack requires drafting 2 and burning 2; an incomplete turn is rejected.
         JsonNode data = draftData(gameId, tokens.get(0));
         JsonNode firstPack = data.get("player").get("activeCardPacks").get(0);

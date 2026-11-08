@@ -23,6 +23,10 @@ Burn draft lobby config keys, with defaults:
 | `cardsBurnedPerPack` | 1 | cards a player burns per turn |
 | `remainderPolicy` | `burn_extras` | partial-pass handling: `burn_extras` or `draft_extras` |
 
+The full frontend contract (schemas, turn rules, error codes, examples) is in
+[`docs/burn-draft-api.md`](docs/burn-draft-api.md); a live OpenAPI document is
+served at `/q/openapi` (Swagger UI at `/q/swagger-ui`).
+
 A turn is submitted as `POST /burn-game/{gameID}/draft` with
 `{ "draftCardIds": [...], "burnCardIds": [...] }` and the `X-Player-Token`
 header. When a pack holds fewer cards than the draft+burn quota, the turn drafts
