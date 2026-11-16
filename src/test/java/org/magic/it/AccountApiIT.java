@@ -169,4 +169,18 @@ class AccountApiIT {
                 .extract().asString());
         return response.get("jwt").asText();
     }
+
+    /** Logs in a regular (non-admin) test user and returns its JWT. */
+    static String loginUser() {
+        long suffix = System.nanoTime();
+        JsonNode response = It.tree(given()
+                .contentType("application/json")
+                .body("{\"idToken\": \"%s\"}".formatted(
+                        It.devIdToken("it-user-sub-" + suffix, "it-metrics-" + suffix + "@example.com", "IT User")))
+                .when().post("/account/login")
+                .then()
+                .statusCode(200)
+                .extract().asString());
+        return response.get("jwt").asText();
+    }
 }
