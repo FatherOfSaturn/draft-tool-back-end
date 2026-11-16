@@ -19,34 +19,74 @@ import jakarta.inject.Inject;
  * Reactive service layer for support requests. Handles creation, retrieval,
  * updates, status changes, and deletion of {@link SupportRequest} documents.
  * Delegates persistence to {@link SupportDbHandler}.
+ *
+ * <p>Creation runs the anti-spam gate first ({@link AntiSpamService}): the
+ * honeypot short-circuits with a non-persisted fake success, mode-gated
+ * form-token/Turnstile checks can reject, the per-email limit can reject with
+ * 429, and a spam-looking description is quarantined rather than dropped.</p>
  */
 @ApplicationScoped
 public class SupportWorker {
     private static final Logger LOGGER = LogManager.getLogger(SupportWorker.class);
 
     private final SupportDbHandler dbHandler;
+    private final AntiSpamService antiSpamService;
 
     @Inject
-    public SupportWorker(final SupportDbHandler dbHandler) {
+    public SupportWorker(final SupportDbHandler dbHandler, final AntiSpamService antiSpamService) {
         this.dbHandler = dbHandler;
+        this.antiSpamService = antiSpamService;
     }
 
     /**
-     * Creates a new support request with {@link SupportStatus#NEW} and current timestamps.
+     * Handles a new support-request submission.
+     *
+     * <p>Order of checks: honeypot → mode-gated form-token/Turnstile →
+     * per-email rate limit → spam heuristic → persist. A honeypot hit returns
+     * an id-shaped success response for an entity that is never saved, so the
+     * caller cannot distinguish it from a real submission.</p>
      *
      * @param request the creation payload
-     * @return a {@link Uni} emitting the persisted {@link SupportRequest} with generated ID
+     * @param clientIp the resolved client IP (used for Turnstile {@code remoteip})
+     * @return a {@link Uni} emitting the persisted {@link SupportRequest} (or
+     *         the non-persisted honeypot placeholder) with a generated ID
      */
-    public Uni<SupportRequest> createRequest(final CreateSupportRequest request) {
+    public Uni<SupportRequest> createRequest(final CreateSupportRequest request, final String clientIp) {
+        if (antiSpamService.isHoneypot(request)) {
+            Instant now = Instant.now();
+            SupportRequest fake = new SupportRequest(
+                    null,
+                    request.title(),
+                    request.description(),
+                    request.contactEmail(),
+                    request.priority(),
+                    null,
+                    SupportStatus.NEW,
+                    request.type(),
+                    now,
+                    now);
+            fake.setId(new ObjectId().toHexString());
+            return Uni.createFrom().item(fake);
+        }
+
+        return antiSpamService.prePersistChecks(request, clientIp)
+                .invoke(() -> antiSpamService.checkEmailRate(request.contactEmail()))
+                .chain(ignored -> persist(request));
+    }
+
+    private Uni<SupportRequest> persist(final CreateSupportRequest request) {
         Instant now = Instant.now();
+        SupportStatus status = SupportSpamHeuristic.isLikelySpam(request.description())
+                ? SupportStatus.QUARANTINED
+                : SupportStatus.NEW;
         SupportRequest supportRequest = new SupportRequest(
                 null,
                 request.title(),
                 request.description(),
                 request.contactEmail(),
                 request.priority(),
-                request.accountID(),
-                SupportStatus.NEW,
+                null,
+                status,
                 request.type(),
                 now,
                 now
@@ -54,8 +94,8 @@ public class SupportWorker {
         supportRequest.setId(new ObjectId().toHexString());
 
         return dbHandler.addRequest(supportRequest)
-                .invoke(ignored -> LOGGER.info("Created SupportRequest: {} - {}",
-                        supportRequest.getId(), request.title()))
+                .invoke(ignored -> LOGGER.info("Created SupportRequest: {} - {} ({})",
+                        supportRequest.getId(), request.title(), status))
                 .replaceWith(supportRequest);
     }
 
@@ -83,7 +123,7 @@ public class SupportWorker {
      * Updates the mutable fields of an existing support request.
      * Only non-null fields in the update payload are applied.
      *
-     * @param id      the request ID
+     * @param id the request ID
      * @param request the fields to update
      * @return a {@link Uni} emitting the updated {@link SupportRequest}
      * @throws IllegalStateException if the request is not found

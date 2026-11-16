@@ -2,16 +2,21 @@ package org.magic.supportService;
 
 import java.util.List;
 
+import org.magic.common.ClientIpResolver;
+import org.magic.supportService.api.CreateSupportAck;
 import org.magic.supportService.api.CreateSupportRequest;
+import org.magic.supportService.api.FormTokenResponse;
 import org.magic.supportService.api.PublicSupportRequest;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
 import org.magic.supportService.api.UpdateSupportRequest;
+import org.magic.supportService.app.FormTokenService;
 import org.magic.supportService.app.SupportWorker;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -43,24 +48,55 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 public class SupportResource {
 
     private final SupportWorker supportWorker;
+    private final FormTokenService formTokenService;
+    private final ClientIpResolver clientIpResolver;
 
-    public SupportResource(final SupportWorker supportWorker) {
+    public SupportResource(final SupportWorker supportWorker,
+                           final FormTokenService formTokenService,
+                           final ClientIpResolver clientIpResolver) {
         this.supportWorker = supportWorker;
+        this.formTokenService = formTokenService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     /**
      * Creates a new support request.
      *
      * @param request the creation payload
-     * @return the created request with generated ID and timestamps
+     * @param routingContext the Vert.x request context, used to resolve the
+     *        client IP for Turnstile verification
+     * @return a minimal acknowledgment carrying only the generated ticket ID
      */
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create a support request",
-            description = "Creates a new support request. Anonymous; rate-limited.")
-    public Uni<SupportRequest> createRequest(@Valid final CreateSupportRequest request) {
-        return supportWorker.createRequest(request);
+            description = "Creates a new support request. Anonymous; rate-limited. "
+                    + "Returns only the generated ticket ID. Submissions with the hidden honeypot "
+                    + "field filled succeed without creating a ticket. Depending on "
+                    + "support.anti-spam.mode, a signed form token (from GET /support/form-token) "
+                    + "and a Cloudflare Turnstile token must be supplied.")
+    public Uni<CreateSupportAck> createRequest(@Valid final CreateSupportRequest request,
+                                               final RoutingContext routingContext) {
+        return supportWorker.createRequest(request, clientIpResolver.fromRoutingContext(routingContext))
+                .map(created -> new CreateSupportAck(created.getId()));
+    }
+
+    /**
+     * Issues a signed form token that must accompany a support-request
+     * submission when the anti-spam mode enforces it. The token is stateless
+     * (HMAC over the issued-at timestamp) and valid for a bounded window.
+     *
+     * @return the signed token
+     */
+    @GET
+    @Path("/form-token")
+    @Operation(summary = "Issue a support form token",
+            description = "Returns an HMAC-signed token embedding the issue time. Submit it as "
+                    + "formToken on POST /support when support.anti-spam.mode enforces it. Tokens "
+                    + "younger than a few seconds or older than two hours are rejected.")
+    public FormTokenResponse issueFormToken() {
+        return new FormTokenResponse(formTokenService.issue());
     }
 
     /**
@@ -117,7 +153,8 @@ public class SupportResource {
     public Uni<List<PublicSupportRequest>> getPublicRequests() {
         return supportWorker.getAllRequests()
                 .map(requests -> requests.stream()
-                        .filter(req -> req.getStatus() != SupportStatus.DELETED)
+                        .filter(req -> req.getStatus() != SupportStatus.DELETED
+                                && req.getStatus() != SupportStatus.QUARANTINED)
                         .map(PublicSupportRequest::from)
                         .toList());
     }

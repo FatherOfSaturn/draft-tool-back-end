@@ -87,6 +87,7 @@ class SupportRequestTest {
         assertEquals(SupportStatus.IN_PROGRESS, SupportStatus.fromString("in_progress"));
         assertEquals(SupportStatus.BLOCKED, SupportStatus.fromString("blocked"));
         assertEquals(SupportStatus.COMPLETED, SupportStatus.fromString("completed"));
+        assertEquals(SupportStatus.QUARANTINED, SupportStatus.fromString("quarantined"));
         assertEquals(SupportStatus.DELETED, SupportStatus.fromString("deleted"));
         assertEquals(SupportStatus.NEW, SupportStatus.fromString("NEW"));
     }
@@ -97,6 +98,7 @@ class SupportRequestTest {
         assertEquals("in_progress", SupportStatus.IN_PROGRESS.getDescription());
         assertEquals("blocked", SupportStatus.BLOCKED.getDescription());
         assertEquals("completed", SupportStatus.COMPLETED.getDescription());
+        assertEquals("quarantined", SupportStatus.QUARANTINED.getDescription());
         assertEquals("deleted", SupportStatus.DELETED.getDescription());
     }
 
@@ -150,23 +152,25 @@ class SupportRequestTest {
     @Test
     void testCreateSupportRequestValidation() {
         assertThrows(NullPointerException.class, () ->
-                new CreateSupportRequest(null, "desc", "e@e.com", SupportPriority.HIGH, null, SupportType.BUG_FIX));
+                new CreateSupportRequest(null, "desc", "e@e.com", SupportPriority.HIGH, null, null, null, SupportType.BUG_FIX));
         assertThrows(NullPointerException.class, () ->
-                new CreateSupportRequest("title", null, "e@e.com", SupportPriority.HIGH, null, SupportType.BUG_FIX));
+                new CreateSupportRequest("title", null, "e@e.com", SupportPriority.HIGH, null, null, null, SupportType.BUG_FIX));
         assertThrows(NullPointerException.class, () ->
-                new CreateSupportRequest("title", "desc", null, SupportPriority.HIGH, null, SupportType.BUG_FIX));
+                new CreateSupportRequest("title", "desc", null, SupportPriority.HIGH, null, null, null, SupportType.BUG_FIX));
         assertThrows(NullPointerException.class, () ->
-                new CreateSupportRequest("title", "desc", "e@e.com", null, null, SupportType.BUG_FIX));
+                new CreateSupportRequest("title", "desc", "e@e.com", null, null, null, null, SupportType.BUG_FIX));
         assertThrows(NullPointerException.class, () ->
-                new CreateSupportRequest("title", "desc", "e@e.com", SupportPriority.HIGH, null, null));
+                new CreateSupportRequest("title", "desc", "e@e.com", SupportPriority.HIGH, null, null, null, null));
     }
 
     @Test
-    void testCreateSupportRequestWithNullAccountID() {
+    void testCreateSupportRequestAntiSpamFieldsAreOptional() {
         CreateSupportRequest request = new CreateSupportRequest(
-                "title", "desc", "e@e.com", SupportPriority.MEDIUM, null, SupportType.NEW_FEATURE);
+                "title", "desc", "e@e.com", SupportPriority.MEDIUM, null, null, null, SupportType.NEW_FEATURE);
 
-        assertNull(request.accountID());
+        assertNull(request.website());
+        assertNull(request.formToken());
+        assertNull(request.turnstileToken());
         assertEquals("title", request.title());
     }
 

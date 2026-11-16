@@ -45,12 +45,24 @@ class SupportApiIT {
                 .then()
                 .statusCode(200)
                 .extract().asString());
-        It.assertFieldOrder(created, List.of(
-                "id", "title", "description", "contactEmail", "priority",
-                "accountID", "status", "type", "createdOnDate", "lastStatusChangeDate"));
-        assertEquals("NEW", created.get("status").asText());
+        // The create response is a minimal ack: only the ticket ID, no content
+        // or PII echo back to the anonymous caller.
+        It.assertFieldOrder(created, List.of("id"));
         String id = created.get("id").asText();
         assertFalse(id.isBlank());
+
+        JsonNode statusProbe = It.tree(given()
+                .when().get("/support/public")
+                .then()
+                .statusCode(200)
+                .extract().asString());
+        String createdStatus = null;
+        for (JsonNode entry : statusProbe) {
+            if (entry.get("id").asText().equals(id)) {
+                createdStatus = entry.get("status").asText();
+            }
+        }
+        assertEquals("NEW", createdStatus);
 
         // --- Public view: PII-free --------------------------------------------
         String single = given()
@@ -132,5 +144,170 @@ class SupportApiIT {
                 .when().get("/support/{id}", id)
                 .then()
                 .statusCode(404);
+    }
+
+    private static JsonNode adminSupportIds(final String adminJwt) {
+        return It.tree(given()
+                .header("Authorization", "Bearer " + adminJwt)
+                .when().get("/support/")
+                .then()
+                .statusCode(200)
+                .extract().asString());
+    }
+
+    private static boolean containsId(final JsonNode list, final String id) {
+        for (JsonNode entry : list) {
+            if (entry.get("id").asText().equals(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void maliciousAndOversizedBodiesAreRejectedWithoutPersisting() {
+        String adminJwt = AccountApiIT.loginAdmin();
+        int before = adminSupportIds(adminJwt).size();
+
+        // Mongo-operator-shaped payload: object where a string is expected.
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "injected",
+                        "description": "attempt",
+                        "contactEmail": {"$ne": null},
+                        "priority": "medium",
+                        "type": "bug_fix"
+                      }""")
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        // Unknown fields are rejected.
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "injected",
+                        "description": "attempt",
+                        "contactEmail": "it-spam@example.com",
+                        "priority": "medium",
+                        "type": "bug_fix",
+                        "evil": {"$gt": ""}
+                      }""")
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        // Oversized fields are rejected.
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "%s",
+                        "description": "attempt",
+                        "contactEmail": "it-spam@example.com",
+                        "priority": "medium",
+                        "type": "bug_fix"
+                      }""".formatted("x".repeat(201)))
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "oversized",
+                        "description": "%s",
+                        "contactEmail": "it-spam@example.com",
+                        "priority": "medium",
+                        "type": "bug_fix"
+                      }""".formatted("y".repeat(4001)))
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        // Invalid email format is rejected.
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "bad email",
+                        "description": "attempt",
+                        "contactEmail": "not-an-email",
+                        "priority": "medium",
+                        "type": "bug_fix"
+                      }""")
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        // Invalid enum values are rejected.
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "bad enum",
+                        "description": "attempt",
+                        "contactEmail": "it-spam@example.com",
+                        "priority": "ultra",
+                        "type": "bug_fix"
+                      }""")
+                .when().post("/support")
+                .then()
+                .statusCode(400);
+
+        assertEquals(before, adminSupportIds(adminJwt).size(), "rejected submissions must not persist");
+    }
+
+    @Test
+    void honeypotSubmissionsLookSuccessfulButCreateNoTicket() {
+        String adminJwt = AccountApiIT.loginAdmin();
+        int before = adminSupportIds(adminJwt).size();
+
+        JsonNode ack = It.tree(given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "IT honeypot %s",
+                        "description": "Bot filled the hidden field.",
+                        "contactEmail": "it-bot-%s@example.com",
+                        "priority": "low",
+                        "type": "misc_support",
+                        "website": "http://spam.example"
+                      }""".formatted(Long.toHexString(System.nanoTime()), Long.toHexString(System.nanoTime())))
+                .when().post("/support")
+                .then()
+                .statusCode(200)
+                .extract().asString());
+
+        // Indistinguishable from a real success to the client...
+        It.assertFieldOrder(ack, List.of("id"));
+        String fakeId = ack.get("id").asText();
+        assertFalse(fakeId.isBlank());
+
+        // ...but nothing was persisted.
+        assertEquals(before, adminSupportIds(adminJwt).size());
+        given().when().get("/support/{id}", fakeId).then().statusCode(404);
+    }
+
+    @Test
+    void accountIDIsNoLongerAcceptedFromAnonymousCallers() {
+        given()
+                .contentType("application/json")
+                .body("""
+                      {
+                        "title": "spoofed attribution",
+                        "description": "Should not be accepted.",
+                        "contactEmail": "it-spoof@example.com",
+                        "priority": "low",
+                        "accountID": "507f1f77bcf86cd799439099",
+                        "type": "bug_fix"
+                      }""")
+                .when().post("/support")
+                .then()
+                .statusCode(400);
     }
 }
