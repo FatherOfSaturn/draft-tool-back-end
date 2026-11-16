@@ -71,6 +71,16 @@ public class AntiSpamService {
     }
 
     /**
+     * Whether the signed form token is currently enforced. Exposed for
+     * deployment-configuration tests and diagnostics.
+     *
+     * @return {@code true} when a missing/invalid form token rejects a submission
+     */
+    public boolean isFormTokenEnforced() {
+        return mode.enforcesFormToken();
+    }
+
+    /**
      * Detects a filled honeypot field. Must be called first: a honeypot hit
      * short-circuits all further checks and persistence.
      *

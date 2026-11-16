@@ -99,6 +99,16 @@ public class TurnstileVerifier {
     }
 
     /**
+     * Whether a site secret is configured. Used by deployment-configuration
+     * tests and the startup log; never exposes the value.
+     *
+     * @return {@code true} when a non-blank secret is present
+     */
+    public boolean isSecretConfigured() {
+        return secret != null && !secret.isBlank();
+    }
+
+    /**
      * Verifies the client's Turnstile token.
      *
      * @param token the {@code cf-turnstile-response} value submitted by the client
