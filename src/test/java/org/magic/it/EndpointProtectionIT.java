@@ -51,7 +51,7 @@ class EndpointProtectionIT {
                     Map.entry("rate-limit.game.max", "1"),
                     Map.entry("rate-limit.game.window", "PT60S"),
                     Map.entry("rate-limit.support-email.enabled", "false"),
-                    Map.entry("support.anti-spam.mode", "off"),
+                    Map.entry("support.antispam.mode", "off"),
                     Map.entry("turnstile.enabled", "false"),
                     Map.entry("scryfall.cache.enabled", "false"));
         }

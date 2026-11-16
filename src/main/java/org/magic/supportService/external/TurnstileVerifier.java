@@ -90,6 +90,15 @@ public class TurnstileVerifier {
     }
 
     /**
+     * Whether Turnstile verification is active at all.
+     *
+     * @return {@code true} when the verifier is enabled
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
      * Verifies the client's Turnstile token.
      *
      * @param token the {@code cf-turnstile-response} value submitted by the client

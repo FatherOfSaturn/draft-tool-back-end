@@ -17,7 +17,7 @@ import jakarta.validation.constraints.Size;
  * non-blank value identifies a bot and the submission is silently discarded
  * server-side. {@code formToken} (signed, from {@code GET /support/form-token})
  * and {@code cf-turnstile-response} (Cloudflare Turnstile) are enforced only
- * when {@code support.anti-spam.mode} is {@code token-only} or {@code full}.</p>
+ * when {@code support.antispam.mode} is {@code token-only} or {@code full}.</p>
  *
  * <p>Strict input validation: this endpoint is deserialized with a dedicated
  * Jackson reader (see {@link SupportRequestReader}) that rejects unknown

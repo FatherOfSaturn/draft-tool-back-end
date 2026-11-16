@@ -24,7 +24,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *   <li>a honeypot field ({@code website}) — bots that fill it get a normal
  *       success response but nothing is saved; trips a Micrometer counter,</li>
  *   <li>signed form-token and Cloudflare Turnstile checks, gated by
- *       {@code support.anti-spam.mode} (see {@link AntiSpamMode}),</li>
+ *       {@code support.antispam.mode} (see {@link AntiSpamMode}),</li>
  *   <li>a per-normalized-email submission rate limit (the per-IP limits live
  *       in {@link org.magic.common.RateLimitFilter}).</li>
  * </ul>
@@ -48,7 +48,7 @@ public class AntiSpamService {
 
     @Inject
     public AntiSpamService(
-            @ConfigProperty(name = "support.anti-spam.mode", defaultValue = "off") final String mode,
+            @ConfigProperty(name = "support.antispam.mode", defaultValue = "off") final String mode,
             final FormTokenService formTokenService,
             final TurnstileVerifier turnstileVerifier,
             final RateLimiter rateLimiter,
@@ -65,6 +65,9 @@ public class AntiSpamService {
         this.emailLimitEnabled = emailLimitEnabled;
         this.emailMax = emailMax;
         this.emailWindow = emailWindow;
+        LOGGER.info("Support anti-spam configuration: mode={} (env SUPPORT_ANTISPAM_MODE), "
+                        + "form-token enforced={}, turnstile enabled={}",
+                this.mode.getDescription(), this.mode.enforcesFormToken(), turnstileVerifier.isEnabled());
     }
 
     /**

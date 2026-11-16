@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Rollout switch for the support-form anti-spam checks. Read from the
- * {@code support.anti-spam.mode} config property.
+ * {@code support.antispam.mode} config property.
  *
  * <ul>
  *   <li>{@link #OFF} — all token/Turnstile checks skipped (honeypot and rate
