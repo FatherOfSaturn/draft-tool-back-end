@@ -35,7 +35,7 @@ class SupportEmailRateLimitIT {
                     Map.entry("rate-limit.support-email.enabled", "true"),
                     Map.entry("rate-limit.support-email.max", "2"),
                     Map.entry("rate-limit.support-email.window", "PT1H"),
-                    Map.entry("support.antispam.mode", "off"),
+                    Map.entry("support.anti-spam.mode", "off"),
                     Map.entry("turnstile.enabled", "false"));
         }
     }

@@ -74,7 +74,7 @@ public class SupportResource {
             description = "Creates a new support request. Anonymous; rate-limited. "
                     + "Returns only the generated ticket ID. Submissions with the hidden honeypot "
                     + "field filled succeed without creating a ticket. Depending on "
-                    + "support.antispam.mode, a signed form token (from GET /support/form-token) "
+                    + "support.anti-spam.mode, a signed form token (from GET /support/form-token) "
                     + "and a Cloudflare Turnstile token must be supplied.")
     public Uni<CreateSupportAck> createRequest(@Valid final CreateSupportRequest request,
                                                final RoutingContext routingContext) {
@@ -93,7 +93,7 @@ public class SupportResource {
     @Path("/form-token")
     @Operation(summary = "Issue a support form token",
             description = "Returns an HMAC-signed token embedding the issue time. Submit it as "
-                    + "formToken on POST /support when support.antispam.mode enforces it. Tokens "
+                    + "formToken on POST /support when support.anti-spam.mode enforces it. Tokens "
                     + "younger than a few seconds or older than two hours are rejected.")
     public FormTokenResponse issueFormToken() {
         return new FormTokenResponse(formTokenService.issue());

@@ -33,7 +33,7 @@ class SupportIpRateLimitIT {
                     Map.entry("rate-limit.support.hourly.max", "5"),
                     Map.entry("rate-limit.support.hourly.window", "PT1H"),
                     Map.entry("rate-limit.support-email.enabled", "false"),
-                    Map.entry("support.antispam.mode", "off"),
+                    Map.entry("support.anti-spam.mode", "off"),
                     Map.entry("turnstile.enabled", "false"));
         }
     }

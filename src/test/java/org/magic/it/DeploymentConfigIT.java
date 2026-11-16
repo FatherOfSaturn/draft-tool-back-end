@@ -37,7 +37,7 @@ class DeploymentConfigIT {
         public Map<String, String> getConfigOverrides() {
             return Map.ofEntries(
                     // Only the env-var names a deployed container would provide.
-                    Map.entry("SUPPORT_ANTISPAM_MODE", "token-only"),
+                    Map.entry("QUARKUS_SUPPORT_ANTI_SPAM_MODE", "token-only"),
                     Map.entry("TURNSTILE_ENABLED", "true"),
                     Map.entry("TURNSTILE_SECRET_KEY", "it-deployment-test-secret"),
                     Map.entry("SUPPORT_FORM_TOKEN_SECRET", "it-deployment-form-token-secret-0123456789"),
@@ -55,7 +55,7 @@ class DeploymentConfigIT {
     @Test
     void antiSpamModeIsResolvedFromEnvironment() {
         assertTrue(antiSpamService.isFormTokenEnforced(),
-                "SUPPORT_ANTISPAM_MODE=token-only must enable form-token enforcement; "
+                "QUARKUS_SUPPORT_ANTI_SPAM_MODE=token-only must enable form-token enforcement; "
                         + "if this fails the mode fell back to off");
     }
 

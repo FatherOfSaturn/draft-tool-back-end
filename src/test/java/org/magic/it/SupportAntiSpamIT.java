@@ -33,7 +33,7 @@ class SupportAntiSpamIT {
         @Override
         public Map<String, String> getConfigOverrides() {
             return Map.of(
-                    "support.antispam.mode", "full",
+                    "support.anti-spam.mode", "full",
                     "turnstile.enabled", "false",
                     "rate-limit.enabled", "false",
                     "rate-limit.support-email.enabled", "false",

@@ -17,7 +17,7 @@ import jakarta.inject.Inject;
 /**
  * Reproduces the deployment path exactly: the mode is supplied only through the
  * environment-variable name Quarkus uses in production
- * ({@code SUPPORT_ANTISPAM_MODE}), not the dotted property.
+ * ({@code QUARKUS_SUPPORT_ANTI_SPAM_MODE}), not the dotted property.
  *
  * <p>Asserts a {@code support.spam.report_only} counter is incremented, which
  * only happens when the mode resolved to {@code report-only}. A 200 alone is
@@ -31,10 +31,10 @@ class EnvVarModeIT {
     public static class Profile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
-            // Deliberately do NOT set support.antispam.mode — only the
+            // Deliberately do NOT set support.anti-spam.mode — only the
             // Quarkus env-var form, as a deployed container would.
             return Map.of(
-                    "SUPPORT_ANTISPAM_MODE", "report-only",
+                    "QUARKUS_SUPPORT_ANTI_SPAM_MODE", "report-only",
                     "turnstile.enabled", "false",
                     "rate-limit.enabled", "false",
                     "rate-limit.support-email.enabled", "false");
@@ -62,7 +62,7 @@ class EnvVarModeIT {
                 .mapToDouble(io.micrometer.core.instrument.Counter::count).sum();
 
         assertTrue(after > before,
-                "expected support.spam.report_only to increment, meaning SUPPORT_ANTISPAM_MODE "
+                "expected support.spam.report_only to increment, meaning QUARKUS_SUPPORT_ANTI_SPAM_MODE "
                         + "resolved to report-only (before=" + before + ", after=" + after + ")");
     }
 }
