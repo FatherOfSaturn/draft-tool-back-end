@@ -109,6 +109,16 @@ public class TurnstileVerifier {
     }
 
     /**
+     * The allowed hostnames, lowercased. Exposed for deployment-configuration
+     * tests.
+     *
+     * @return an immutable set (empty when no allow-list is configured)
+     */
+    public Set<String> allowedHostnames() {
+        return allowedHostnames;
+    }
+
+    /**
      * Verifies the client's Turnstile token.
      *
      * @param token the {@code cf-turnstile-response} value submitted by the client

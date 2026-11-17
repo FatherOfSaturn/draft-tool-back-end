@@ -65,8 +65,7 @@ public class AntiSpamService {
         this.emailLimitEnabled = emailLimitEnabled;
         this.emailMax = emailMax;
         this.emailWindow = emailWindow;
-        LOGGER.info("Support anti-spam configuration: mode={} (env SUPPORT_ANTISPAM_MODE), "
-                        + "form-token enforced={}, turnstile enabled={}",
+        LOGGER.info("Support anti-spam configuration: mode={}, form-token enforced={}, turnstile enabled={}",
                 this.mode.getDescription(), this.mode.enforcesFormToken(), turnstileVerifier.isEnabled());
     }
 

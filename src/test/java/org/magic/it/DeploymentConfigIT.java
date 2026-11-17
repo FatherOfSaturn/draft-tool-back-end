@@ -38,8 +38,9 @@ class DeploymentConfigIT {
             return Map.ofEntries(
                     // Only the env-var names a deployed container would provide.
                     Map.entry("QUARKUS_SUPPORT_ANTI_SPAM_MODE", "token-only"),
-                    Map.entry("TURNSTILE_ENABLED", "true"),
+                    Map.entry("QUARKUS_TURNSTILE_ENABLED", "true"),
                     Map.entry("TURNSTILE_SECRET_KEY", "it-deployment-test-secret"),
+                    Map.entry("TURNSTILE_ALLOWED_HOSTNAMES", "pyramiddraft.xyz,dev.pyramiddraft.xyz"),
                     Map.entry("SUPPORT_FORM_TOKEN_SECRET", "it-deployment-form-token-secret-0123456789"),
                     Map.entry("rate-limit.enabled", "false"),
                     Map.entry("rate-limit.support-email.enabled", "false"));
@@ -62,7 +63,7 @@ class DeploymentConfigIT {
     @Test
     void turnstileEnabledIsResolvedFromEnvironment() {
         assertTrue(turnstileVerifier.isEnabled(),
-                "TURNSTILE_ENABLED=true must enable Turnstile verification; "
+                "QUARKUS_TURNSTILE_ENABLED=true must enable Turnstile verification; "
                         + "if this fails the value is hardcoded or unreadable from the environment");
     }
 
@@ -70,5 +71,12 @@ class DeploymentConfigIT {
     void turnstileSecretIsResolvedFromEnvironment() {
         assertTrue(turnstileVerifier.isSecretConfigured(),
                 "TURNSTILE_SECRET_KEY must reach the verifier");
+    }
+
+    @Test
+    void turnstileAllowedHostnamesAreResolvedFromEnvironment() {
+        assertEquals(java.util.Set.of("pyramiddraft.xyz", "dev.pyramiddraft.xyz"),
+                turnstileVerifier.allowedHostnames(),
+                "TURNSTILE_ALLOWED_HOSTNAMES must reach the verifier");
     }
 }
