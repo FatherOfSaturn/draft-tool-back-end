@@ -2,10 +2,13 @@ package org.magic.supportService.api;
 
 import java.time.Instant;
 
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import io.quarkus.mongodb.panache.common.MongoEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,9 +24,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonPropertyOrder({ "id", "title", "description", "contactEmail", "priority",
                      "accountID", "status", "type", "createdOnDate", "lastStatusChangeDate" })
+@MongoEntity(collection = "SupportRequests")
 public class SupportRequest {
 
-    @BsonProperty("_id")
+    @BsonId
     @JsonProperty("id")
     private String id;
 

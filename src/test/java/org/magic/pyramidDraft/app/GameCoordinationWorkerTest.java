@@ -16,15 +16,15 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
-import org.magic.pyramidDraft.api.GameStatusMessage;
+import org.magic.common.game.GameState;
+import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.Cube;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.card.Cube;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Card;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.smallrye.mutiny.Uni;
@@ -41,7 +41,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         Cube adamCube = this.createCubeFromJson("AdamCube.json");
 
         when(cubeDownloader.getCubeForCubeID(createGameInfo.cubeID())).thenReturn(Uni.createFrom().item(adamCube));
-        when(dbHandler.addGame(any())).thenReturn("GameInfo");
+        when(dbHandler.addGame(any())).thenReturn(Uni.createFrom().item("GameInfo"));
 
         GameInfo game = gameCoordinationWorker.startGame(createGameInfo).await().atMost(Duration.ofSeconds(3));
 
@@ -63,7 +63,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+        GameCreationInfo info = TestJson.fromJson(gameString, GameCreationInfo.class);
 
         packCreator = new PackCreator(cube);
 
@@ -87,10 +87,10 @@ public class GameCoordinationWorkerTest extends TestUtils {
     void shouldThrowWhenMergeGameHasWrongPlayerCount() {
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(), GameState.GAME_STARTED, Instant.now());
 
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
         assertThrows(IllegalStateException.class, () ->
-                gameCoordinationWorker.mergeAndSwapPacks("gid"));
+                gameCoordinationWorker.mergeAndSwapPacks("gid").await().indefinitely());
     }
 
     @Test
@@ -99,7 +99,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         var p2 = mock(Player.class);
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_MERGED, Instant.now());
 
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
         GameStatusMessage result = gameCoordinationWorker.mergeAndSwapPacks("gid").await().indefinitely();
 
@@ -118,7 +118,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         when(packMerger.mergePlayerPacks(p2)).thenReturn(packs1);
 
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_STARTED, Instant.now());
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
         GameStatusMessage result = gameCoordinationWorker.mergeAndSwapPacks("gid").await().indefinitely();
 
@@ -132,7 +132,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
         var p2 = mock(Player.class);
 
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_STARTED, Instant.now());
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
         GameStatusMessage result = gameCoordinationWorker.mergeAndSwapPacks("gid").await().indefinitely();
 
@@ -143,8 +143,9 @@ public class GameCoordinationWorkerTest extends TestUtils {
     void shouldEndGameWhenNotComplete() {
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(mock(Player.class), mock(Player.class)), GameState.GAME_STARTED, Instant.now());
 
-        when(dbHandler.findGame("gid")).thenReturn(game);
-        when(dbHandler.updateGameState("gid", GameState.GAME_COMPLETE)).thenReturn(GameState.GAME_COMPLETE);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
+        when(dbHandler.updateGameState("gid", GameState.GAME_COMPLETE))
+                .thenReturn(Uni.createFrom().item(GameState.GAME_COMPLETE));
 
         GameStatusMessage result = gameCoordinationWorker.endGame("gid").await().indefinitely();
 
@@ -155,7 +156,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
     void shouldReturnCompleteWhenEndGameAlreadyComplete() {
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(mock(Player.class), mock(Player.class)), GameState.GAME_COMPLETE, Instant.now());
 
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
         GameStatusMessage result = gameCoordinationWorker.endGame("gid").await().indefinitely();
 
@@ -164,7 +165,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
 
     @Test
     void shouldDeleteGameWhenFound() {
-        when(dbHandler.deleteGame("gid")).thenReturn(true);
+        when(dbHandler.deleteGame("gid")).thenReturn(Uni.createFrom().item(true));
 
         Response response = gameCoordinationWorker.deleteGame("gid").await().indefinitely();
 
@@ -173,7 +174,7 @@ public class GameCoordinationWorkerTest extends TestUtils {
 
     @Test
     void shouldReturnNotFoundWhenDeletingMissingGame() {
-        when(dbHandler.deleteGame("missing")).thenReturn(false);
+        when(dbHandler.deleteGame("missing")).thenReturn(Uni.createFrom().item(false));
 
         Response response = gameCoordinationWorker.deleteGame("missing").await().indefinitely();
 
@@ -193,9 +194,9 @@ public class GameCoordinationWorkerTest extends TestUtils {
         when(p1.draftCard("card-1", 0, false)).thenReturn(card);
 
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_MERGED, Instant.now());
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
-        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid");
+        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid").await().indefinitely();
     }
 
     @Test
@@ -211,8 +212,8 @@ public class GameCoordinationWorkerTest extends TestUtils {
         when(p1.draftCard("card-1", 0, false)).thenReturn(card);
 
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(p1, p2), GameState.GAME_MERGED, Instant.now());
-        when(dbHandler.findGame("gid")).thenReturn(game);
+        when(dbHandler.findGame("gid")).thenReturn(Uni.createFrom().item(game));
 
-        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid");
+        gameCoordinationWorker.draftCard("tok-1", 0, "card-1", false, "gid").await().indefinitely();
     }
 }

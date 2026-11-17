@@ -39,4 +39,22 @@ public interface DraftTypeHandler {
      * @return a {@link Uni} emitting the generated game ID
      */
     Uni<String> startGame(String cubeID, List<LobbyPlayer> players, Map<String, Object> config);
+
+    /**
+     * Reads an integer value from a lobby's opaque config map. JSON numbers
+     * arrive as {@link Number}s of various concrete types; anything absent or
+     * non-numeric falls back to the default.
+     *
+     * @param config       the lobby config
+     * @param key          the config key
+     * @param defaultValue the value to use when the key is absent or not numeric
+     * @return the config value as an int
+     */
+    static int intConfig(final Map<String, Object> config, final String key, final int defaultValue) {
+        Object value = config.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return defaultValue;
+    }
 }

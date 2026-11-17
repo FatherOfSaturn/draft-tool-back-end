@@ -3,6 +3,7 @@ package org.magic.supportService.app;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,11 +23,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.smallrye.mutiny.Uni;
+
 @ExtendWith(MockitoExtension.class)
 class SupportWorkerTest {
 
     @Mock
     SupportDbHandler supportDbHandler;
+
+    @Mock
+    AntiSpamService antiSpamService;
 
     SupportWorker supportWorker;
 
@@ -34,16 +40,24 @@ class SupportWorkerTest {
 
     @BeforeEach
     void setup() {
-        supportWorker = new SupportWorker(supportDbHandler);
+        supportWorker = new SupportWorker(supportDbHandler, antiSpamService);
+    }
+
+    private CreateSupportRequest createRequest(final String description) {
+        return new CreateSupportRequest(
+                "Add dark mode", description, "user@example.com",
+                SupportPriority.HIGH, null, null, null, SupportType.NEW_FEATURE);
     }
 
     @Test
     void shouldCreateRequest() {
-        CreateSupportRequest request = new CreateSupportRequest(
-                "Add dark mode", "Support dark mode theme", "user@example.com",
-                SupportPriority.HIGH, "acct-123", SupportType.NEW_FEATURE);
+        CreateSupportRequest request = createRequest("Support dark mode theme");
+        when(antiSpamService.isHoneypot(request)).thenReturn(false);
+        when(antiSpamService.prePersistChecks(any(), any())).thenReturn(Uni.createFrom().voidItem());
+        when(supportDbHandler.addRequest(any(SupportRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
 
-        SupportRequest result = supportWorker.createRequest(request).await().indefinitely();
+        SupportRequest result = supportWorker.createRequest(request, "203.0.113.5").await().indefinitely();
 
         assertNotNull(result);
         assertNotNull(result.getId());
@@ -55,13 +69,77 @@ class SupportWorkerTest {
     }
 
     @Test
+    void shouldNeverPersistClientSuppliedAccountID() {
+        CreateSupportRequest request = createRequest("Support dark mode theme");
+        when(antiSpamService.isHoneypot(request)).thenReturn(false);
+        when(antiSpamService.prePersistChecks(any(), any())).thenReturn(Uni.createFrom().voidItem());
+        when(supportDbHandler.addRequest(any(SupportRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        SupportRequest result = supportWorker.createRequest(request, "203.0.113.5").await().indefinitely();
+
+        assertNull(result.getAccountID(), "accountID must never come from the client");
+    }
+
+    @Test
+    void shouldRunAntiSpamChecksBeforePersisting() {
+        CreateSupportRequest request = createRequest("Support dark mode theme");
+        when(antiSpamService.isHoneypot(request)).thenReturn(false);
+        when(antiSpamService.prePersistChecks(eq(request), eq("203.0.113.5")))
+                .thenReturn(Uni.createFrom().voidItem());
+        when(supportDbHandler.addRequest(any(SupportRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        supportWorker.createRequest(request, "203.0.113.5").await().indefinitely();
+
+        var inOrder = org.mockito.Mockito.inOrder(antiSpamService, supportDbHandler);
+        inOrder.verify(antiSpamService).prePersistChecks(eq(request), eq("203.0.113.5"));
+        inOrder.verify(antiSpamService).checkEmailRate("user@example.com");
+        inOrder.verify(supportDbHandler).addRequest(any(SupportRequest.class));
+    }
+
+    @Test
+    void shouldHoneypotReturnFakeAckWithoutPersisting() {
+        CreateSupportRequest request = new CreateSupportRequest(
+                "Buy v1agra", "cheap deals w1th fr33 sh1pp1ng", "bot@spam.com",
+                SupportPriority.LOW, "http://spam.example", null, null, SupportType.MISC_SUPPORT);
+        when(antiSpamService.isHoneypot(request)).thenReturn(true);
+
+        SupportRequest result = supportWorker.createRequest(request, "203.0.113.5").await().indefinitely();
+
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals(SupportStatus.NEW, result.getStatus());
+        verify(supportDbHandler, never()).addRequest(any(SupportRequest.class));
+        verify(antiSpamService, never()).prePersistChecks(any(), any());
+        verify(antiSpamService, never()).checkEmailRate(any());
+    }
+
+    @Test
+    void shouldQuarantineSpamLookingDescription() {
+        StringBuilder gibberish = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            gibberish.append("xkcdqwryzptvbnmjhgfe");
+        }
+        CreateSupportRequest request = createRequest(gibberish.toString());
+        when(antiSpamService.isHoneypot(request)).thenReturn(false);
+        when(antiSpamService.prePersistChecks(any(), any())).thenReturn(Uni.createFrom().voidItem());
+        when(supportDbHandler.addRequest(any(SupportRequest.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        SupportRequest result = supportWorker.createRequest(request, "203.0.113.5").await().indefinitely();
+
+        assertEquals(SupportStatus.QUARANTINED, result.getStatus());
+    }
+
+    @Test
     void shouldGetRequest() {
         Instant now = Instant.now();
         SupportRequest expected = new SupportRequest(
                 testId, "Title", "Desc", "e@e.com", SupportPriority.HIGH, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(expected);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(expected));
 
         SupportRequest result = supportWorker.getRequest(testId).await().indefinitely();
 
@@ -80,7 +158,7 @@ class SupportWorkerTest {
                         SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now)
         );
 
-        when(supportDbHandler.findAll()).thenReturn(expected);
+        when(supportDbHandler.findAllRequests()).thenReturn(Uni.createFrom().item(expected));
 
         List<SupportRequest> result = supportWorker.getAllRequests().await().indefinitely();
 
@@ -96,8 +174,8 @@ class SupportWorkerTest {
                 testId, "Old Title", "Old Desc", "old@e.com", SupportPriority.LOW, "acct-1",
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(existing);
-        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(existing);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         UpdateSupportRequest update = new UpdateSupportRequest("New Title", "New Desc", null, null, SupportType.NEW_FEATURE);
 
@@ -114,8 +192,8 @@ class SupportWorkerTest {
                 testId, "Original Title", "Original Desc", "orig@e.com", SupportPriority.MEDIUM, "acct-1",
                 SupportStatus.IN_PROGRESS, SupportType.BUG_FIX, now, now);
 
-        when(supportDbHandler.findById(testId)).thenReturn(existing);
-        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(existing);
+        when(supportDbHandler.findRequestById(testId)).thenReturn(Uni.createFrom().item(existing));
+        when(supportDbHandler.updateRequest(any(SupportRequest.class))).thenReturn(Uni.createFrom().item(existing));
 
         ArgumentCaptor<SupportRequest> captor = ArgumentCaptor.forClass(SupportRequest.class);
 
@@ -140,12 +218,27 @@ class SupportWorkerTest {
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
         when(supportDbHandler.updateStatus(eq(testId), eq(SupportStatus.IN_PROGRESS), any(Instant.class)))
-                .thenReturn(existing);
+                .thenReturn(Uni.createFrom().item(existing));
 
         SupportRequest result = supportWorker.updateStatus(testId, SupportStatus.IN_PROGRESS).await().indefinitely();
 
         assertNotNull(result);
         verify(supportDbHandler).updateStatus(eq(testId), eq(SupportStatus.IN_PROGRESS), any(Instant.class));
+    }
+
+    @Test
+    void shouldUpdateStatusToQuarantined() {
+        Instant now = Instant.now();
+        SupportRequest existing = new SupportRequest(
+                testId, "Title", "Desc", "e@e.com", SupportPriority.HIGH, null,
+                SupportStatus.QUARANTINED, SupportType.MISC_SUPPORT, now, now);
+
+        when(supportDbHandler.updateStatus(eq(testId), eq(SupportStatus.QUARANTINED), any(Instant.class)))
+                .thenReturn(Uni.createFrom().item(existing));
+
+        SupportRequest result = supportWorker.updateStatus(testId, SupportStatus.QUARANTINED).await().indefinitely();
+
+        assertEquals(SupportStatus.QUARANTINED, result.getStatus());
     }
 
     @Test
@@ -156,7 +249,7 @@ class SupportWorkerTest {
                 SupportStatus.NEW, SupportType.BUG_FIX, now, now);
 
         when(supportDbHandler.updateStatus(eq(testId), eq(SupportStatus.DELETED), any(Instant.class)))
-                .thenReturn(existing);
+                .thenReturn(Uni.createFrom().item(existing));
 
         SupportRequest result = supportWorker.softDeleteRequest(testId).await().indefinitely();
 
@@ -166,7 +259,7 @@ class SupportWorkerTest {
 
     @Test
     void shouldHardDeleteRequest() {
-        when(supportDbHandler.hardDeleteRequest(testId)).thenReturn(true);
+        when(supportDbHandler.hardDeleteRequest(testId)).thenReturn(Uni.createFrom().item(true));
 
         Boolean result = supportWorker.deleteRequest(testId).await().indefinitely();
 
@@ -177,7 +270,7 @@ class SupportWorkerTest {
     @Test
     void shouldReturnFalseForHardDeleteOnMissing() {
         String missingId = "507f1f77bcf86cd799439099";
-        when(supportDbHandler.hardDeleteRequest(missingId)).thenReturn(false);
+        when(supportDbHandler.hardDeleteRequest(missingId)).thenReturn(Uni.createFrom().item(false));
 
         Boolean result = supportWorker.deleteRequest(missingId).await().indefinitely();
 

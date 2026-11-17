@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 
 class LobbyPlayerTest {
 
@@ -14,7 +14,7 @@ class LobbyPlayerTest {
     void shouldNotSerializePlayerToken() {
         LobbyPlayer player = new LobbyPlayer("acc-1", "Alice", 0, "super-secret-token", Instant.now());
 
-        String json = JsonUtility.getInstance().toJson(player);
+        String json = TestJson.toJson(player);
 
         assertNotNull(json);
         assertFalse(json.contains("super-secret-token"));

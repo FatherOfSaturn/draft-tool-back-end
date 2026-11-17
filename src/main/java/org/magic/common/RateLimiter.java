@@ -59,6 +59,14 @@ public class RateLimiter {
     }
 
     /**
+     * Clears all recorded hits. Test-only hook so integration tests start each
+     * scenario with a clean budget; not intended for production use.
+     */
+    public void reset() {
+        hits.clear();
+    }
+
+    /**
      * Periodically prunes keys that have been idle for several minutes so the
      * key table does not grow without bound.
      */

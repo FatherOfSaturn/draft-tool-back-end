@@ -1,17 +1,21 @@
 package org.magic.supportService.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.magic.common.util.EnumParser;
 
 /**
  * Enumerates the lifecycle statuses of a support request:
  * {@link #NEW} → {@link #IN_PROGRESS} → {@link #BLOCKED}/{@link #COMPLETED} → {@link #DELETED}.
- * Any status can be transitioned to from any other status.
+ * {@link #QUARANTINED} marks submissions flagged as probable spam: they are
+ * stored for admin review but hidden from the public queue. Any status can be
+ * transitioned to from any other status.
  */
-public enum SupportStatus {
+public enum SupportStatus implements EnumParser.Described {
     NEW("new"),
     IN_PROGRESS("in_progress"),
     BLOCKED("blocked"),
     COMPLETED("completed"),
+    QUARANTINED("quarantined"),
     DELETED("deleted");
 
     private final String description;
@@ -33,11 +37,6 @@ public enum SupportStatus {
      */
     @JsonCreator
     public static SupportStatus fromString(final String description) {
-        for (SupportStatus status : SupportStatus.values()) {
-            if (status.description.equalsIgnoreCase(description)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("No SupportStatus with description: " + description);
+        return EnumParser.parse(SupportStatus.class, description);
     }
 }

@@ -48,9 +48,8 @@ public class ClassicDraftTypeHandler implements DraftTypeHandler {
     public Uni<String> startGame(final String cubeID,
                                  final List<LobbyPlayer> players,
                                  final Map<String, Object> config) {
-        int cardsPerPack = intConfig(config, "cardsPerPack", 15);
-        int packsPerPlayer = intConfig(config, "packsPerPlayer", 3);
-
+        int cardsPerPack = DraftTypeHandler.intConfig(config, "cardsPerPack", 15);
+        int packsPerPlayer = DraftTypeHandler.intConfig(config, "packsPerPlayer", 3);
         List<ClassicPlayerCreationInfo> playerInfo = players.stream()
                 .sorted(Comparator.comparingInt(LobbyPlayer::getSlotIndex))
                 .map(p -> new ClassicPlayerCreationInfo(p.getDisplayName(), p.getAccountID(), p.getPlayerToken()))
@@ -63,13 +62,5 @@ public class ClassicDraftTypeHandler implements DraftTypeHandler {
 
         return gameWorker.startGame(creationInfo)
                 .map(game -> game.getGameID());
-    }
-
-    private static int intConfig(final Map<String, Object> config, final String key, final int defaultValue) {
-        Object value = config.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        return defaultValue;
     }
 }

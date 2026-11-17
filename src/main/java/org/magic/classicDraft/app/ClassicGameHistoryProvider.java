@@ -5,12 +5,13 @@ import java.util.List;
 import org.magic.accountService.api.DraftGameState;
 import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
-import org.magic.accountService.app.GameHistoryProvider;
+import org.magic.accountService.app.AbstractGameHistoryProvider;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.app.GameCoordination.ClassicDraftDbHandler;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -19,7 +20,7 @@ import jakarta.inject.Inject;
  * progress as the 1-based pack index, and per-player cards remaining to draft.
  */
 @ApplicationScoped
-public class ClassicGameHistoryProvider implements GameHistoryProvider {
+public class ClassicGameHistoryProvider extends AbstractGameHistoryProvider<ClassicGameInfo> {
 
     private final ClassicDraftDbHandler dbHandler;
 
@@ -29,13 +30,12 @@ public class ClassicGameHistoryProvider implements GameHistoryProvider {
     }
 
     @Override
-    public List<GameHistoryEntry> findGamesByAccountID(final String accountID) {
-        return dbHandler.findGamesByAccountID(accountID).stream()
-                .map(this::toEntry)
-                .toList();
+    protected Uni<List<ClassicGameInfo>> findGamesByAccount(final String accountID) {
+        return dbHandler.findGamesByAccountID(accountID);
     }
 
-    private GameHistoryEntry toEntry(final ClassicGameInfo game) {
+    @Override
+    protected GameHistoryEntry toEntry(final ClassicGameInfo game) {
         List<GameHistoryPlayer> players = game.getPlayers().stream()
                 .map(player -> {
                     int cardsLeftToDraft = cardsLeftToDraft(player);
@@ -55,7 +55,7 @@ public class ClassicGameHistoryProvider implements GameHistoryProvider {
                 game.getGameID(),
                 game.getCubeID(),
                 "classic",
-                game.getGameState() == ClassicGameState.GAME_COMPLETE
+                game.getGameState() == GameState.GAME_COMPLETE
                         ? DraftGameState.GAME_COMPLETE
                         : DraftGameState.GAME_IN_PROGRESS,
                 players,

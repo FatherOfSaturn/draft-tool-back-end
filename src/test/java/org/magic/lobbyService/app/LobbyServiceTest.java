@@ -43,6 +43,9 @@ class LobbyServiceTest {
 
     @BeforeEach
     void setup() {
+        lenient().when(dbHandler.insertLobby(any())).thenReturn(Uni.createFrom().voidItem());
+        lenient().when(dbHandler.updateLobby(any())).thenReturn(Uni.createFrom().voidItem());
+        lenient().when(dbHandler.deleteLobby(any())).thenReturn(Uni.createFrom().voidItem());
         lenient().when(pyramidHandler.draftType()).thenReturn("pyramid");
         lenient().when(pyramidHandler.defaultMinPlayers()).thenReturn(2);
         lenient().when(pyramidHandler.defaultMaxPlayers()).thenReturn(2);
@@ -54,7 +57,7 @@ class LobbyServiceTest {
     @Test
     void shouldRoutePyramidLobbyToPyramidHandler() {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         when(pyramidHandler.startGame(eq("cube-1"), anyList(), anyMap()))
                 .thenReturn(Uni.createFrom().item("game-123"));
 
@@ -71,7 +74,7 @@ class LobbyServiceTest {
     @Test
     void shouldRouteClassicLobbyToClassicHandler() {
         Lobby lobby = lobby("classic", 4, 12, 4);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         when(classicHandler.startGame(eq("cube-1"), anyList(), anyMap()))
                 .thenReturn(Uni.createFrom().item("classic-game-1"));
 
@@ -90,7 +93,7 @@ class LobbyServiceTest {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
         lobby.getPlayers().get(0).setSlotIndex(1);
         lobby.getPlayers().get(1).setSlotIndex(0);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         when(pyramidHandler.startGame(anyString(), anyList(), anyMap()))
                 .thenReturn(Uni.createFrom().item("game-123"));
 
@@ -108,7 +111,7 @@ class LobbyServiceTest {
     @Test
     void shouldResetLobbyToWaitingWhenDraftTypeIsUnknown() {
         Lobby lobby = lobby("bogus", 4, 12, 4);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
 
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
@@ -123,7 +126,7 @@ class LobbyServiceTest {
     @Test
     void shouldResetLobbyToWaitingWhenHandlerFails() {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         when(pyramidHandler.startGame(anyString(), anyList(), anyMap()))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException("boom")));
 
@@ -138,7 +141,7 @@ class LobbyServiceTest {
 
     @Test
     void shouldApplyPyramidDefaultsOnLobbyCreation() {
-        when(dbHandler.lobbyExists(anyString())).thenReturn(false);
+        when(dbHandler.lobbyExists(anyString())).thenReturn(Uni.createFrom().item(false));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         JoinLobbyResponse response = service.createLobby(createLobbyRequest("pyramid", null, null)).await().indefinitely();
@@ -152,7 +155,7 @@ class LobbyServiceTest {
 
     @Test
     void shouldApplyClassicDefaultsOnLobbyCreation() {
-        when(dbHandler.lobbyExists(anyString())).thenReturn(false);
+        when(dbHandler.lobbyExists(anyString())).thenReturn(Uni.createFrom().item(false));
         service = new LobbyService(dbHandler, instanceOf(classicHandler));
 
         JoinLobbyResponse response = service.createLobby(createLobbyRequest("classic", null, null)).await().indefinitely();
@@ -163,7 +166,7 @@ class LobbyServiceTest {
 
     @Test
     void shouldKeepExplicitPlayerOverridesOnLobbyCreation() {
-        when(dbHandler.lobbyExists(anyString())).thenReturn(false);
+        when(dbHandler.lobbyExists(anyString())).thenReturn(Uni.createFrom().item(false));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         JoinLobbyResponse response = service.createLobby(createLobbyRequest("pyramid", 3, 5)).await().indefinitely();
@@ -175,7 +178,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectStartWhenCallerIsNotHost() {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -188,7 +191,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectJoinWhenAccountAlreadyInLobby() {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -200,7 +203,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectJoinWhenDisplayNameAlreadyTakenCaseInsensitive() {
         Lobby lobby = lobby("pyramid", 2, 2, 1);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -212,7 +215,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectJoinWhenLobbyIsFull() {
         Lobby lobby = lobby("pyramid", 2, 2, 2);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -224,7 +227,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectJoinWhenDisplayNameIsBlank() {
         Lobby lobby = lobby("pyramid", 2, 2, 1);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -236,7 +239,7 @@ class LobbyServiceTest {
     @Test
     void shouldJoinLobbyWithTrimmedName() {
         Lobby lobby = lobby("pyramid", 2, 2, 1);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         JoinLobbyResponse response = service.joinLobby("ABC12", new JoinLobbyRequest("acc-9", "  New Player  "))
@@ -253,7 +256,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectKickWhenNotHost() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -266,7 +269,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectKickWhenTargetSlotNotFound() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -278,7 +281,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectKickWhenTargetIsHost() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -291,7 +294,7 @@ class LobbyServiceTest {
     void shouldRejectKickWhenLobbyNotWaiting() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
         lobby.setStatus(LobbyStatus.STARTED);
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -303,7 +306,7 @@ class LobbyServiceTest {
     @Test
     void shouldKickPlayerAndStartHostAloneClockWhenOnlyHostRemains() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely();
@@ -319,7 +322,7 @@ class LobbyServiceTest {
         Lobby lobby = lobbyWithHost("host-1",
                 new LobbyPlayer(null, "Guest", 1, "tok-guest-1", Instant.now()),
                 new LobbyPlayer(null, "Guest 2", 2, "tok-guest-2", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         Lobby result = service.kickPlayer("ABC12", new KickPlayerRequest("tok-host", 1)).await().indefinitely();
@@ -331,7 +334,7 @@ class LobbyServiceTest {
     @Test
     void shouldLeaveLobbyByToken() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         Lobby result = service.leaveLobby("ABC12", new LeaveLobbyRequest("tok-guest")).await().indefinitely();
@@ -344,7 +347,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectLeaveWhenTokenDoesNotMatchAnyPlayer() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
@@ -357,7 +360,7 @@ class LobbyServiceTest {
     @Test
     void shouldRejectLeaveWithoutToken() {
         Lobby lobby = lobbyWithHost("host-1", new LobbyPlayer(null, "Guest", 1, "tok-guest", Instant.now()));
-        when(dbHandler.findByCode("ABC12")).thenReturn(lobby);
+        when(dbHandler.findByCode("ABC12")).thenReturn(Uni.createFrom().item(lobby));
         service = new LobbyService(dbHandler, instanceOf(pyramidHandler));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,

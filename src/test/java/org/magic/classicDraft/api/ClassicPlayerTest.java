@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardDetails;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardDetails;
+import org.magic.common.card.CardPack;
 
 class ClassicPlayerTest {
 

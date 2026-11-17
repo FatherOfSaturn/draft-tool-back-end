@@ -13,17 +13,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.classicDraft.api.ClassicGameCreationInfo;
 import org.magic.classicDraft.api.ClassicGameInfo;
-import org.magic.classicDraft.api.ClassicGameState;
+import org.magic.common.game.GameState;
 import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
-import org.magic.classicDraft.api.DraftDirection;
+import org.magic.common.game.DraftDirection;
 import org.magic.classicDraft.api.DraftPlayerSnapshot;
 import org.magic.classicDraft.api.PlayerDraftCheck;
 import org.magic.classicDraft.api.PlayerDraftData;
 import org.magic.classicDraft.app.GameCoordination.ClassicGameCoordinationWorker;
-import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardDetails;
+import org.magic.common.game.GameStatusMessage;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardDetails;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -55,7 +55,7 @@ class GameResourceTest {
                 12, 4, 3);
 
         var expectedGame = new ClassicGameInfo("game-456", "cube-123", "classic",
-                List.of(), ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                List.of(), GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(gameWorker.startGame(info)).thenReturn(Uni.createFrom().item(expectedGame));
 
@@ -63,14 +63,14 @@ class GameResourceTest {
 
         assertNotNull(result);
         assertEquals("game-456", result.getGameID());
-        assertEquals(ClassicGameState.GAME_STARTED, result.getGameState());
+        assertEquals(GameState.GAME_STARTED, result.getGameState());
     }
 
     @Test
     void shouldDraftCard() {
         var card = new Card("Lightning Bolt", details, "card-789", 1, "Instant");
 
-        when(gameWorker.draftCard("tok-0", "card-789", "game-456")).thenReturn(card);
+        when(gameWorker.draftCard("tok-0", "card-789", "game-456")).thenReturn(Uni.createFrom().item(card));
 
         Card result = resource.draftCard("game-456", "card-789", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));
@@ -82,7 +82,7 @@ class GameResourceTest {
     @Test
     void shouldFetchGameData() {
         var gameInfo = new ClassicGameInfo("game-456", "cube-123", "classic",
-                List.of(), ClassicGameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
+                List.of(), GameState.GAME_STARTED, Instant.now(), 0, DraftDirection.ASCENDING);
 
         when(gameWorker.getGameInfo("game-456")).thenReturn(Uni.createFrom().item(gameInfo));
 
@@ -94,20 +94,20 @@ class GameResourceTest {
 
     @Test
     void shouldGetDraftCheck() {
-        var check = new PlayerDraftCheck(true, ClassicGameState.GAME_STARTED);
+        var check = new PlayerDraftCheck(true, GameState.GAME_STARTED);
 
         when(gameWorker.getDraftCheck("game-456", "tok-0")).thenReturn(Uni.createFrom().item(check));
 
         PlayerDraftCheck result = resource.getDraftCheck("game-456", "tok-0")
                 .await().atMost(Duration.ofSeconds(3));
         assertTrue(result.canDraft());
-        assertEquals(ClassicGameState.GAME_STARTED, result.gameState());
+        assertEquals(GameState.GAME_STARTED, result.gameState());
     }
 
     @Test
     void shouldGetDraftData() {
         var snapshot = new DraftPlayerSnapshot("Alice", List.of(), List.of(), 0);
-        var data = new PlayerDraftData("game-456", ClassicGameState.GAME_STARTED, DraftDirection.ASCENDING, snapshot);
+        var data = new PlayerDraftData("game-456", GameState.GAME_STARTED, DraftDirection.ASCENDING, snapshot);
 
         when(gameWorker.getDraftData("game-456", "tok-0")).thenReturn(Uni.createFrom().item(data));
 
@@ -121,7 +121,7 @@ class GameResourceTest {
     @Test
     void shouldEndGame() {
         when(gameWorker.endGame("game-456")).thenReturn(
-                Uni.createFrom().item(new GameStatusMessage("game-456", org.magic.pyramidDraft.api.GameState.GAME_COMPLETE)));
+                Uni.createFrom().item(new GameStatusMessage("game-456", GameState.GAME_COMPLETE)));
 
         var result = resource.endGame("game-456").await().atMost(Duration.ofSeconds(3));
 
@@ -130,7 +130,7 @@ class GameResourceTest {
 
     @Test
     void shouldGetGameHistory() {
-        var summary = new ClassicGameSummary("game-456", "cube-123", ClassicGameState.GAME_COMPLETE,
+        var summary = new ClassicGameSummary("game-456", "cube-123", GameState.GAME_COMPLETE,
                 "Alice", 0, 5, 2, 2, Instant.now());
 
         when(gameWorker.getGameHistory("Alice")).thenReturn(Uni.createFrom().item(List.of(summary)));

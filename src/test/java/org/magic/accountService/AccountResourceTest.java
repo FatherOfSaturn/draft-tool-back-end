@@ -10,11 +10,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.accountService.api.Account;
-import org.magic.accountService.api.CreateDeckRequest;
+import org.magic.accountService.api.DeckPayload;
 import org.magic.accountService.api.Deck;
 import org.magic.accountService.api.LoginRequest;
 import org.magic.accountService.api.LoginResponse;
-import org.magic.accountService.api.UpdateDeckRequest;
 import org.magic.accountService.api.UpdateDisplayNameRequest;
 import org.magic.accountService.app.AccountWorker;
 import org.magic.common.TokenRevocationService;
@@ -146,7 +145,7 @@ class AccountResourceTest {
 
     @Test
     void shouldCreateDeckWhenAccountFound() {
-        var request = new CreateDeckRequest("My Deck", "Description", List.of("card1"));
+        var request = new DeckPayload("My Deck", "Description", List.of("card1"));
 
         when(accountService.createDeck(googleSub, request)).thenReturn(Uni.createFrom().item(Optional.of("deck-456")));
 
@@ -158,7 +157,7 @@ class AccountResourceTest {
 
     @Test
     void shouldReturnNotFoundForCreateDeckOnMissingAccount() {
-        var request = new CreateDeckRequest("My Deck", "Description", List.of("card1"));
+        var request = new DeckPayload("My Deck", "Description", List.of("card1"));
 
         when(accountService.createDeck(googleSub, request)).thenReturn(Uni.createFrom().item(Optional.empty()));
 
@@ -189,7 +188,7 @@ class AccountResourceTest {
 
     @Test
     void shouldUpdateDeckWhenFound() {
-        var request = new UpdateDeckRequest("New Name", "New Desc", List.of("card1", "card2"));
+        var request = new DeckPayload("New Name", "New Desc", List.of("card1", "card2"));
 
         when(accountService.updateDeck(googleSub, "deck-456", request)).thenReturn(Uni.createFrom().item(true));
 
@@ -200,7 +199,7 @@ class AccountResourceTest {
 
     @Test
     void shouldReturnNotFoundForUpdateDeckOnMissingDeck() {
-        var request = new UpdateDeckRequest("New Name", "New Desc", List.of("card1"));
+        var request = new DeckPayload("New Name", "New Desc", List.of("card1"));
 
         when(accountService.updateDeck(googleSub, "missing", request)).thenReturn(Uni.createFrom().item(false));
 

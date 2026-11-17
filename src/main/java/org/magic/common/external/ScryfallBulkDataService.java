@@ -15,24 +15,31 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.magic.common.api.scryfall.BulkDataEntry;
 import org.magic.common.api.scryfall.ScryfallCard;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.eclipse.microprofile.context.ManagedExecutor;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 
+import io.quarkus.mongodb.reactive.ReactiveMongoClient;
+import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
 import io.quarkus.scheduler.Scheduled;
+import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+/**
+ * Downloads and imports Scryfall's bulk card data into the local
+ * {@link ScryfallCardCache}. The download/parse loop is inherently blocking
+ * (gzip HTTP stream + line-by-line JSON), so it always runs on the worker
+ * executor; the cache and metadata writes use the reactive driver and are
+ * awaited inside those worker threads.
+ */
 @ApplicationScoped
 public class ScryfallBulkDataService {
     private static final Logger LOGGER = LogManager.getLogger(ScryfallBulkDataService.class);
@@ -44,7 +51,8 @@ public class ScryfallBulkDataService {
     private final boolean enabled;
     private final String bulkDataType;
     private final ScryfallCardCache cardCache;
-    private final MongoService mongoService;
+    private final ReactiveMongoClient mongoClient;
+    private final String databaseName;
     private final ObjectMapper objectMapper;
     private final ManagedExecutor managedExecutor;
 
@@ -53,13 +61,15 @@ public class ScryfallBulkDataService {
             @ConfigProperty(name = "scryfall.cache.enabled", defaultValue = "true") final boolean enabled,
             @ConfigProperty(name = "scryfall.cache.bulk-data-type", defaultValue = "default_cards") final String bulkDataType,
             final ScryfallCardCache cardCache,
-            final MongoService mongoService,
+            final ReactiveMongoClient mongoClient,
+            @ConfigProperty(name = "quarkus.mongodb.database") final String databaseName,
             final ObjectMapper objectMapper,
             final ManagedExecutor managedExecutor) {
         this.enabled = enabled;
         this.bulkDataType = bulkDataType;
         this.cardCache = cardCache;
-        this.mongoService = mongoService;
+        this.mongoClient = mongoClient;
+        this.databaseName = databaseName;
         this.objectMapper = objectMapper;
         this.managedExecutor = managedExecutor;
     }
@@ -88,14 +98,14 @@ public class ScryfallBulkDataService {
                 return;
             }
 
-            String lastImported = getLastImportedUpdatedAt();
+            String lastImported = getLastImportedUpdatedAt().await().indefinitely();
             if (target.updatedAt().equals(lastImported)) {
                 LOGGER.info("Bulk data unchanged since last import ({}), skipping", lastImported);
                 return;
             }
 
             int count = performImport(target);
-            setLastImportedUpdatedAt(target.updatedAt());
+            setLastImportedUpdatedAt(target.updatedAt()).await().indefinitely();
             LOGGER.info("Scheduled Scryfall bulk data refresh complete: {} cards imported", count);
         } catch (Exception e) {
             LOGGER.error("Scheduled Scryfall bulk data refresh failed", e);
@@ -110,29 +120,46 @@ public class ScryfallBulkDataService {
         return bulkDataType;
     }
 
-    public CacheStatus getStatus() {
-        return new CacheStatus(
-                cardCache.isAvailable(),
-                cardCache.count(),
-                getLastImportedUpdatedAt(),
-                bulkDataType
-        );
+    /**
+     * Computes the current cache status. Runs on the reactive stack: the card
+     * count, availability and last-import timestamp are all reactive reads.
+     */
+    public Uni<CacheStatus> getStatus() {
+        return cardCache.isAvailable()
+                .chain(available -> cardCache.count()
+                        .chain(count -> getLastImportedUpdatedAt()
+                                .map(lastImported -> new CacheStatus(
+                                        available, count, lastImported, bulkDataType))));
     }
 
-    public int triggerRefresh() throws IOException {
+    /**
+     * Triggers a full blocking refresh (download + import) on the worker executor.
+     *
+     * @return a {@link Uni} emitting the number of imported cards
+     */
+    public Uni<Integer> triggerRefresh() {
         if (!enabled) {
-            throw new IllegalStateException("Scryfall cache is disabled");
+            return Uni.createFrom().failure(new IllegalStateException("Scryfall cache is disabled"));
         }
-        LOGGER.info("Manual Scryfall bulk data refresh triggered...");
-        List<BulkDataEntry> entries = fetchBulkDataEntries();
-        BulkDataEntry target = findTargetEntry(entries);
-        if (target == null) {
-            throw new IllegalStateException("No bulk data entry found for type: " + bulkDataType);
+        return Uni.createFrom().item(this::blockingRefresh)
+                .runSubscriptionOn(managedExecutor);
+    }
+
+    private int blockingRefresh() {
+        try {
+            LOGGER.info("Manual Scryfall bulk data refresh triggered...");
+            List<BulkDataEntry> entries = fetchBulkDataEntries();
+            BulkDataEntry target = findTargetEntry(entries);
+            if (target == null) {
+                throw new IllegalStateException("No bulk data entry found for type: " + bulkDataType);
+            }
+            int count = performImport(target);
+            setLastImportedUpdatedAt(target.updatedAt()).await().indefinitely();
+            LOGGER.info("Manual Scryfall bulk data refresh complete: {} cards imported", count);
+            return count;
+        } catch (IOException e) {
+            throw new IllegalStateException("Cache refresh failed: " + e.getMessage(), e);
         }
-        int count = performImport(target);
-        setLastImportedUpdatedAt(target.updatedAt());
-        LOGGER.info("Manual Scryfall bulk data refresh complete: {} cards imported", count);
-        return count;
     }
 
     List<BulkDataEntry> fetchBulkDataEntries() throws IOException {
@@ -173,8 +200,8 @@ public class ScryfallBulkDataService {
                 entry.type(), entry.compressedSize());
 
         // Start fresh: drop old collection and recreate indexes
-        cardCache.dropCollection();
-        cardCache.createIndexes();
+        cardCache.dropCollection().await().indefinitely();
+        cardCache.createIndexes().await().indefinitely();
 
         URL url = new URL(entry.jsonlDownloadUri());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -202,36 +229,36 @@ public class ScryfallBulkDataService {
                 total++;
 
                 if (batch.size() >= BATCH_SIZE) {
-                    cardCache.bulkInsert(batch);
+                    cardCache.bulkInsert(batch).await().indefinitely();
                     batch.clear();
                 }
             }
         }
 
         if (!batch.isEmpty()) {
-            cardCache.bulkInsert(batch);
+            cardCache.bulkInsert(batch).await().indefinitely();
         }
 
         return total;
     }
 
-    private MongoCollection<Document> getMetaCollection() {
-        return mongoService.getDatabase().getCollection(META_COLLECTION);
+    private ReactiveMongoCollection<Document> getMetaCollection() {
+        return mongoClient.getDatabase(databaseName).getCollection(META_COLLECTION);
     }
 
-    String getLastImportedUpdatedAt() {
-        Document doc = getMetaCollection().find(Filters.eq("_id", META_ID)).first();
-        return doc != null ? doc.getString("updatedAt") : null;
+    Uni<String> getLastImportedUpdatedAt() {
+        return getMetaCollection().find(Filters.eq("_id", META_ID)).collect().first()
+                .map(doc -> doc != null ? doc.getString("updatedAt") : null);
     }
 
-    void setLastImportedUpdatedAt(final String updatedAt) {
-        getMetaCollection().replaceOne(
-                Filters.eq("_id", META_ID),
-                new Document("_id", META_ID)
-                        .append("updatedAt", updatedAt)
-                        .append("importedAt", Instant.now().toString()),
-                new ReplaceOptions().upsert(true)
-        );
+    Uni<Void> setLastImportedUpdatedAt(final String updatedAt) {
+        return getMetaCollection().replaceOne(
+                        Filters.eq("_id", META_ID),
+                        new Document("_id", META_ID)
+                                .append("updatedAt", updatedAt)
+                                .append("importedAt", Instant.now().toString()),
+                        new ReplaceOptions().upsert(true))
+                .replaceWithVoid();
     }
 
     public record CacheStatus(

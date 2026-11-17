@@ -1,10 +1,15 @@
 package org.magic.accountService.app;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,47 +18,34 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.accountService.api.Deck;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.UpdateResult;
+
+import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 class DeckDbHandlerTest {
 
     @Mock
-    MongoService mongoService;
-    @Mock
-    MongoDatabase database;
-    @Mock
-    MongoCollection<Deck> collection;
-    @Mock
-    FindIterable<Deck> findIterable;
+    ReactiveMongoCollection<Deck> collection;
 
     DeckDbHandler handler;
 
     @BeforeEach
     void setup() {
-        when(mongoService.getDatabase()).thenReturn(database);
-        when(database.getCollection("Decks", Deck.class)).thenReturn(collection);
-        handler = new DeckDbHandler(mongoService);
+        handler = spy(new DeckDbHandler());
+        lenient().doReturn(collection).when(handler).mongoCollection();
     }
 
     @Test
     void shouldFindByAccountID() {
-        var decks = List.of(new Deck(), new Deck());
+        doReturn(Uni.createFrom().item(List.of(new Deck(), new Deck())))
+                .when(handler).list("accountID = ?1", "acc-1");
 
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.into(any())).thenAnswer(invocation -> {
-            ArrayList<Deck> list = invocation.getArgument(0);
-            list.addAll(decks);
-            return list;
-        });
-
-        List<Deck> result = handler.findByAccountID("acc-1");
+        List<Deck> result = handler.findByAccountID("acc-1").await().indefinitely();
 
         assertEquals(2, result.size());
     }
@@ -62,11 +54,10 @@ class DeckDbHandlerTest {
     void shouldFindById() {
         var deck = new Deck();
         deck.setDeckID("deck-1");
+        doReturn(Uni.createFrom().item(Optional.of(deck)))
+                .when(handler).findByIdOptional("deck-1");
 
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(deck);
-
-        Optional<Deck> result = handler.findById("deck-1");
+        Optional<Deck> result = handler.findByIdOptional("deck-1").await().indefinitely();
 
         assertTrue(result.isPresent());
         assertEquals("deck-1", result.get().getDeckID());
@@ -74,38 +65,43 @@ class DeckDbHandlerTest {
 
     @Test
     void shouldReturnEmptyForUnknownId() {
-        when(collection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(null);
+        doReturn(Uni.createFrom().item(Optional.empty()))
+                .when(handler).findByIdOptional("unknown");
 
-        Optional<Deck> result = handler.findById("unknown");
-
-        assertTrue(result.isEmpty());
+        assertTrue(handler.findByIdOptional("unknown").await().indefinitely().isEmpty());
     }
 
     @Test
     void shouldCreateDeck() {
-        String result = handler.createDeck("acc-1", "My Deck", "A description", List.of("card-1", "card-2"));
+        doReturn(Uni.createFrom().item((Deck) null)).when(handler).persist(any(Deck.class));
 
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        verify(collection).insertOne(argThat(deck ->
-                "acc-1".equals(deck.getAccountID()) &&
-                "My Deck".equals(deck.getName()) &&
-                "A description".equals(deck.getDescription()) &&
-                deck.getCardIds().size() == 2));
+        String result = handler.createDeck("acc-1", "My Deck", "A description",
+                List.of("card-1", "card-2")).await().indefinitely();
+
+        assertEquals(24, result.length(), "ObjectId hex string");
+        verify(handler).persist((Deck) argThat(deck ->
+                "acc-1".equals(((Deck) deck).getAccountID()) &&
+                "My Deck".equals(((Deck) deck).getName()) &&
+                "A description".equals(((Deck) deck).getDescription()) &&
+                ((Deck) deck).getCardIds().size() == 2));
     }
 
     @Test
     void shouldUpdateDeck() {
-        handler.updateDeck("deck-1", "New Name", "New Desc", List.of("card-1"));
+        when(collection.updateOne(any(Document.class), any(Document.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 1L, null)));
+
+        handler.updateDeck("deck-1", "New Name", "New Desc", List.of("card-1")).await().indefinitely();
 
         verify(collection).updateOne(any(Document.class), any(Document.class));
     }
 
     @Test
     void shouldDeleteDeck() {
-        handler.deleteDeck("deck-1");
+        doReturn(Uni.createFrom().item(true)).when(handler).deleteById("deck-1");
 
-        verify(collection).deleteOne(any(Document.class));
+        handler.deleteDeck("deck-1").await().indefinitely();
+
+        verify(handler).deleteById("deck-1");
     }
 }

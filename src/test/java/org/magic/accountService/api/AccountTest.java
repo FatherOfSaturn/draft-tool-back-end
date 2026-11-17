@@ -12,7 +12,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 
 class AccountTest {
 
@@ -21,7 +21,7 @@ class AccountTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Account.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Account account = JsonUtility.getInstance().fromJson(json, Account.class);
+        Account account = TestJson.fromJson(json, Account.class);
 
         assertNotNull(account);
         assertEquals("507f1f77bcf86cd799439011", account.getAccountID());
@@ -42,12 +42,12 @@ class AccountTest {
         account.setDeckIDs(List.of());
         account.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0, 0));
 
-        String json = JsonUtility.getInstance().toJson(account);
+        String json = TestJson.toJson(account);
 
         assertFalse(json.contains("test@example.com"));
         assertFalse(json.contains("1234567890"));
 
-        Account deserialized = JsonUtility.getInstance().fromJson(json, Account.class);
+        Account deserialized = TestJson.fromJson(json, Account.class);
 
         assertEquals(account.getAccountID(), deserialized.getAccountID());
         assertNull(deserialized.getEmail());

@@ -17,6 +17,7 @@ import org.magic.accountService.app.GameHistoryService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.core.SecurityContext;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +47,7 @@ class GameHistoryResourceTest {
         var entries = List.of(new GameHistoryEntry("game-1", "cube-1", "pyramid",
                 DraftGameState.GAME_IN_PROGRESS, players, Instant.now()));
 
-        when(gameHistoryService.getGameHistory("sub123")).thenReturn(entries);
+        when(gameHistoryService.getGameHistory("sub123")).thenReturn(Uni.createFrom().item(entries));
 
         List<GameHistoryEntry> result = resource.getGameHistory(securityContext).await().indefinitely();
 
@@ -58,7 +59,7 @@ class GameHistoryResourceTest {
 
     @Test
     void shouldReturnEmptyListWhenNoGames() {
-        when(gameHistoryService.getGameHistory("sub123")).thenReturn(List.of());
+        when(gameHistoryService.getGameHistory("sub123")).thenReturn(Uni.createFrom().item(List.of()));
 
         List<GameHistoryEntry> result = resource.getGameHistory(securityContext).await().indefinitely();
 

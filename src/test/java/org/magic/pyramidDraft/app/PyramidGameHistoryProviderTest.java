@@ -12,12 +12,14 @@ import org.magic.accountService.api.DraftGameState;
 import org.magic.accountService.api.GameHistoryEntry;
 import org.magic.accountService.api.GameHistoryPlayer;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
+import org.magic.common.game.GameState;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.CardPack;
+import org.magic.common.card.CardPack;
 import org.magic.pyramidDraft.app.GameCoordination.PyramidDraftDbHandler;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 class PyramidGameHistoryProviderTest {
@@ -31,11 +33,11 @@ class PyramidGameHistoryProviderTest {
         Player bob = player("Bob", "acc-2", 5, 20, 13, true);
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(alice, bob), GameState.GAME_STARTED, Instant.now());
 
-        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
+        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(game)));
 
         PyramidGameHistoryProvider provider = new PyramidGameHistoryProvider(dbHandler);
 
-        List<GameHistoryEntry> result = provider.findGamesByAccountID("acc-1");
+        List<GameHistoryEntry> result = provider.findGamesByAccountID("acc-1").await().indefinitely();
 
         assertEquals(1, result.size());
         GameHistoryEntry entry = result.get(0);
@@ -60,11 +62,11 @@ class PyramidGameHistoryProviderTest {
         Player alice = player("Alice", "acc-1", 0, 20, 13, false);
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(alice, player("Bob", "acc-2", 0, 20, 13, false)), GameState.GAME_MERGED, Instant.now());
 
-        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
+        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(game)));
 
         PyramidGameHistoryProvider provider = new PyramidGameHistoryProvider(dbHandler);
 
-        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").get(0);
+        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").await().indefinitely().get(0);
 
         assertEquals(DraftGameState.GAME_MERGED, entry.gameState());
         assertEquals(13, entry.players().get(0).totalPacks());
@@ -75,11 +77,11 @@ class PyramidGameHistoryProviderTest {
         Player alice = player("Alice", "acc-1", 13, 20, 13, false);
         GameInfo game = new GameInfo("gid", "cid", "pyramid", List.of(alice, player("Bob", "acc-2", 13, 20, 13, false)), GameState.GAME_COMPLETE, Instant.now());
 
-        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(List.of(game));
+        when(dbHandler.findGamesByAccountID("acc-1")).thenReturn(Uni.createFrom().item(List.of(game)));
 
         PyramidGameHistoryProvider provider = new PyramidGameHistoryProvider(dbHandler);
 
-        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").get(0);
+        GameHistoryEntry entry = provider.findGamesByAccountID("acc-1").await().indefinitely().get(0);
 
         assertEquals(DraftGameState.GAME_COMPLETE, entry.gameState());
         assertTrue(entry.players().get(0).doneDrafting());
