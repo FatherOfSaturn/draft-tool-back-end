@@ -86,6 +86,14 @@ jobs:
           MONGO_TEST_CONNECTION_STRING: mongodb://127.0.0.1:27017
         run: ./gradlew integrationTest
 
+      # NEW: lets the x86 runner build the arm64 image
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      # NEW: buildx is required for multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Determine tags, build, and publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -112,10 +120,10 @@ jobs:
             BUILD_ARGS="$BUILD_ARGS -t $tag"
           done
 
-          docker build \
+          # CHANGED: buildx builds both architectures and pushes in one step.
+          # This replaces the old "docker build" + "docker push" loop.
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --push \
             -f src/main/docker/Dockerfile.jvm \
             $BUILD_ARGS .
-
-          for tag in "${TAG_ARR[@]}"; do
-            docker push "$tag"
-          done
