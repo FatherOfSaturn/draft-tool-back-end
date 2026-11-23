@@ -10,8 +10,8 @@ import org.magic.classicDraft.api.ClassicGameSummary;
 import org.magic.classicDraft.api.PlayerDraftCheck;
 import org.magic.classicDraft.api.PlayerDraftData;
 import org.magic.classicDraft.app.GameCoordination.ClassicGameCoordinationWorker;
-import org.magic.pyramidDraft.api.GameStatusMessage;
-import org.magic.pyramidDraft.api.card.Card;
+import org.magic.common.game.GameStatusMessage;
+import org.magic.common.card.Card;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.validation.Valid;
@@ -75,7 +75,7 @@ public class GameResource {
                                @PathParam("cardID") @Size(max = 64) final String cardID,
                                @HeaderParam("X-Player-Token") @Size(max = 64) final String playerToken) {
         LOGGER.info("Call to draft card: {} for classic game: {}", cardID, gameID);
-        return Uni.createFrom().item(gameWorker.draftCard(playerToken, cardID, gameID));
+        return gameWorker.draftCard(playerToken, cardID, gameID);
     }
 
     @GET

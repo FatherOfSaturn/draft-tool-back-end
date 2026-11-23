@@ -1,22 +1,24 @@
 package org.magic.common;
 
-import java.io.IOException;
-
 import org.magic.common.api.ErrorMessage;
+import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 
 /**
  * Rejects requests carrying a revoked bearer token. Runs before JWT
  * authentication so that a logged-out token is refused with 401 regardless of
  * which resource is targeted.
+ *
+ * <p>Implemented as a RESTEasy Reactive server request filter: plain
+ * {@code @Provider} JAX-RS filters are not registered by {@code quarkus-rest},
+ * so this must stay in the {@code @ServerRequestFilter} form.</p>
  */
-@Provider
-public class TokenRevocationFilter implements ContainerRequestFilter {
+@ApplicationScoped
+public class TokenRevocationFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -27,20 +29,25 @@ public class TokenRevocationFilter implements ContainerRequestFilter {
         this.revocationService = revocationService;
     }
 
-    @Override
-    public void filter(final ContainerRequestContext requestContext) throws IOException {
+    /**
+     * RESTEasy Reactive request filter: returns the aborting {@link Response}
+     * when the token is revoked, {@code null} to continue.
+     */
+    @ServerRequestFilter(priority = 100)
+    public Response filter(final ContainerRequestContext requestContext) {
         String authorization = requestContext.getHeaderString("Authorization");
         if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
-            return;
+            return null;
         }
         String token = authorization.substring(BEARER_PREFIX.length()).trim();
         if (token.isEmpty()) {
-            return;
+            return null;
         }
         if (revocationService.isRevoked(token)) {
-            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+            return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(new ErrorMessage("Token has been revoked. Please log in again."))
-                    .build());
+                    .build();
         }
+        return null;
     }
 }

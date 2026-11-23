@@ -1,12 +1,13 @@
 package org.magic.lobbyService.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.magic.common.util.EnumParser;
 
 /**
  * Enumerates the lifecycle statuses of a lobby:
  * {@link #WAITING} → {@link #STARTING} → {@link #STARTED}.
  */
-public enum LobbyStatus {
+public enum LobbyStatus implements EnumParser.Described {
     WAITING("waiting"),
     STARTING("starting"),
     STARTED("started");
@@ -30,11 +31,6 @@ public enum LobbyStatus {
      */
     @JsonCreator
     public static LobbyStatus fromString(final String description) {
-        for (LobbyStatus status : LobbyStatus.values()) {
-            if (status.description.equalsIgnoreCase(description)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("No LobbyStatus with description: " + description);
+        return EnumParser.parse(LobbyStatus.class, description);
     }
 }

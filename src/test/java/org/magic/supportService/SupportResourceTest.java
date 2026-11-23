@@ -10,13 +10,17 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.magic.common.ClientIpResolver;
+import org.magic.supportService.api.CreateSupportAck;
 import org.magic.supportService.api.CreateSupportRequest;
+import org.magic.supportService.api.FormTokenResponse;
 import org.magic.supportService.api.PublicSupportRequest;
 import org.magic.supportService.api.SupportPriority;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
 import org.magic.supportService.api.SupportType;
 import org.magic.supportService.api.UpdateSupportRequest;
+import org.magic.supportService.app.FormTokenService;
 import org.magic.supportService.app.SupportWorker;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,24 +35,46 @@ class SupportResourceTest {
     @Mock
     SupportWorker supportWorker;
 
+    @Mock
+    FormTokenService formTokenService;
+
+    @Mock
+    ClientIpResolver clientIpResolver;
+
     SupportResource resource;
 
     @BeforeEach
     void setup() {
-        resource = new SupportResource(supportWorker);
+        resource = new SupportResource(supportWorker, formTokenService, clientIpResolver);
+    }
+
+    private CreateSupportRequest createRequest() {
+        return new CreateSupportRequest("Subject", "Description", "test@example.com",
+                SupportPriority.HIGH, null, null, null, SupportType.NEW_FEATURE);
     }
 
     @Test
-    void shouldCreateRequest() {
-        var request = new CreateSupportRequest("Subject", "Description", "test@example.com", SupportPriority.HIGH, null, SupportType.NEW_FEATURE);
-        var expected = new SupportRequest("id123", "Subject", "Description", "test@example.com", SupportPriority.HIGH, null, SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null);
+    void shouldCreateRequestReturningMinimalAck() {
+        var request = createRequest();
+        var expected = new SupportRequest("id123", "Subject", "Description", "test@example.com",
+                SupportPriority.HIGH, null, SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null);
 
-        when(supportWorker.createRequest(request)).thenReturn(Uni.createFrom().item(expected));
+        when(supportWorker.createRequest(request, "203.0.113.5")).thenReturn(Uni.createFrom().item(expected));
+        when(clientIpResolver.fromRoutingContext(null)).thenReturn("203.0.113.5");
 
-        SupportRequest result = resource.createRequest(request).await().indefinitely();
+        CreateSupportAck result = resource.createRequest(request, null).await().indefinitely();
 
         assertNotNull(result);
-        assertEquals("id123", result.getId());
+        assertEquals("id123", result.id());
+    }
+
+    @Test
+    void shouldIssueFormToken() {
+        when(formTokenService.issue()).thenReturn("123.abc");
+
+        FormTokenResponse result = resource.issueFormToken();
+
+        assertEquals("123.abc", result.token());
     }
 
     @Test
@@ -101,10 +127,11 @@ class SupportResourceTest {
     }
 
     @Test
-    void shouldListPublicRequestsExcludingDeleted() {
+    void shouldListPublicRequestsExcludingDeletedAndQuarantined() {
         var requests = List.of(
                 new SupportRequest("id1", "S1", "D1", "a@b.com", SupportPriority.HIGH, null, SupportStatus.NEW, SupportType.NEW_FEATURE, Instant.now(), null),
-                new SupportRequest("id2", "S2", "D2", "c@d.com", SupportPriority.CRITICAL, null, SupportStatus.DELETED, SupportType.BUG_FIX, Instant.now(), null)
+                new SupportRequest("id2", "S2", "D2", "c@d.com", SupportPriority.CRITICAL, null, SupportStatus.DELETED, SupportType.BUG_FIX, Instant.now(), null),
+                new SupportRequest("id3", "S3", "D3", "e@f.com", SupportPriority.LOW, null, SupportStatus.QUARANTINED, SupportType.MISC_SUPPORT, Instant.now(), null)
         );
 
         when(supportWorker.getAllRequests()).thenReturn(Uni.createFrom().item(requests));

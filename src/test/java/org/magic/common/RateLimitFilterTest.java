@@ -1,6 +1,7 @@
 package org.magic.common;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -45,13 +46,10 @@ class RateLimitFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(20), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> {
-            assertEquals(429, response.getStatus());
-            assertEquals("60", response.getHeaderString("Retry-After"));
-            return true;
-        }));
+        assertEquals(429, response.getStatus());
+        assertEquals("60", response.getHeaderString("Retry-After"));
     }
 
     @Test
@@ -61,9 +59,9 @@ class RateLimitFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(120), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 429));
+        assertEquals(429, response.getStatus());
     }
 
     @Test
@@ -73,34 +71,175 @@ class RateLimitFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(60), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 429));
+        assertEquals(429, response.getStatus());
     }
 
     @Test
-    void shouldAbortWith429WhenSupportCreateOverLimit() throws Exception {
+    void shouldAbortWith429WhenSupportBurstOverLimit() throws Exception {
         remote("203.0.113.9");
         when(uriInfo.getPath()).thenReturn("support");
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(requestContext.getMethod()).thenReturn("POST");
-        when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(20), any())).thenReturn(false);
+        when(rateLimiter.isAllowed(eq("203.0.113.9#0"), anyInt(), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 429));
+        assertEquals(429, response.getStatus());
     }
 
     @Test
-    void shouldNotLimitSupportReads() throws Exception {
+    void shouldAbortWith429WhenSupportHourlyOverLimit() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("support");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getMethod()).thenReturn("POST");
+        when(rateLimiter.isAllowed(eq("203.0.113.9#0"), anyInt(), any())).thenReturn(true);
+        when(rateLimiter.isAllowed(eq("203.0.113.9#1"), anyInt(), any())).thenReturn(false);
+
+        Response response = filter.filter(requestContext);
+
+        assertEquals(429, response.getStatus());
+        assertEquals("3600", response.getHeaderString("Retry-After"));
+    }
+
+    @Test
+    void shouldAllowSupportCreateWhenBothTiersUnderLimit() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("support");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getMethod()).thenReturn("POST");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        Response response = filter.filter(requestContext);
+
+        assertNull(response);
+        verify(rateLimiter).isAllowed(eq("203.0.113.9#0"), eq(3), eq(Duration.ofSeconds(60)));
+        verify(rateLimiter).isAllowed(eq("203.0.113.9#1"), eq(5), eq(Duration.ofHours(1)));
+    }
+
+    @Test
+    void shouldLimitAnonymousSupportReads() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("support/public");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getMethod()).thenReturn("GET");
+        when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(60), any())).thenReturn(false);
+
+        Response response = filter.filter(requestContext);
+
+        assertEquals(429, response.getStatus());
+    }
+
+    @Test
+    void shouldLimitSupportByIdRead() throws Exception {
+        remote("203.0.113.9");
         when(uriInfo.getPath()).thenReturn("support/ABC123");
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(requestContext.getMethod()).thenReturn("GET");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        Response response = filter.filter(requestContext);
+
+        assertNull(response);
+        verify(rateLimiter).isAllowed(eq("203.0.113.9"), eq(60), eq(Duration.ofSeconds(60)));
+    }
+
+    @Test
+    void shouldBucketAuthenticatedEndpointsPerSubject() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("account/decks");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+
+        when(requestContext.getHeaderString("Authorization"))
+                .thenReturn("Bearer " + token("google-sub-123"));
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        Response response = filter.filter(requestContext);
+
+        assertNull(response);
+        verify(rateLimiter).isAllowed(eq("user:google-sub-123"), eq(300), eq(Duration.ofSeconds(60)));
+    }
+
+    @Test
+    void shouldFallBackToIpWhenNoTokenPresent() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("account/decks");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        Response response = filter.filter(requestContext);
+
+        assertNull(response);
+        verify(rateLimiter).isAllowed(eq("anon:203.0.113.9"), eq(300), eq(Duration.ofSeconds(60)));
+    }
+
+    @Test
+    void shouldLimitAdminEndpointsPerSubject() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("admin/stats/drafts/classic");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getHeaderString("Authorization"))
+                .thenReturn("Bearer " + token("admin-sub-9"));
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(false);
+
+        Response response = filter.filter(requestContext);
+
+        assertEquals(429, response.getStatus());
+        verify(rateLimiter).isAllowed(eq("user:admin-sub-9"), anyInt(), any());
+    }
+
+    @Test
+    void shouldBucketLoginByIpEvenWithToken() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("account/login");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
 
         filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
-        verifyNoInteractions(rateLimiter);
+        verify(rateLimiter).isAllowed(eq("203.0.113.9"), eq(20), any());
+    }
+
+    @Test
+    void shouldNotLimitSupportFormTokenEndpoint() throws Exception {
+        when(uriInfo.getPath()).thenReturn("support/form-token");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getMethod()).thenReturn("GET");
+        remote("203.0.113.9");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        Response response = filter.filter(requestContext);
+
+        assertNull(response);
+        verify(rateLimiter).isAllowed(eq("203.0.113.9"), eq(60), eq(Duration.ofSeconds(60)));
+    }
+
+    @Test
+    void shouldNotRateLimitUnparseableTokenBySubject() throws Exception {
+        remote("203.0.113.9");
+        when(uriInfo.getPath()).thenReturn("account/decks");
+        when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer not-a-jwt");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), any())).thenReturn(true);
+
+        filter.filter(requestContext);
+
+        verify(rateLimiter).isAllowed(eq("anon:203.0.113.9"), eq(300), any());
+    }
+
+    /** Builds an unsigned JWT-shaped token whose payload carries the given sub. */
+    private static String token(final String subject) {
+        String header = base64Url("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
+        String payload = base64Url("{\"sub\":\"" + subject + "\",\"iss\":\"magic-draft\"}");
+        return header + "." + payload + ".signature";
+    }
+
+    private static String base64Url(final String json) {
+        return java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @Test
@@ -111,19 +250,19 @@ class RateLimitFilterTest {
         when(requestContext.getMethod()).thenReturn("GET");
         when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(120), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 429));
+        assertEquals(429, response.getStatus());
     }
 
     @Test
     void shouldNotLimitUnrelatedEndpoints() throws Exception {
-        when(uriInfo.getPath()).thenReturn("account");
+        when(uriInfo.getPath()).thenReturn("health");
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
         verifyNoInteractions(rateLimiter);
     }
 
@@ -131,9 +270,9 @@ class RateLimitFilterTest {
     void shouldSkipEntirelyWhenDisabled() throws Exception {
         filter = newFilter(false, false, "");
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
         verifyNoInteractions(rateLimiter, uriInfo);
     }
 
@@ -146,9 +285,9 @@ class RateLimitFilterTest {
         when(requestContext.getHeaders()).thenReturn(forwardedHeaders("203.0.113.9"));
         when(rateLimiter.isAllowed(eq("203.0.113.9"), eq(20), any())).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 429));
+        assertEquals(429, response.getStatus());
     }
 
     @Test
@@ -159,20 +298,23 @@ class RateLimitFilterTest {
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(rateLimiter.isAllowed(eq("203.0.113.99"), eq(20), any())).thenReturn(true);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
         verify(requestContext, never()).getHeaders();
     }
 
     private RateLimitFilter newFilter(final boolean enabled, final boolean trustForwarded,
                                       final String trustedProxies) {
-        return new RateLimitFilter(rateLimiter, enabled, trustForwarded,
-                Optional.ofNullable(trustedProxies),
+        return new RateLimitFilter(rateLimiter, new ClientIpResolver(trustForwarded, Optional.ofNullable(trustedProxies)),
+                enabled,
                 20, Duration.ofSeconds(60),
                 120, Duration.ofSeconds(60),
                 60, Duration.ofSeconds(60),
-                20, Duration.ofSeconds(60),
+                3, Duration.ofSeconds(60),
+                5, Duration.ofHours(1),
+                60, Duration.ofSeconds(60),
+                300, Duration.ofSeconds(60),
                 120, Duration.ofSeconds(60));
     }
 

@@ -6,15 +6,15 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
+import org.magic.common.cube.CubeDownloader;
+import org.magic.common.game.GameState;
+import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
-import org.magic.pyramidDraft.api.GameStatusMessage;
 import org.magic.pyramidDraft.api.Player;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.app.CubeDownloader;
 import org.magic.pyramidDraft.app.PackCreator;
 import org.magic.pyramidDraft.app.PackMerger;
 
@@ -28,6 +28,11 @@ import jakarta.ws.rs.core.Response;
  * starting games, processing card drafts, merging packs between players,
  * and ending games. Delegates cube downloading to {@link CubeDownloader},
  * pack creation to {@link PackCreator}, and pack merging to {@link PackMerger}.
+ *
+ * <p>All persistence is reactive: the game state is read and written through
+ * {@link PyramidDraftDbHandler}'s {@link Uni} API, so no event-loop thread is
+ * ever blocked. Pure in-memory work (pack creation, merging, draft rules)
+ * runs inline on the completing thread.</p>
  */
 @ApplicationScoped
 public class GameCoordinationWorker {
@@ -60,9 +65,9 @@ public class GameCoordinationWorker {
 
         return cubeDownloader.getCubeForCubeID(gameCreationInfo.cubeID())
                              .map(cube -> new PackCreator(cube))
-                             .map(packCreator -> packCreator.createPyramidPacks(player1Creation, 
-                                                                               player2Creation,
-                                                                               gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
+                             .map(packCreator -> packCreator.createPyramidPacks(player1Creation,
+                                                                                player2Creation,
+                                                                                gameCreationInfo.numberOfDoubleDraftPicksPerPlayer()))
                              .map(players -> {
                                  for (Player p : players) {
                                      if (p.getPlayerToken() == null || p.getPlayerToken().isBlank()) {
@@ -77,53 +82,55 @@ public class GameCoordinationWorker {
                                                           players,
                                                           GameState.GAME_STARTED,
                                                           Instant.now()))
-                             .invoke(gameInfo -> dbHandler.addGame(gameInfo));
+                             .call(gameInfo -> dbHandler.addGame(gameInfo));
     }
 
     /**
      * Processes a card draft action for a player. Finds the game and player, then
      * delegates the draft logic to {@link Player#draftCard(String, int, boolean)}.
      *
-     * @param accountID  the account drafting the card
-     * @param packNumber the pack number to draft from
-     * @param cardID     the Scryfall ID of the card being drafted
+     * @param playerToken  the drafting player's token
+     * @param packNumber   the pack number to draft from
+     * @param cardID       the Scryfall ID of the card being drafted
      * @param isDoublePick whether this draft uses a double-pick token
-     * @param gameID     the game to draft from
-     * @return the drafted {@link Card}
+     * @param gameID       the game to draft from
+     * @return a {@link Uni} emitting the drafted {@link Card}
      */
-    public Card draftCard(final String playerToken, 
-                          final int packNumber, 
-                          final String cardID, 
-                          final boolean isDoublePick,
-                          final String gameID) {
+    public Uni<Card> draftCard(final String playerToken,
+                               final int packNumber,
+                               final String cardID,
+                               final boolean isDoublePick,
+                               final String gameID) {
 
         LOGGER.info("Fetching Game with ID: {}", gameID);
-        GameInfo gameInfo = dbHandler.findGame(gameID);
-        
-        LOGGER.info("\nRetrieved Game: {}\n", gameID);
-        final Player player = gameInfo.getPlayers()
-                                       .stream()
-                                       .filter(pl -> playerToken.equals(pl.getPlayerToken()))
-                                       .findFirst()
-                                       .orElseThrow(() -> new IllegalArgumentException("Player not found"));
-        LOGGER.info("\nDrafting {} Card for {}\n", cardID, player.getPlayerName());
-        
-        Card cardDrafted = player.draftCard(cardID, packNumber, isDoublePick);
+        return dbHandler.findGame(gameID)
+                .chain(gameInfo -> {
+                    LOGGER.info("\nRetrieved Game: {}\n", gameID);
+                    final Player player = gameInfo.getPlayers()
+                                                   .stream()
+                                                   .filter(pl -> playerToken.equals(pl.getPlayerToken()))
+                                                   .findFirst()
+                                                   .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                    LOGGER.info("\nDrafting {} Card for {}\n", cardID, player.getPlayerName());
 
-        LOGGER.info("\nSuccesfully Allocated Draft for Card: {}\n", cardDrafted.getName());
+                    final Card cardDrafted = player.draftCard(cardID, packNumber, isDoublePick);
 
-        dbHandler.updatePlayer(gameInfo, player);
+                    LOGGER.info("\nSuccesfully Allocated Draft for Card: {}\n", cardDrafted.getName());
 
-        if (gameInfo.getGameState() == GameState.GAME_MERGED) {
-            Player p1 = gameInfo.getPlayers().get(0);
-            Player p2 = gameInfo.getPlayers().get(1);
-            if (p1.isReadyForMerge() && p2.isReadyForMerge()) {
-                LOGGER.info("Both players finished post-merge. Auto-completing game: {}", gameID);
-                dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE);
-            }
-        }
-
-        return cardDrafted;
+                    return dbHandler.updatePlayer(gameInfo, player)
+                            .chain(ignored -> {
+                                if (gameInfo.getGameState() == GameState.GAME_MERGED) {
+                                    Player p1 = gameInfo.getPlayers().get(0);
+                                    Player p2 = gameInfo.getPlayers().get(1);
+                                    if (p1.isReadyForMerge() && p2.isReadyForMerge()) {
+                                        LOGGER.info("Both players finished post-merge. Auto-completing game: {}", gameID);
+                                        return dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE)
+                                                .replaceWith(cardDrafted);
+                                    }
+                                }
+                                return Uni.createFrom().item(cardDrafted);
+                            });
+                });
     }
 
     /**
@@ -133,7 +140,7 @@ public class GameCoordinationWorker {
      * @return a {@link Uni} emitting the {@link GameInfo}
      */
     public Uni<GameInfo> getGameInfo(final String gameID) {
-        return Uni.createFrom().item(dbHandler.findGame(gameID));
+        return dbHandler.findGame(gameID);
     }
 
     /**
@@ -149,48 +156,46 @@ public class GameCoordinationWorker {
      */
     public Uni<GameStatusMessage> mergeAndSwapPacks(final String gameID) {
 
-        final GameInfo game = dbHandler.findGame(gameID);
+        return dbHandler.findGame(gameID)
+                .chain(game -> {
+                    if (game.getPlayers().size() != 2) {
+                        throw new IllegalStateException("Game has more than 2 players. Cannot Merge and Swap Cards");
+                    }
 
-        if (game.getPlayers().size() != 2) {
-            throw new IllegalStateException("Game has more than 2 players. Cannot Merge and Swap Cards");
-        }
+                    final Player player1 = game.getPlayers().get(0);
+                    final Player player2 = game.getPlayers().get(1);
 
-        final Player player1 = game.getPlayers().get(0);
-        final Player player2 = game.getPlayers().get(1);
+                    // TODO: Add a lock on a Game when it is being checked for merging since it is shared by two instances on the front
 
-        // TODO: Add a lock on a Game when it is being checked for merging since it is shared by two instances on the front
+                    if (game.getGameState() == GameState.GAME_MERGED) {
+                        LOGGER.info("Game was already Merged: {}", gameID);
+                        return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_MERGED));
+                    }
 
-        if (game.getGameState() == GameState.GAME_MERGED) {
-            LOGGER.info("Game was already Merged: {}", gameID);
-            return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_MERGED));
-        }
+                    // Both players must have completed their draft rounds before merging
+                    if (player1.isReadyForMerge() && player2.isReadyForMerge()) {
+                        LOGGER.info("Game Merging: {}", gameID);
+                        // Merge each player's packs, then swap: player1 gets player2's packs and vice versa
+                        List<CardPack> mergedPlayer1Packs = packMerger.mergePlayerPacks(player1);
+                        List<CardPack> mergedPlayer2Packs = packMerger.mergePlayerPacks(player2);
+                        player1.setCardPacks(mergedPlayer2Packs);
+                        player2.setCardPacks(mergedPlayer1Packs);
 
-        // Both players must have completed their draft rounds before merging
-        if (player1.isReadyForMerge() && player2.isReadyForMerge() && game.getGameState() != GameState.GAME_MERGED) {
-            LOGGER.info("Game Merging: {}", gameID);
-            // Merge each player's packs, then swap: player1 gets player2's packs and vice versa
-            List<CardPack> mergedPlayer1Packs = packMerger.mergePlayerPacks(player1);
-            List<CardPack> mergedPlayer2Packs = packMerger.mergePlayerPacks(player2);
-            player1.setCardPacks(mergedPlayer2Packs);
-            player2.setCardPacks(mergedPlayer1Packs);
+                        player1.resetAfterMerge();
+                        player2.resetAfterMerge();
 
-            player1.resetAfterMerge();
-            player2.resetAfterMerge();
+                        game.setGameState(GameState.GAME_MERGED);
+                        game.updatePlayers(List.of(player1, player2));
 
-            game.setGameState(GameState.GAME_MERGED);
-            game.updatePlayers(List.of(player1, player2));
-
-            LOGGER.info("Merging game: {}", gameID);
-
-            dbHandler.updateGame(game);
-
-            LOGGER.info("Game was Merged: {}", gameID);
-            return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_MERGED));
-        }
-        LOGGER.info("Game {} is not ready for merge, or has already been merged.\nPlayer1: {}\nPlayer2: {}", gameID, 
-                                                                                                                        player1.isReadyForMerge(),
-                                                                                                                        player2.isReadyForMerge());
-        return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_STARTED));
+                        LOGGER.info("Merging game: {}", gameID);
+                        return dbHandler.updateGame(game)
+                                .invoke(ignored -> LOGGER.info("Game was Merged: {}", gameID))
+                                .replaceWith(new GameStatusMessage(gameID, GameState.GAME_MERGED));
+                    }
+                    LOGGER.info("Game {} is not ready for merge, or has already been merged.\nPlayer1: {}\nPlayer2: {}",
+                            gameID, player1.isReadyForMerge(), player2.isReadyForMerge());
+                    return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_STARTED));
+                });
     }
 
     /**
@@ -200,15 +205,15 @@ public class GameCoordinationWorker {
      * @param gameID the game to end
      * @return a {@link Uni} emitting a {@link GameStatusMessage} with GAME_COMPLETE
      */
-    public Uni<GameStatusMessage> endGame(String gameID) {
-
-        // very dirty way to check if game state was already updated to complete
-        if (!(dbHandler.findGame(gameID).getGameState() == GameState.GAME_COMPLETE)) {
-            final GameState gameState = dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE);
-            return Uni.createFrom().item(new GameStatusMessage(gameID, gameState));
-        }
-
-        return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_COMPLETE));
+    public Uni<GameStatusMessage> endGame(final String gameID) {
+        return dbHandler.findGame(gameID)
+                .chain(game -> {
+                    if (game.getGameState() == GameState.GAME_COMPLETE) {
+                        return Uni.createFrom().item(new GameStatusMessage(gameID, GameState.GAME_COMPLETE));
+                    }
+                    return dbHandler.updateGameState(gameID, GameState.GAME_COMPLETE)
+                            .map(gameState -> new GameStatusMessage(gameID, gameState));
+                });
     }
 
     /**
@@ -218,11 +223,12 @@ public class GameCoordinationWorker {
      * @return a {@link Uni} emitting a 200 OK response with the deletion count
      */
     public Uni<Response> deleteGamesWithStatus(final GameState gameState) {
-        final int recordsDeleted = dbHandler.clearGamesWithStatus(gameState);
-
-        final String message = String.format("Deleted %d records with game state of %s.", recordsDeleted, gameState);
-
-        return Uni.createFrom().item(Response.ok(message).build());
+        return dbHandler.clearGamesWithStatus(gameState)
+                .map(recordsDeleted -> {
+                    final String message = String.format(
+                            "Deleted %d records with game state of %s.", recordsDeleted, gameState);
+                    return Response.ok(message).build();
+                });
     }
 
     /**
@@ -235,10 +241,9 @@ public class GameCoordinationWorker {
      */
     public Uni<Response> deleteGame(final String gameID) {
         LOGGER.info("Deleting Game: {}", gameID);
-        final boolean deleted = dbHandler.deleteGame(gameID);
-
-        return Uni.createFrom().item(deleted
-                ? Response.noContent().build()
-                : Response.status(Response.Status.NOT_FOUND).build());
+        return dbHandler.deleteGame(gameID)
+                .map(deleted -> deleted
+                        ? Response.noContent().build()
+                        : Response.status(Response.Status.NOT_FOUND).build());
     }
 }

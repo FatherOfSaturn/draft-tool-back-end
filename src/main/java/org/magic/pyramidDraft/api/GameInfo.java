@@ -1,5 +1,7 @@
 package org.magic.pyramidDraft.api;
 
+import org.magic.common.game.GameState;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import io.quarkus.mongodb.panache.common.MongoEntity;
+
 /**
  * Represents the full state of a pyramid draft game, including the game ID,
  * both players' states, the current game state, and account ownership info.
@@ -24,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Setter
 @EqualsAndHashCode
 @JsonPropertyOrder({ "gameID", "cubeID", "gameType", "players", "gameState", "createdAt" })
+@MongoEntity(collection = "Games")
 public class GameInfo {
     private final String gameID;
     private final String cubeID;

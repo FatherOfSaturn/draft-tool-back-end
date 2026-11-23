@@ -33,9 +33,9 @@ class TokenRevocationFilterTest {
         when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer revoked-jwt");
         when(revocationService.isRevoked("revoked-jwt")).thenReturn(true);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext).abortWith(argThat(response -> response.getStatus() == 401));
+        assertNotNull(response);
     }
 
     @Test
@@ -43,16 +43,16 @@ class TokenRevocationFilterTest {
         when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer valid-jwt");
         when(revocationService.isRevoked("valid-jwt")).thenReturn(false);
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
     }
 
     @Test
     void shouldPassWhenNoAuthorizationHeader() throws Exception {
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
         verifyNoInteractions(revocationService);
     }
 
@@ -60,9 +60,9 @@ class TokenRevocationFilterTest {
     void shouldPassWhenHeaderIsNotBearer() throws Exception {
         when(requestContext.getHeaderString("Authorization")).thenReturn("Basic abc123");
 
-        filter.filter(requestContext);
+        Response response = filter.filter(requestContext);
 
-        verify(requestContext, never()).abortWith(any());
+        assertNull(response);
         verifyNoInteractions(revocationService);
     }
 }

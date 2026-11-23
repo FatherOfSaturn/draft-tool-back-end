@@ -1,8 +1,16 @@
 package org.magic.supportService.app;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
@@ -11,7 +19,6 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
 import org.magic.supportService.api.SupportPriority;
 import org.magic.supportService.api.SupportRequest;
 import org.magic.supportService.api.SupportStatus;
@@ -19,27 +26,18 @@ import org.magic.supportService.api.SupportType;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+
+import io.quarkus.mongodb.reactive.ReactiveMongoCollection;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 
 @ExtendWith(MockitoExtension.class)
 class SupportDbHandlerTest {
 
     @Mock
-    MongoService mongoService;
-    @Mock
-    MongoDatabase database;
-    @Mock
-    MongoCollection<SupportRequest> collection;
-    @Mock
-    FindIterable<SupportRequest> findIterable;
-    @Mock
-    UpdateResult updateResult;
-    @Mock
-    DeleteResult deleteResult;
+    ReactiveMongoCollection<SupportRequest> collection;
 
     SupportDbHandler handler;
 
@@ -47,31 +45,32 @@ class SupportDbHandlerTest {
 
     @BeforeEach
     void setup() {
-        when(mongoService.getDatabase()).thenReturn(database);
-        when(database.getCollection("SupportRequests", SupportRequest.class)).thenReturn(collection);
-        handler = new SupportDbHandler();
-        handler.mongoService = mongoService;
+        handler = spy(new SupportDbHandler());
+        lenient().doReturn(collection).when(handler).mongoCollection();
     }
 
     private SupportRequest createRequest(String id) {
-        return new SupportRequest(id, "Title", "Desc", "email@test.com", SupportPriority.MEDIUM, null, SupportStatus.NEW, SupportType.NEW_FEATURE, now, null);
+        return new SupportRequest(id, "Title", "Desc", "email@test.com", SupportPriority.MEDIUM,
+                null, SupportStatus.NEW, SupportType.NEW_FEATURE, now, null);
     }
 
     @Test
     void shouldAddRequest() {
         var request = createRequest("id-1");
-        handler.addRequest(request);
-        verify(collection).insertOne(request);
+        doReturn(Uni.createFrom().item(request)).when(handler).persist(request);
+
+        handler.addRequest(request).await().indefinitely();
+
+        verify(handler).persist(request);
     }
 
     @Test
     void shouldFindById() {
         var request = createRequest("id-1");
+        doReturn(Uni.createFrom().item(java.util.Optional.of(request)))
+                .when(handler).findByIdOptional("id-1");
 
-        when(collection.find(any(Bson.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(request);
-
-        SupportRequest result = handler.findById("id-1");
+        SupportRequest result = handler.findRequestById("id-1").await().indefinitely();
 
         assertNotNull(result);
         assertEquals("id-1", result.getId());
@@ -79,21 +78,19 @@ class SupportDbHandlerTest {
 
     @Test
     void shouldThrowWhenFindByIdNotFound() {
-        when(collection.find(any(Bson.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(null);
+        doReturn(Uni.createFrom().item(java.util.Optional.empty()))
+                .when(handler).findByIdOptional("missing");
 
-        assertThrows(IllegalStateException.class, () -> handler.findById("missing"));
+        assertThrows(IllegalStateException.class,
+                () -> handler.findRequestById("missing").await().indefinitely());
     }
 
     @Test
     void shouldFindAll() {
-        var requests = List.of(createRequest("id-1"), createRequest("id-2"));
+        when(collection.find(any(io.quarkus.mongodb.FindOptions.class)))
+                .thenReturn(Multi.createFrom().items(createRequest("id-1"), createRequest("id-2")));
 
-        when(collection.find()).thenReturn(findIterable);
-        when(findIterable.sort(any())).thenReturn(findIterable);
-        when(findIterable.into(any())).thenReturn(requests);
-
-        List<SupportRequest> result = handler.findAll();
+        List<SupportRequest> result = handler.findAllRequests().await().indefinitely();
 
         assertEquals(2, result.size());
     }
@@ -101,11 +98,10 @@ class SupportDbHandlerTest {
     @Test
     void shouldUpdateRequest() {
         var request = createRequest("id-1");
+        when(collection.updateOne(any(Bson.class), any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 1L, null)));
 
-        when(collection.updateOne(any(Bson.class), any(Bson.class))).thenReturn(updateResult);
-        when(updateResult.getModifiedCount()).thenReturn(1L);
-
-        SupportRequest result = handler.updateRequest(request);
+        SupportRequest result = handler.updateRequest(request).await().indefinitely();
 
         assertEquals("id-1", result.getId());
     }
@@ -113,52 +109,49 @@ class SupportDbHandlerTest {
     @Test
     void shouldThrowWhenUpdateRequestFails() {
         var request = createRequest("id-1");
+        when(collection.updateOne(any(Bson.class), any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 0L, null)));
 
-        when(collection.updateOne(any(Bson.class), any(Bson.class))).thenReturn(updateResult);
-        when(updateResult.getModifiedCount()).thenReturn(0L);
-
-        assertThrows(IllegalStateException.class, () -> handler.updateRequest(request));
+        assertThrows(IllegalStateException.class,
+                () -> handler.updateRequest(request).await().indefinitely());
     }
 
     @Test
     void shouldUpdateStatus() {
         var request = createRequest("id-1");
+        when(collection.updateOne(any(Bson.class), any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 1L, null)));
+        doReturn(Uni.createFrom().item(java.util.Optional.of(request)))
+                .when(handler).findByIdOptional("id-1");
 
-        when(collection.updateOne(any(Bson.class), any(Bson.class))).thenReturn(updateResult);
-        when(updateResult.getModifiedCount()).thenReturn(1L);
-        when(collection.find(any(Bson.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(request);
-
-        SupportRequest result = handler.updateStatus("id-1", SupportStatus.COMPLETED, now);
+        SupportRequest result = handler.updateStatus("id-1", SupportStatus.COMPLETED, now)
+                .await().indefinitely();
 
         assertNotNull(result);
     }
 
     @Test
     void shouldThrowWhenUpdateStatusFails() {
-        when(collection.updateOne(any(Bson.class), any(Bson.class))).thenReturn(updateResult);
-        when(updateResult.getModifiedCount()).thenReturn(0L);
+        when(collection.updateOne(any(Bson.class), any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(UpdateResult.acknowledged(1L, 0L, null)));
 
-        assertThrows(IllegalStateException.class, () -> handler.updateStatus("id-1", SupportStatus.COMPLETED, now));
+        assertThrows(IllegalStateException.class,
+                () -> handler.updateStatus("id-1", SupportStatus.COMPLETED, now).await().indefinitely());
     }
 
     @Test
     void shouldHardDeleteRequest() {
-        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
-        when(deleteResult.getDeletedCount()).thenReturn(1L);
+        when(collection.deleteOne(any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(DeleteResult.acknowledged(1)));
 
-        boolean result = handler.hardDeleteRequest("id-1");
-
-        assertTrue(result);
+        assertTrue(handler.hardDeleteRequest("id-1").await().indefinitely());
     }
 
     @Test
     void shouldReturnFalseWhenHardDeletingMissingRequest() {
-        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
-        when(deleteResult.getDeletedCount()).thenReturn(0L);
+        when(collection.deleteOne(any(Bson.class)))
+                .thenReturn(Uni.createFrom().item(DeleteResult.acknowledged(0)));
 
-        boolean result = handler.hardDeleteRequest("missing");
-
-        assertFalse(result);
+        assertFalse(handler.hardDeleteRequest("missing").await().indefinitely());
     }
 }

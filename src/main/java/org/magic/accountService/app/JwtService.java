@@ -1,5 +1,6 @@
 package org.magic.accountService.app;
 
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ public class JwtService {
                 .claim("email", email)
                 .groups(groups)
                 .claim("jti", UUID.randomUUID().toString())
-                .expiresAt(System.currentTimeMillis() + TTL_SECONDS * 1000)
+                .expiresAt(Instant.now().plusSeconds(TTL_SECONDS))
                 .sign();
     }
 

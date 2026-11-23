@@ -9,12 +9,12 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 import org.magic.pyramidDraft.api.GameInfo;
 import org.magic.pyramidDraft.api.Player;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Cube;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,18 +30,18 @@ public class PackMergerTest extends TestUtils {
         InputStream cubeIS = getClass().getClassLoader().getResourceAsStream("AdamCube.json");
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
 
-        Cube cube = JsonUtility.getInstance().fromJson(cubeString, Cube.class);
+        Cube cube = TestJson.fromJson(cubeString, Cube.class);
 
         // Test needs to add data for the merge flag being true
         InputStream player1IS = getClass().getClassLoader().getResourceAsStream("Player1.json");
         String player1String = IOUtils.toString(player1IS, "UTF-8");
 
-        Player player1 = JsonUtility.getInstance().fromJson(player1String, Player.class);
+        Player player1 = TestJson.fromJson(player1String, Player.class);
 
         InputStream player2IS = getClass().getClassLoader().getResourceAsStream("Player2.json");
         String player2String = IOUtils.toString(player2IS, "UTF-8");
 
-        Player player2 = JsonUtility.getInstance().fromJson(player2String, Player.class);
+        Player player2 = TestJson.fromJson(player2String, Player.class);
 
         this.draftCardInEveryPack(player1);
         this.draftCardInEveryPack(player2);

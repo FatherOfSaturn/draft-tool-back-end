@@ -5,11 +5,14 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.quarkus.mongodb.panache.common.MongoEntity;
+
 /**
  * DTO representing a Magic: The Gathering card as returned by the Scryfall API.
  * Includes card identity, mana cost, type line, images, legalities, and
  * optional {@link ScryfallCardFace} data for multi-faced cards.
  */
+@MongoEntity(collection = "ScryfallCards")
 public record ScryfallCard(
     @JsonProperty("id") String id,
     @JsonProperty("oracle_id") String oracleId,

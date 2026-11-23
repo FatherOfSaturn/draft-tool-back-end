@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.GameState;
-import org.magic.pyramidDraft.api.GameStatusMessage;
+import org.magic.common.game.GameState;
+import org.magic.common.game.GameStatusMessage;
 import org.magic.pyramidDraft.api.PlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardDetails;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardDetails;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,7 +37,7 @@ class GameResourceTest {
 
     @BeforeEach
     void setup() {
-        resource = new GameResource(gameWorker);
+        resource = new GameResource(gameWorker, org.magic.TestJson.mapper());
     }
 
     @Test
@@ -58,7 +58,7 @@ class GameResourceTest {
     void shouldDraftCard() {
         var card = new Card("Lightning Bolt", details, "card-789", 1, "Instant");
 
-        when(gameWorker.draftCard("tok-0", 2, "card-789", false, "game-456")).thenReturn(card);
+        when(gameWorker.draftCard("tok-0", 2, "card-789", false, "game-456")).thenReturn(Uni.createFrom().item(card));
 
         Card result = resource.draftCard("game-456", 2, "card-789", "tok-0", false).await().atMost(Duration.ofSeconds(3));
 

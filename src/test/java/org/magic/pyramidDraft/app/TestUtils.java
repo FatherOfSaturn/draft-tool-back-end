@@ -10,10 +10,11 @@ import java.time.Duration;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
+import org.magic.common.cube.CubeDownloader;
 import org.magic.pyramidDraft.api.GameCreationInfo;
 import org.magic.pyramidDraft.api.GameInfo;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Cube;
 import org.magic.pyramidDraft.app.GameCoordination.PyramidDraftDbHandler;
 import org.magic.pyramidDraft.app.GameCoordination.GameCoordinationWorker;
 import org.mockito.Mock;
@@ -43,7 +44,7 @@ public abstract class TestUtils {
         InputStream cubeIS = getClass().getClassLoader().getResourceAsStream(fileName);
         String cubeString = IOUtils.toString(cubeIS, "UTF-8");
 
-        Cube cube = JsonUtility.getInstance().fromJson(cubeString, Cube.class);
+        Cube cube = TestJson.fromJson(cubeString, Cube.class);
 
         return cube;
     }
@@ -53,7 +54,7 @@ public abstract class TestUtils {
         InputStream gameIS = getClass().getClassLoader().getResourceAsStream("GameCreationInfo.json");
         String gameString = IOUtils.toString(gameIS, "UTF-8");
 
-        GameCreationInfo info = JsonUtility.getInstance().fromJson(gameString, GameCreationInfo.class);
+        GameCreationInfo info = TestJson.fromJson(gameString, GameCreationInfo.class);
 
         return info;
     }
@@ -64,7 +65,7 @@ public abstract class TestUtils {
         Cube adamCube = this.createCubeFromJson(cubeName);
 
         when(cubeDownloader.getCubeForCubeID(createGameInfo.cubeID())).thenReturn(Uni.createFrom().item(adamCube));
-        when(dbHandler.addGame(any())).thenReturn("GameInfo");
+        when(dbHandler.addGame(any())).thenReturn(Uni.createFrom().item("GameInfo"));
 
         return gameCoordinationWorker.startGame(createGameInfo).await().atMost(Duration.ofSeconds(3));
     }

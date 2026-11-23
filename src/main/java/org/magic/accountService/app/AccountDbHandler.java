@@ -4,42 +4,27 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.magic.accountService.api.Account;
-import org.magic.pyramidDraft.app.GameCoordination.MongoService;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheMongoRepositoryBase;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
- * MongoDB data access handler for user accounts. Provides operations for
- * account lookup, creation, display name updates, and deck list management.
+ * Reactive repository for user accounts. Lookups are by Google subject or ID;
+ * deck-list membership is maintained with atomic {@code $push}/{@code $pull}
+ * updates so concurrent deck creation cannot clobber the array.
  */
 @ApplicationScoped
-public class AccountDbHandler {
+public class AccountDbHandler implements ReactivePanacheMongoRepositoryBase<Account, String> {
 
-    private static final String COLLECTION_NAME = "Accounts";
-
-    private final MongoService mongoService;
-
-    @Inject
-    public AccountDbHandler(final MongoService mongoService) {
-        this.mongoService = mongoService;
+    public Uni<Optional<Account>> findByGoogleSub(final String googleSub) {
+        return find("googleSub = ?1", googleSub).firstResultOptional();
     }
 
-    public Optional<Account> findByGoogleSub(final String googleSub) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        var doc = collection.find(new org.bson.Document("googleSub", googleSub)).first();
-        return Optional.ofNullable(doc);
-    }
-
-    public Optional<Account> findById(final String accountID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        var doc = collection.find(new org.bson.Document("_id", accountID)).first();
-        return Optional.ofNullable(doc);
-    }
-
-    public Account createAccount(final String googleSub, final String email, final String displayName) {
+    public Uni<Account> createAccount(final String googleSub, final String email, final String displayName) {
         var account = new Account();
         account.setAccountID(new ObjectId().toHexString());
         account.setGoogleSub(googleSub);
@@ -47,30 +32,27 @@ public class AccountDbHandler {
         account.setDisplayName(displayName);
         account.setDeckIDs(new ArrayList<>());
         account.setCreatedAt(LocalDateTime.now());
-
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        collection.insertOne(account);
-        return account;
+        return persist(account).replaceWith(account);
     }
 
-    public void updateDisplayName(final String accountID, final String displayName) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        collection.updateOne(
-                new org.bson.Document("_id", accountID),
-                new org.bson.Document("$set", new org.bson.Document("displayName", displayName)));
+    public Uni<Void> updateDisplayName(final String accountID, final String displayName) {
+        return mongoCollection()
+                .updateOne(new Document("_id", accountID),
+                        new Document("$set", new Document("displayName", displayName)))
+                .replaceWithVoid();
     }
 
-    public void addDeckToAccount(final String accountID, final String deckID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        collection.updateOne(
-                new org.bson.Document("_id", accountID),
-                new org.bson.Document("$push", new org.bson.Document("deckIDs", deckID)));
+    public Uni<Void> addDeckToAccount(final String accountID, final String deckID) {
+        return mongoCollection()
+                .updateOne(new Document("_id", accountID),
+                        new Document("$push", new Document("deckIDs", deckID)))
+                .replaceWithVoid();
     }
 
-    public void removeDeckFromAccount(final String accountID, final String deckID) {
-        var collection = mongoService.getDatabase().getCollection(COLLECTION_NAME, Account.class);
-        collection.updateOne(
-                new org.bson.Document("_id", accountID),
-                new org.bson.Document("$pull", new org.bson.Document("deckIDs", deckID)));
+    public Uni<Void> removeDeckFromAccount(final String accountID, final String deckID) {
+        return mongoCollection()
+                .updateOne(new Document("_id", accountID),
+                        new Document("$pull", new Document("deckIDs", deckID)))
+                .replaceWithVoid();
     }
 }

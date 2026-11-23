@@ -8,9 +8,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.magic.classicDraft.api.ClassicPlayer;
 import org.magic.classicDraft.api.ClassicPlayerCreationInfo;
-import org.magic.pyramidDraft.api.card.Card;
-import org.magic.pyramidDraft.api.card.CardPack;
-import org.magic.pyramidDraft.api.card.Cube;
+import org.magic.common.card.Card;
+import org.magic.common.card.CardPack;
+import org.magic.common.card.Cube;
 
 import jakarta.inject.Inject;
 

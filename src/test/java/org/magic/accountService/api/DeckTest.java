@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.magic.common.util.JsonUtility;
+import org.magic.TestJson;
 
 class DeckTest {
 
@@ -19,7 +19,7 @@ class DeckTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream("Deck.json");
         String json = IOUtils.toString(is, "UTF-8");
 
-        Deck deck = JsonUtility.getInstance().fromJson(json, Deck.class);
+        Deck deck = TestJson.fromJson(json, Deck.class);
 
         assertNotNull(deck);
         assertEquals("507f1f77bcf86cd799439012", deck.getDeckID());
@@ -42,8 +42,8 @@ class DeckTest {
         deck.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0, 0));
         deck.setUpdatedAt(LocalDateTime.of(2024, 1, 1, 0, 0, 0));
 
-        String json = JsonUtility.getInstance().toJson(deck);
-        Deck deserialized = JsonUtility.getInstance().fromJson(json, Deck.class);
+        String json = TestJson.toJson(deck);
+        Deck deserialized = TestJson.fromJson(json, Deck.class);
 
         assertEquals(deck.getDeckID(), deserialized.getDeckID());
         assertEquals(deck.getAccountID(), deserialized.getAccountID());

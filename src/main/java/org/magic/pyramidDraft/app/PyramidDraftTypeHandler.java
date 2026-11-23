@@ -1,12 +1,10 @@
 package org.magic.pyramidDraft.app;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.magic.common.util.GuestIdentity;
 import org.magic.lobbyService.api.LobbyPlayer;
 import org.magic.lobbyService.app.DraftTypeHandler;
 import org.magic.pyramidDraft.api.GameCreationInfo;
@@ -53,12 +51,12 @@ public class PyramidDraftTypeHandler implements DraftTypeHandler {
                                  final List<LobbyPlayer> players,
                                  final Map<String, Object> config) {
         String gameID = UUID.randomUUID().toString();
-        int doubleDraftPicks = intConfig(config, "numberOfDoubleDraftPicksPerPlayer", 0);
+        int doubleDraftPicks = DraftTypeHandler.intConfig(config, "numberOfDoubleDraftPicksPerPlayer", 0);
 
         List<PlayerCreationInfo> playerInfo = players.stream()
                 .map(p -> new PlayerCreationInfo(
                         p.getDisplayName(),
-                        p.getAccountID() != null ? p.getAccountID() : guestAccountId(p.getPlayerToken()),
+                        p.getAccountID() != null ? p.getAccountID() : GuestIdentity.id(p.getPlayerToken()),
                         p.getPlayerToken()))
                 .toList();
 
@@ -66,23 +64,5 @@ public class PyramidDraftTypeHandler implements DraftTypeHandler {
 
         return gameWorker.startGame(creationInfo)
                 .map(game -> game.getGameID());
-    }
-
-    private static int intConfig(final Map<String, Object> config, final String key, final int defaultValue) {
-        Object value = config.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        return defaultValue;
-    }
-
-    private static String guestAccountId(final String playerToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(playerToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return "guest-" + HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available", e);
-        }
     }
 }
